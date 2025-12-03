@@ -1,0 +1,5 @@
+{
+  "name": "DrillCost Pro",
+  "description": "A comprehensive drilling cost and time simulation tool. Compare bit scenarios, calculate cost per meter, and visualize depth-time-cost curves.",
+  "requestFramePermissions": []
+}
