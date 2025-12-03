@@ -6,6 +6,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.2-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2.0-646cff?logo=vite)](https://vitejs.dev/)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 DrillCost Pro is a sophisticated web application designed for drilling engineers to compare different drill bit strategies and determine the most cost-effective approach for drilling well intervals. The tool performs comprehensive simulations that account for bit costs, drilling rates, trip times, and operational expenses to identify optimal drilling scenarios.
 
 ## 🎯 Purpose
@@ -314,7 +316,11 @@ These simplifications are acceptable for comparative scenario analysis where all
 
 ## 📄 License
 
-This project is available under the MIT License.
+This project is available under the MIT License. See the `LICENSE` file for details.
+
+## Disclaimer
+
+The calculations and simulations provided by DrillCost Pro are for general informational and planning purposes only and may not account for all site-specific factors. The authors and contributors make no representations or warranties about the accuracy, completeness, or suitability of the results, and accept no professional liability for decisions made using this tool. Users should independently verify key assumptions and consult qualified professionals before relying on outputs for operational or financial decisions.
 
 ## 👤 Author
 
