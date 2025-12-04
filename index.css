@@ -16,29 +16,29 @@
 
 /* 1) Theme tokens */
 :root {
-  /* Light Mode Defaults */
+  /* Light Mode - True Silver palette for premium, eye-friendly UI */
   --bh-primary: #2563eb;     /* blue-600 */
-  --bh-bg:      #f8fafc;     /* slate-50 */
+  --bh-bg:      #E0E2E7;     /* True Silver - deeper background */
   --bh-accent:  #10b981;     /* emerald-500 */
   --bh-accent-2:#0ea5e9;     /* sky-500 */
 
-  --bh-surface-0: #ffffff;   /* white */
-  --bh-surface-1: #f8fafc;   /* slate-50 */
-  --bh-surface-2: #f1f5f9;   /* slate-100 */
-  --bh-border:    #e2e8f0;   /* slate-200 */
+  --bh-surface-0: #FFFFFF;   /* Pure white cards - creates "lifted" effect */
+  --bh-surface-1: #F0F1F4;   /* Light silver for sections */
+  --bh-surface-2: #E8EAEF;   /* Hover states */
+  --bh-border:    #D1D5DB;   /* Medium gray border */
   --bh-overlay:   rgba(0,0,0,0.5);
 
-  --bh-text:      #1e293b;   /* slate-800 */
-  --bh-text-weak: #475569;   /* slate-600 */
-  --bh-text-mute: #94a3b8;   /* slate-400 */
+  --bh-text:      #172B4D;   /* Atlassian-style dark blue-gray */
+  --bh-text-weak: #5E6C84;   /* Medium blue-gray */
+  --bh-text-mute: #97A0AF;   /* Light blue-gray */
 
   --bh-focus:     #3b82f6;   /* blue-500 */
   --bh-success:   #10b981;   /* emerald-500 */
   --bh-warning:   #f59e0b;   /* amber-500 */
   --bh-danger:    #ef4444;   /* red-500 */
 
-  --bh-shadow-1:  0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --bh-shadow-2:  0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --bh-shadow-1:  0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --bh-shadow-2:  0 4px 8px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06);
 
   --bh-radius-sm: 0.375rem;
   --bh-radius-md: 0.5rem;
