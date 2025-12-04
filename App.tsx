@@ -22,8 +22,10 @@ const App: React.FC = () => {
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'bakerhughes-dark');
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
     }
   }, [theme]);
 
@@ -108,7 +110,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-12 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans pb-12 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
       {/* Hidden File Input */}
       <input 
         type="file" 
@@ -119,7 +121,7 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+      <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-20 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
@@ -128,8 +130,8 @@ const App: React.FC = () => {
               className="w-9 h-9 rounded-lg shadow-md shadow-blue-200 dark:shadow-none"
             />
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">DrillCost Pro</h1>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-0.5">Scenario Analysis</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-[var(--bh-text)] tracking-tight leading-none">DrillCost Pro</h1>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wide mt-0.5">Scenario Analysis</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -142,12 +144,12 @@ const App: React.FC = () => {
                 </span>
              </div>
              
-             <div className="h-8 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden sm:block"></div>
 
              <div className="flex items-center gap-2">
                 <button 
                   onClick={triggerFileUpload}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-colors flex items-center gap-2 group"
+                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
                   title="Load Scenarios"
                 >
                   <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -155,7 +157,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleSaveState}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-colors flex items-center gap-2 group"
+                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
                   title="Save Scenarios"
                 >
                   <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -163,7 +165,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleClearState}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-red-400 transition-colors flex items-center gap-2 group"
+                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-danger)] transition-colors flex items-center gap-2 group"
                   title="Clear All Scenarios"
                 >
                   <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -171,7 +173,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleLoadSampleData}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-emerald-400 transition-colors flex items-center gap-2 group"
+                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-accent)] transition-colors flex items-center gap-2 group"
                   title="Load Sample Data"
                 >
                   <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -179,11 +181,11 @@ const App: React.FC = () => {
                 </button>
              </div>
 
-             <div className="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
+             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)]"></div>
 
              <button 
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-colors"
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors"
               title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
              >
                {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
