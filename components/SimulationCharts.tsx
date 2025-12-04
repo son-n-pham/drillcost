@@ -51,13 +51,13 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Depth vs. Time</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart margin={{ top: 20, right: 30, left: 70, bottom: 50 }}>
+            <LineChart margin={{ top: 20, right: 30, left: 70, bottom: 65 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis 
                 type="number" 
                 dataKey="time" 
                 name="Time" 
-                label={{ value: 'Time (hours)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                label={{ value: 'Time (hours)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                 tick={{ fill: axisColor, fontSize: 11 }}
               />
               <YAxis 
@@ -75,7 +75,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 verticalAlign="bottom" 
                 align="center"
                 iconType="circle"
-                wrapperStyle={{ paddingTop: '20px' }}
+                wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
               />
               {results.map((res, index) => {
                 if (res.steps.length <= 1) return null;
@@ -103,7 +103,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Depth vs. Cost</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart margin={{ top: 20, right: 30, left: 80, bottom: 50 }}>
+            <LineChart margin={{ top: 20, right: 30, left: 80, bottom: 65 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis 
                 type="number" 
@@ -111,7 +111,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 name="Cost" 
                 domain={['dataMin', 'auto']}
                 tickFormatter={(value) => (value / 1000).toLocaleString()}
-                label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                 tick={{ fill: axisColor, fontSize: 11 }}
               />
               <YAxis 
@@ -129,7 +129,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 verticalAlign="bottom" 
                 align="center"
                 iconType="circle"
-                wrapperStyle={{ paddingTop: '20px' }}
+                wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
               />
               {results.map((res, index) => {
                 if (res.steps.length <= 1) return null;
