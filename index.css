@@ -47,18 +47,18 @@
 }
 
 :root[data-theme="bakerhughes-dark"] {
-  /* Core brand */
-  --bh-primary: #005AA9;     /* Medium Persian Blue */
-  --bh-bg:      #1B1B1F;     /* Eerie Black */
-  --bh-accent:  #02BC94;     /* Light Green (legacy accent) */
-  --bh-accent-2:#018374;     /* Green (legacy accent 2) */
+  /* Core brand - Strictly from brandcolorcode.com */
+  --bh-primary: #02BC94;     /* Light Green (Brand Primary) */
+  --bh-bg:      #00120F;     /* Deepest Green/Black (New Background) */
+  --bh-accent:  #018374;     /* Green (Accent) */
+  --bh-accent-2:#FFFFFF;     /* White (Secondary Accent) */
 
-  /* Semantic & surfaces */
-  --bh-surface-0: #111216;   /* Deep surface (cards on bg) */
-  --bh-surface-1: #15161A;   /* Raised surface */
-  --bh-surface-2: #1D1E23;   /* Hover/active surface */
-  --bh-border:    #2A2B31;   /* Neutral border on dark */
-  --bh-overlay:   rgba(0,0,0,0.5);
+  /* Semantic & surfaces - tinted with Dark Green */
+  --bh-surface-0: #05322B;   /* Brand Dark Green (Now used for Cards) */
+  --bh-surface-1: #0A453B;   /* Raised surface */
+  --bh-surface-2: #0F594C;   /* Hover/active surface */
+  --bh-border:    #166355;   /* Greenish border */
+  --bh-overlay:   rgba(0, 18, 15, 0.8);
 
   /* Text */
   --bh-text:      #FFFFFF;   /* Primary text */

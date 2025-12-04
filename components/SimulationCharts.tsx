@@ -54,7 +54,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
   const yAxisWidth = (depthDigits * 8) + 35;
   
   // Transform data for charts
-  const colors = ['#005AA9', '#02BC94', '#018374', '#FAB840', '#D84A3B']; // Baker Hughes Palette
+  const colors = ['#02BC94', '#FFFFFF', '#018374', '#FAB840', '#D84A3B']; // Baker Hughes Palette (Green/White)
   const gridColor = isDark ? '#2A2B31' : '#f1f5f9';
   const axisColor = isDark ? '#8B8E97' : '#64748b';
 
