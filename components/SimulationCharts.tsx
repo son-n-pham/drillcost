@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -7,14 +7,18 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer
+  ResponsiveContainer,
+  BarChart,
+  Bar
 } from 'recharts';
-import { ScenarioResult } from '../types';
+import { ScenarioResult, Bit, GlobalParams } from '../types';
 
 interface SimulationChartsProps {
   results: ScenarioResult[];
   targetDepth: number;
   isDark?: boolean;
+  bits?: Bit[];
+  params?: GlobalParams;
 }
 
 const CustomTooltip = ({ active, payload, label, xLabel, isDark }: any) => {
@@ -36,14 +40,14 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark }: any) => {
   return null;
 };
 
-const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false }) => {
+const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params }) => {
   
   // Calculate active scenarios for dynamic margin calculation
   const activeScenarios = results.filter(r => r.steps.length > 1);
   const scenarioCount = activeScenarios.length;
   
   // Optimized bottom margin for X-axis label only
-  const bottomMargin = 40;
+  const bottomMargin = 25;
   
   // Dynamic Y-axis width calculation based on max depth
   const maxDepth = Math.max(...results.flatMap(r => r.steps.map(s => s.depth)), targetDepth);
@@ -53,6 +57,67 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
   // e.g. "3000 m" -> 70px
   const yAxisWidth = (depthDigits * 8) + 35;
   
+  // Compute time and cost breakdown data for stacked bar charts
+  const breakdownData = useMemo(() => {
+    if (!params) return [];
+    
+    const hourlyRigCost = params.operationCostPerDay / 24;
+    const bitMap = new Map(bits.map(b => [b.name, b]));
+    
+    return activeScenarios.map((scenario) => {
+      let drillingTime = 0;
+      let flatTime = 0; // tripping + circulating
+      let bitCost = 0;
+      let drillingCost = 0;
+      let flatTimeCost = 0;
+      
+      let prevTime = 0;
+      let prevCost = 0;
+      
+      scenario.steps.forEach((step, index) => {
+        if (index === 0) {
+          prevTime = step.time;
+          prevCost = step.cost;
+          return;
+        }
+        
+        const timeDelta = step.time - prevTime;
+        const costDelta = step.cost - prevCost;
+        
+        if (step.activity === 'drilling') {
+          // For drilling step, we need to separate bit cost from drilling cost
+          // Bit cost is added at the start of each run
+          const bit = step.bitName ? bitMap.get(step.bitName) : null;
+          if (bit) {
+            bitCost += bit.cost;
+            drillingCost += costDelta - bit.cost;
+          } else {
+            drillingCost += costDelta;
+          }
+          drillingTime += timeDelta;
+        } else if (step.activity === 'tripping') {
+          flatTime += timeDelta;
+          flatTimeCost += costDelta;
+        }
+        
+        prevTime = step.time;
+        prevCost = step.cost;
+      });
+      
+      return {
+        name: scenario.status === 'incomplete' ? `${scenario.name} (Incomplete)` : scenario.name,
+        drillingTime,
+        flatTime,
+        bitCost,
+        drillingCost,
+        flatTimeCost,
+        totalTime: scenario.totalTime,
+        totalCost: scenario.totalCost,
+        status: scenario.status,
+      };
+    });
+  }, [activeScenarios, bits, params]);
+
   // Transform data for charts
   // Expanded chart palette for dark theme - 12 distinct colors optimized for dark green background
   const colors = [
@@ -69,12 +134,22 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
     '#FCD34D', // 11. Sunflower
     '#2DD4BF', // 12. Teal
   ];
+  
+  // Stacked bar chart colors
+  const barColors = {
+    drillingTime: '#02BC94',  // Green - drilling
+    flatTime: '#FFB547',      // Amber - flat time
+    bitCost: '#A78BFA',       // Purple - bit costs
+    drillingCost: '#02BC94',  // Green - drilling cost
+    flatTimeCost: '#FFB547',  // Amber - flat time cost
+  };
+  
   const gridColor = isDark ? '#2A2B31' : '#f1f5f9';
   const axisColor = isDark ? '#8B8E97' : '#64748b';
 
   // Custom Legend Component
   const CustomLegend = () => (
-    <div className="flex flex-wrap justify-center gap-4 mt-4 px-2">
+    <div className="flex flex-wrap justify-center gap-4 mt-2 px-2">
       {results.map((res, index) => {
         if (res.steps.length <= 1) return null;
         return (
@@ -84,13 +159,42 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
               style={{ backgroundColor: colors[index % colors.length] }}
             />
             <span className={`font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
-              {res.name}{res.status === 'incomplete' ? ' (Incomplete)' : ''}
+              {res.name}
+              {res.status === 'incomplete' && (
+                <span className="text-red-500 ml-1">(Incomplete)</span>
+              )}
             </span>
           </div>
         );
       })}
     </div>
   );
+
+  // Custom X-Axis Tick for bar charts with red incomplete marker
+  const CustomBarXAxisTick = ({ x, y, payload }: any) => {
+    const name = payload.value as string;
+    const isIncomplete = name.includes('(Incomplete)');
+    const displayName = isIncomplete ? name.replace(' (Incomplete)', '') : name;
+    
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={10}
+          textAnchor="end"
+          fill={axisColor}
+          fontSize={10}
+          transform="rotate(-45)"
+        >
+          {displayName}
+          {isIncomplete && (
+            <tspan fill="#ef4444" fontWeight="500"> (Inc.)</tspan>
+          )}
+        </text>
+      </g>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -107,19 +211,19 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   type="number" 
                   dataKey="time" 
                   name="Time" 
-                  label={{ value: 'Time (hours)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  label={{ value: 'Time (hours)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   tick={{ fill: axisColor, fontSize: 11 }}
                 />
                 <YAxis 
                   type="number" 
                   dataKey="depth" 
                   name="Depth" 
-                  unit="m" 
                   reversed={true}
                   width={yAxisWidth}
                   domain={['dataMin', 'auto']}
                   label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   tick={{ fill: axisColor, fontSize: 11 }}
+                  tickFormatter={(value) => value.toLocaleString()}
                 />
                 <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} />} />
                 {results.map((res, index) => {
@@ -159,19 +263,19 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   name="Cost" 
                   domain={['dataMin', 'auto']}
                   tickFormatter={(value) => (value / 1000).toLocaleString()}
-                  label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   tick={{ fill: axisColor, fontSize: 11 }}
                 />
                 <YAxis 
                   type="number" 
                   dataKey="depth" 
                   name="Depth" 
-                  unit="m" 
                   reversed={true}
                   width={yAxisWidth}
                   domain={['dataMin', 'auto']}
                   label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   tick={{ fill: axisColor, fontSize: 11 }}
+                  tickFormatter={(value) => value.toLocaleString()}
                 />
                 <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} />} />
                 {results.map((res, index) => {
@@ -196,6 +300,165 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
           <CustomLegend />
         </div>
       </div>
+
+      {/* Time Breakdown Chart - Stacked Bar */}
+      {breakdownData.length > 0 && (
+        <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Time Breakdown by Scenario</h3>
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={breakdownData} 
+                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                layout="horizontal"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={<CustomBarXAxisTick />}
+                  height={90}
+                  interval={0}
+                />
+                <YAxis 
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                  tickFormatter={(value) => value.toLocaleString()}
+                  label={{ value: 'Time (hours)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDark ? 'var(--bh-surface-0)' : '#ffffff',
+                    border: `1px solid ${isDark ? 'var(--bh-border)' : '#e2e8f0'}`,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  labelStyle={{ color: isDark ? 'var(--bh-text)' : '#1e293b', fontWeight: 'bold' }}
+                  formatter={(value: number, name: string) => [
+                    `${value.toFixed(1)} hrs`,
+                    name === 'drillingTime' ? 'Drilling Time' : 'Flat Time (Trip + Circ.)'
+                  ]}
+                />
+                <Bar 
+                  dataKey="drillingTime" 
+                  stackId="time" 
+                  fill={barColors.drillingTime} 
+                  name="drillingTime"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar 
+                  dataKey="flatTime" 
+                  stackId="time" 
+                  fill={barColors.flatTime} 
+                  name="flatTime"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Custom Legend - outside chart to prevent overlap */}
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-3 px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: barColors.drillingTime }} />
+              <span className={`text-xs font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
+                Drilling Time
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: barColors.flatTime }} />
+              <span className={`text-xs font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
+                Flat Time (Trip + Circ.)
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cost Breakdown Chart - Stacked Bar */}
+      {breakdownData.length > 0 && (
+        <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Cost Breakdown by Scenario</h3>
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={breakdownData} 
+                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                layout="horizontal"
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis 
+                  dataKey="name" 
+                  tick={<CustomBarXAxisTick />}
+                  height={90}
+                  interval={0}
+                />
+                <YAxis 
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                  tickFormatter={(value) => `${(value / 1000).toLocaleString()}k`}
+                  label={{ value: 'Cost ($)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: isDark ? 'var(--bh-surface-0)' : '#ffffff',
+                    border: `1px solid ${isDark ? 'var(--bh-border)' : '#e2e8f0'}`,
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                  labelStyle={{ color: isDark ? 'var(--bh-text)' : '#1e293b', fontWeight: 'bold' }}
+                  formatter={(value: number, name: string) => {
+                    const labels: Record<string, string> = {
+                      'bitCost': 'Bit Cost',
+                      'drillingCost': 'Drilling Cost',
+                      'flatTimeCost': 'Flat Time Cost'
+                    };
+                    return [`$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, labels[name] || name];
+                  }}
+                />
+                <Bar 
+                  dataKey="bitCost" 
+                  stackId="cost" 
+                  fill={barColors.bitCost} 
+                  name="bitCost"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar 
+                  dataKey="drillingCost" 
+                  stackId="cost" 
+                  fill={barColors.drillingCost} 
+                  name="drillingCost"
+                  radius={[0, 0, 0, 0]}
+                />
+                <Bar 
+                  dataKey="flatTimeCost" 
+                  stackId="cost" 
+                  fill={barColors.flatTimeCost} 
+                  name="flatTimeCost"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Custom Legend - outside chart to prevent overlap */}
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-3 px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: barColors.bitCost }} />
+              <span className={`text-xs font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
+                Bit Cost
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: barColors.drillingCost }} />
+              <span className={`text-xs font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
+                Drilling Cost
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: barColors.flatTimeCost }} />
+              <span className={`text-xs font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
+                Flat Time Cost
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

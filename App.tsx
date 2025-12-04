@@ -234,6 +234,8 @@ const App: React.FC = () => {
                 results={results} 
                 targetDepth={params.depthIn + params.intervalToDrill} 
                 isDark={theme === 'dark'}
+                bits={bits}
+                params={params}
                />
             </section>
 
