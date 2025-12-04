@@ -38,6 +38,19 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark }: any) => {
 
 const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false }) => {
   
+  // Calculate active scenarios for dynamic margin calculation
+  const activeScenarios = results.filter(r => r.steps.length > 1);
+  const scenarioCount = activeScenarios.length;
+  
+  // Optimized bottom margin: minimal values based on scenario count
+  // 1-2 scenarios fit on one line (~45px), 3-4 might wrap (~55px), 5+ use max (60px)
+  const bottomMargin = scenarioCount <= 2 ? 45 : 
+                       scenarioCount <= 4 ? 55 : 60;
+  
+  // Optimized left margins - reduced to minimize wasted space
+  const leftMarginTime = 70;
+  const leftMarginCost = 75;
+  
   // Transform data for charts
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
   const gridColor = isDark ? '#334155' : '#f1f5f9';
@@ -51,7 +64,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Depth vs. Time</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart margin={{ top: 20, right: 30, left: 70, bottom: 65 }}>
+            <LineChart margin={{ top: 5, right: 20, left: leftMarginTime, bottom: bottomMargin }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis 
                 type="number" 
@@ -75,7 +88,12 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 verticalAlign="bottom" 
                 align="center"
                 iconType="circle"
-                wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
+                wrapperStyle={{ 
+                  paddingTop: '10px', 
+                  paddingBottom: '5px',
+                  fontSize: '12px',
+                  lineHeight: '1.5'
+                }}
               />
               {results.map((res, index) => {
                 if (res.steps.length <= 1) return null;
@@ -103,7 +121,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Depth vs. Cost</h3>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart margin={{ top: 20, right: 30, left: 80, bottom: 65 }}>
+            <LineChart margin={{ top: 5, right: 20, left: leftMarginCost, bottom: bottomMargin }}>
               <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
               <XAxis 
                 type="number" 
@@ -129,7 +147,12 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 verticalAlign="bottom" 
                 align="center"
                 iconType="circle"
-                wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px' }}
+                wrapperStyle={{ 
+                  paddingTop: '10px', 
+                  paddingBottom: '5px',
+                  fontSize: '12px',
+                  lineHeight: '1.5'
+                }}
               />
               {results.map((res, index) => {
                 if (res.steps.length <= 1) return null;
