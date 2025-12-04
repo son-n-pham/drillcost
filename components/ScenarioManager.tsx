@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
 import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X } from 'lucide-react';
 import clsx from 'clsx';
+import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 
 interface ScenarioManagerProps {
   bits: Bit[];
@@ -9,9 +10,10 @@ interface ScenarioManagerProps {
   setScenarios: (s: ScenarioConfig[]) => void;
   results: ScenarioResult[];
   params: GlobalParams;
+  depthUnit: DepthUnit;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -82,6 +84,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const isTargetReached = currentSequenceCapacity >= params.intervalToDrill;
   const progressPercent = Math.min((currentSequenceCapacity / params.intervalToDrill) * 100, 100);
 
+  // Helper for display values
+  const displayDepth = (val: number) => convertDepth(val, depthUnit).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const displayCostPerUnit = (costPerMeter: number) => {
+      const val = depthUnit === 'm' ? costPerMeter : costPerMeter / METERS_TO_FEET;
+      return val;
+  };
+
   return (
     <div className="space-y-6">
       {/* Results Summary Cards */}
@@ -90,6 +99,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             const isBestCost = results.every(r => (r.status === 'incomplete' || r.steps.length <= 1 ? Infinity : r.totalCost) >= (res.status === 'incomplete' || res.steps.length <= 1 ? Infinity : res.totalCost)) && res.status === 'complete' && res.steps.length > 1;
             const isActive = activeTab === res.id;
             const isBlank = res.steps.length <= 1;
+            const costPerUnit = displayCostPerUnit(res.costPerMeter);
 
             return (
               <div 
@@ -131,13 +141,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   
                   <div className="space-y-2.5">
                      <div className="flex justify-between items-baseline">
-                        <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/m</span>
+                        <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
                         {isBlank ? (
                            <span className={clsx("text-xl font-bold tracking-tight", isActive ? "text-slate-300 dark:text-[var(--bh-text-weak)]" : "text-slate-300 dark:text-[var(--bh-text-mute)]")}>N/A</span>
                         ) : (
                           <span className={clsx("text-2xl font-bold tracking-tight", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
-                            ${res.costPerMeter.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            <span className="text-sm font-normal text-slate-400 dark:text-[var(--bh-text-mute)]">.{(res.costPerMeter % 1).toFixed(2).substring(2)}</span>
+                            ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            <span className="text-sm font-normal text-slate-400 dark:text-[var(--bh-text-mute)]">.{(costPerUnit % 1).toFixed(2).substring(2)}</span>
                           </span>
                         )}
                      </div>
@@ -145,14 +155,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         <div className="flex flex-col">
                            <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
                            <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                             {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toFixed(1)}k`}
+                             {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`}
                            </span>
                         </div>
                         <div className="w-px h-6 bg-slate-100 dark:bg-[var(--bh-border)] mx-2"></div>
                         <div className="flex flex-col items-end">
                            <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Time</span>
                            <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                             {isBlank ? 'N/A' : `${res.totalTime.toFixed(0)}h`}
+                             {isBlank ? 'N/A' : `${res.totalTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}h`}
                            </span>
                         </div>
                      </div>
@@ -209,8 +219,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                    <div>
                       <h5 className="text-sm font-bold text-amber-900 dark:text-[var(--bh-warning)]">Target Not Reached</h5>
                       <p className="text-sm text-amber-700 dark:text-[var(--bh-text-weak)] mt-1 leading-relaxed">
-                         Current sequence covers <span className="font-bold">{currentSequenceCapacity.toLocaleString()}m</span> of the required {params.intervalToDrill.toLocaleString()}m. 
-                         You need <strong>{(params.intervalToDrill - currentSequenceCapacity).toLocaleString()}m</strong> more.
+                         Current sequence covers <span className="font-bold">{displayDepth(currentSequenceCapacity)}{getUnitLabel(depthUnit)}</span> of the required {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}. 
+                         You need <strong>{displayDepth(params.intervalToDrill - currentSequenceCapacity)}{getUnitLabel(depthUnit)}</strong> more.
                       </p>
                    </div>
                 </div>
@@ -226,7 +236,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     <div className="flex flex-col items-end">
                       <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold tracking-wider">Coverage</span>
                       <span className="text-xs font-mono font-medium text-slate-600 dark:text-[var(--bh-text-weak)]">
-                        {currentSequenceCapacity.toLocaleString()} / {params.intervalToDrill.toLocaleString()}m
+                        {displayDepth(currentSequenceCapacity)} / {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}
                       </span>
                     </div>
                     <div className="w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
@@ -249,7 +259,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                               <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: bit.color }}></div>
                               <div>
                                  <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)]">{bit.name}</div>
-                                 <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Max {bit.maxDistance}m</div>
+                                 <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
                               </div>
                               <span className="absolute -top-2 -left-2 bg-emerald-600 dark:bg-[var(--bh-primary)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2 ring-white dark:ring-[var(--bh-bg)]">
                                  {idx + 1}
@@ -314,7 +324,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                                       <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
                                       <div className="flex flex-col">
                                         <span className="font-semibold">{bit.name}</span>
-                                        <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {bit.maxDistance}m</span>
+                                        <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
                                       </div>
                                   </button>
                                 ))}
@@ -355,10 +365,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         {activeResult.steps.length > 1 ? (
                           <>
                             <div className="flex items-baseline gap-1">
-                               <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">{(activeResult.totalTime / 24).toFixed(1)}</span>
+                               <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">{(activeResult.totalTime / 24).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
                                <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">days</span>
                             </div>
-                            <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">{activeResult.totalTime.toFixed(1)} hours</div>
+                            <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">{activeResult.totalTime.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} hours</div>
                           </>
                         ) : (
                           <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
@@ -370,9 +380,9 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                           <>
                             <div className="flex items-baseline gap-1">
                                <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">
-                                 {(activeResult.totalTime > 0 ? ((activeResult.steps[activeResult.steps.length-1]?.depth - params.depthIn) / activeResult.totalTime).toFixed(1) : 0)}
+                                 {(activeResult.totalTime > 0 ? convertDepth(((activeResult.steps[activeResult.steps.length-1]?.depth - params.depthIn) / activeResult.totalTime), depthUnit).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0)}
                                </span>
-                               <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">m/hr</span>
+                               <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">{getSpeedLabel(depthUnit)}</span>
                             </div>
                             <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Includes tripping</div>
                           </>
@@ -385,7 +395,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         {activeResult.steps.length > 1 ? (
                            <>
                              <div className="flex items-baseline gap-1">
-                               <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toFixed(1)}k</span>
+                               <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k</span>
                             </div>
                             <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on rig rate</div>
                            </>

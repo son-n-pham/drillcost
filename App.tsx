@@ -6,16 +6,18 @@ import SettingsPanel from './components/SettingsPanel';
 import BitsPanel from './components/BitsPanel';
 import ScenarioManager from './components/ScenarioManager';
 import SimulationCharts from './components/SimulationCharts';
-import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText } from 'lucide-react';
+import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown } from 'lucide-react';
 import { SAMPLE_PARAMS, SAMPLE_BITS, SAMPLE_SCENARIOS } from './sampleData';
 import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
+import { DepthUnit, convertDepth, getUnitLabel } from './utils/unitUtils';
 
 const App: React.FC = () => {
   const [params, setParams] = useState<GlobalParams>(INITIAL_GLOBAL_PARAMS);
   const [bits, setBits] = useState<Bit[]>(INITIAL_BITS);
   const [scenarios, setScenarios] = useState<ScenarioConfig[]>(INITIAL_SCENARIOS);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [depthUnit, setDepthUnit] = useState<DepthUnit>('m');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Apply theme class to html element
@@ -43,6 +45,7 @@ const App: React.FC = () => {
       params,
       bits,
       scenarios,
+      depthUnit,
       version: '1.0',
       timestamp: new Date().toISOString()
     };
@@ -70,6 +73,7 @@ const App: React.FC = () => {
         if (state.params) setParams(state.params);
         if (state.bits) setBits(state.bits);
         if (state.scenarios) setScenarios(state.scenarios);
+        if (state.depthUnit) setDepthUnit(state.depthUnit);
         
       } catch (error) {
         console.error('Failed to parse state file', error);
@@ -109,6 +113,10 @@ const App: React.FC = () => {
     setScenarios(SAMPLE_SCENARIOS);
   };
 
+  const toggleUnit = () => {
+    setDepthUnit(prev => prev === 'm' ? 'ft' : 'm');
+  };
+
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans pb-12 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
       {/* Hidden File Input */}
@@ -139,9 +147,21 @@ const App: React.FC = () => {
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Target className="w-3 h-3" /> Target Depth
                 </span>
-                <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
-                  {(params.depthIn + params.intervalToDrill).toLocaleString()} <span className="text-sm text-slate-400">m</span>
-                </span>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
+                    {convertDepth(params.depthIn + params.intervalToDrill, depthUnit).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-sm text-slate-400">{getUnitLabel(depthUnit)}</span>
+                  </span>
+                  
+                  {/* Unit Selector */}
+                  <button 
+                    onClick={toggleUnit}
+                    className="flex items-center gap-0.5 text-[10px] font-bold bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)] px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[var(--bh-border)] transition-colors"
+                    title="Toggle Unit (m/ft)"
+                  >
+                    {depthUnit.toUpperCase()}
+                    <ChevronDown className="w-2.5 h-2.5" />
+                  </button>
+                </div>
              </div>
              
              <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden sm:block"></div>
@@ -199,8 +219,8 @@ const App: React.FC = () => {
           
           {/* Left Sidebar: Controls */}
           <div className="lg:col-span-3 flex flex-col gap-6">
-            <SettingsPanel params={params} setParams={setParams} />
-            <BitsPanel bits={bits} setBits={setBits} />
+            <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} />
+            <BitsPanel bits={bits} setBits={setBits} depthUnit={depthUnit} />
           </div>
 
           {/* Main Content: Results & Charts */}
@@ -225,6 +245,7 @@ const App: React.FC = () => {
                 setScenarios={setScenarios} 
                 results={results}
                 params={params}
+                depthUnit={depthUnit}
               />
             </section>
 
@@ -236,6 +257,7 @@ const App: React.FC = () => {
                 isDark={theme === 'dark'}
                 bits={bits}
                 params={params}
+                depthUnit={depthUnit}
                />
             </section>
 

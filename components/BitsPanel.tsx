@@ -1,13 +1,15 @@
 import React from 'react';
 import { Bit } from '../types';
 import { Drill, Trash2, Plus } from 'lucide-react';
+import { DepthUnit, convertDepth, convertDepthToMeters, getUnitLabel, getSpeedLabel } from '../utils/unitUtils';
 
 interface BitsPanelProps {
   bits: Bit[];
   setBits: (bits: Bit[]) => void;
+  depthUnit: DepthUnit;
 }
 
-const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits }) => {
+const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
   const updateBit = (id: string, field: keyof Bit, value: any) => {
     setBits(bits.map(b => b.id === id ? { ...b, [field]: value } : b));
   };
@@ -42,6 +44,19 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits }) => {
     if (!isNaN(numValue)) {
         updateBit(id, 'cost', numValue);
     }
+  };
+
+  const handleDepthValueChange = (id: string, field: 'rop' | 'maxDistance', value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+        const metersValue = convertDepthToMeters(numValue, depthUnit);
+        updateBit(id, field, metersValue);
+    }
+  };
+
+  const getDisplayValue = (val: number) => {
+    const converted = convertDepth(val, depthUnit);
+    return Number.isInteger(converted) ? converted : parseFloat(converted.toFixed(2));
   };
 
   return (
@@ -97,12 +112,12 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits }) => {
 
               {/* ROP */}
               <div>
-                <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">ROP (m/h)</label>
+                <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">ROP ({getSpeedLabel(depthUnit)})</label>
                 <div className="bg-slate-50 dark:bg-[var(--bh-surface-1)] rounded border border-slate-100 dark:border-[var(--bh-border)] px-1.5 py-1">
                   <input 
                     type="number"
-                    value={bit.rop}
-                    onChange={(e) => updateBit(bit.id, 'rop', parseFloat(e.target.value))}
+                    value={getDisplayValue(bit.rop)}
+                    onChange={(e) => handleDepthValueChange(bit.id, 'rop', e.target.value)}
                     className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
                   />
                 </div>
@@ -110,12 +125,12 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits }) => {
 
               {/* Max Dist */}
               <div>
-                <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">MAX DIST (m)</label>
+                <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">MAX DIST ({getUnitLabel(depthUnit)})</label>
                 <div className="bg-slate-50 dark:bg-[var(--bh-surface-1)] rounded border border-slate-100 dark:border-[var(--bh-border)] px-1.5 py-1">
                   <input 
                     type="number"
-                    value={bit.maxDistance}
-                    onChange={(e) => updateBit(bit.id, 'maxDistance', parseFloat(e.target.value))}
+                    value={getDisplayValue(bit.maxDistance)}
+                    onChange={(e) => handleDepthValueChange(bit.id, 'maxDistance', e.target.value)}
                     className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
                   />
                 </div>

@@ -1,16 +1,42 @@
 import React from 'react';
 import { GlobalParams } from '../types';
 import { Settings, DollarSign, Clock, ArrowDownToLine, MoveVertical, RefreshCw } from 'lucide-react';
+import { DepthUnit, convertDepth, convertDepthToMeters, getUnitLabel } from '../utils/unitUtils';
 
 interface SettingsPanelProps {
   params: GlobalParams;
   setParams: (p: GlobalParams) => void;
+  depthUnit: DepthUnit;
 }
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams }) => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthUnit }) => {
   const handleChange = (key: keyof GlobalParams, value: string) => {
-    const numVal = parseFloat(value);
-    setParams({ ...params, [key]: isNaN(numVal) ? 0 : numVal });
+    // Remove commas from formatted numbers before parsing
+    const cleanValue = value.replace(/,/g, '');
+    const numVal = parseFloat(cleanValue);
+    const finalValue = isNaN(numVal) ? 0 : numVal;
+
+    // specific fields need conversion back to meters
+    if (['standLength', 'depthIn', 'intervalToDrill'].includes(key)) {
+        setParams({ ...params, [key]: convertDepthToMeters(finalValue, depthUnit) });
+    } else {
+        setParams({ ...params, [key]: finalValue });
+    }
+  };
+
+  // Helper to get display value with formatting
+  const getDisplayValue = (key: keyof GlobalParams) => {
+    const val = params[key];
+    if (['standLength', 'depthIn', 'intervalToDrill'].includes(key)) {
+        // Round to 2 decimals for display to avoid long floats
+        const converted = convertDepth(val, depthUnit);
+        const rounded = Number.isInteger(converted) ? converted : parseFloat(converted.toFixed(2));
+        return rounded.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+    if (key === 'operationCostPerDay') {
+        return val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    return val;
   };
 
   return (
@@ -29,8 +55,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams }) => {
           </label>
           <div className="relative">
             <input
-              type="number"
-              value={params.operationCostPerDay}
+              type="text"
+              value={getDisplayValue('operationCostPerDay')}
               onChange={(e) => handleChange('operationCostPerDay', e.target.value)}
               className="input font-semibold text-sm"
             />
@@ -60,12 +86,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams }) => {
             </label>
             <div className="relative">
               <input
-                type="number"
-                value={params.standLength}
+                type="text"
+                value={getDisplayValue('standLength')}
                 onChange={(e) => handleChange('standLength', e.target.value)}
                 className="input font-medium text-sm"
               />
-              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-[var(--bh-text-mute)] text-[10px] pointer-events-none">m</span>
+              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-[var(--bh-text-mute)] text-[10px] pointer-events-none">{getUnitLabel(depthUnit)}</span>
             </div>
           </div>
         </div>
@@ -80,12 +106,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams }) => {
             </label>
             <div className="relative">
               <input
-                type="number"
-                value={params.depthIn}
+                type="text"
+                value={getDisplayValue('depthIn')}
                 onChange={(e) => handleChange('depthIn', e.target.value)}
                 className="input font-medium text-sm"
               />
-              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-[var(--bh-text-mute)] text-xs pointer-events-none">m</span>
+              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-[var(--bh-text-mute)] text-xs pointer-events-none">{getUnitLabel(depthUnit)}</span>
             </div>
           </div>
 
@@ -95,12 +121,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams }) => {
             </label>
             <div className="relative">
               <input
-                type="number"
-                value={params.intervalToDrill}
+                type="text"
+                value={getDisplayValue('intervalToDrill')}
                 onChange={(e) => handleChange('intervalToDrill', e.target.value)}
                 className="input font-medium text-sm"
               />
-              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-[var(--bh-text-mute)] text-xs pointer-events-none">m</span>
+              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-[var(--bh-text-mute)] text-xs pointer-events-none">{getUnitLabel(depthUnit)}</span>
             </div>
           </div>
         </div>

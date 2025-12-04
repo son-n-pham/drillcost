@@ -12,6 +12,7 @@ import {
   Bar
 } from 'recharts';
 import { ScenarioResult, Bit, GlobalParams } from '../types';
+import { DepthUnit, convertDepth, getUnitLabel } from '../utils/unitUtils';
 
 interface SimulationChartsProps {
   results: ScenarioResult[];
@@ -19,9 +20,10 @@ interface SimulationChartsProps {
   isDark?: boolean;
   bits?: Bit[];
   params?: GlobalParams;
+  depthUnit: DepthUnit;
 }
 
-const CustomTooltip = ({ active, payload, label, xLabel, isDark }: any) => {
+const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className={`p-3 border shadow-lg rounded-lg text-xs ${isDark ? 'bg-[var(--bh-surface-0)] border-[var(--bh-border)] text-[var(--bh-text)]' : 'bg-white border-slate-200 text-slate-700'}`}>
@@ -31,7 +33,7 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark }: any) => {
         {payload.map((p: any) => (
           <div key={p.name} style={{ color: p.color }} className="flex items-center gap-2 mb-1">
              <span className="font-medium">{p.name}:</span>
-             <span>{Number(p.value).toLocaleString()} {p.unit}</span>
+             <span>{Number(p.value).toLocaleString()} {p.unit || getUnitLabel(depthUnit)}</span>
           </div>
         ))}
       </div>
@@ -40,7 +42,7 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark }: any) => {
   return null;
 };
 
-const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params }) => {
+const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params, depthUnit }) => {
   
   // Calculate active scenarios for dynamic margin calculation
   const activeScenarios = results.filter(r => r.steps.length > 1);
@@ -48,9 +50,20 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
   
   // Optimized bottom margin for X-axis label only
   const bottomMargin = 25;
+
+  // Transform results for charts (convert depth)
+  const chartResults = useMemo(() => {
+    return results.map(res => ({
+        ...res,
+        steps: res.steps.map(step => ({
+            ...step,
+            depth: convertDepth(step.depth, depthUnit)
+        }))
+    }));
+  }, [results, depthUnit]);
   
   // Dynamic Y-axis width calculation based on max depth
-  const maxDepth = Math.max(...results.flatMap(r => r.steps.map(s => s.depth)), targetDepth);
+  const maxDepth = Math.max(...chartResults.flatMap(r => r.steps.map(s => s.depth)), convertDepth(targetDepth, depthUnit));
   
   // Estimate width: ~8px per digit + ~15px for " m" + ~15px padding for label
   const depthDigits = Math.floor(maxDepth).toString().length;
@@ -221,12 +234,12 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   reversed={true}
                   width={yAxisWidth}
                   domain={['dataMin', 'auto']}
-                  label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  label={{ value: `Depth (${getUnitLabel(depthUnit)})`, angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   tick={{ fill: axisColor, fontSize: 11 }}
                   tickFormatter={(value) => value.toLocaleString()}
                 />
-                <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} />} />
-                {results.map((res, index) => {
+                <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} depthUnit={depthUnit} />} />
+                {chartResults.map((res, index) => {
                   if (res.steps.length <= 1) return null;
                   return (
                     <Line
@@ -238,7 +251,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                       stroke={colors[index % colors.length]}
                       strokeWidth={2}
                       dot={false}
-                      unit="m"
+                      unit={getUnitLabel(depthUnit)}
                     />
                   );
                 })}
@@ -273,12 +286,12 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   reversed={true}
                   width={yAxisWidth}
                   domain={['dataMin', 'auto']}
-                  label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  label={{ value: `Depth (${getUnitLabel(depthUnit)})`, angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   tick={{ fill: axisColor, fontSize: 11 }}
                   tickFormatter={(value) => value.toLocaleString()}
                 />
-                <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} />} />
-                {results.map((res, index) => {
+                <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} depthUnit={depthUnit} />} />
+                {chartResults.map((res, index) => {
                   if (res.steps.length <= 1) return null;
                   return (
                     <Line
@@ -290,7 +303,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                       stroke={colors[index % colors.length]}
                       strokeWidth={2}
                       dot={false}
-                      unit="m"
+                      unit={getUnitLabel(depthUnit)}
                     />
                   );
                 })}
