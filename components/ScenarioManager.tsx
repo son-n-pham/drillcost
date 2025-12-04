@@ -245,19 +245,19 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                      if (!bit) return null;
                      return (
                         <div key={idx} className="flex items-center animate-in zoom-in-50 duration-200">
-                           <div className="relative group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md transition-all rounded-xl p-3 pr-8 flex items-center gap-3 w-48">
+                           <div className="relative group bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md transition-all rounded-xl p-3 pr-8 flex items-center gap-3 w-48">
                               <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: bit.color }}></div>
                               <div>
-                                 <div className="font-bold text-sm text-slate-800 dark:text-slate-100">{bit.name}</div>
-                                 <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400">Max {bit.maxDistance}m</div>
+                                 <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)]">{bit.name}</div>
+                                 <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Max {bit.maxDistance}m</div>
                               </div>
-                              <span className="absolute -top-2 -left-2 bg-slate-800 dark:bg-slate-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2 ring-white dark:ring-slate-900">
+                              <span className="absolute -top-2 -left-2 bg-emerald-600 dark:bg-[var(--bh-primary)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2 ring-white dark:ring-[var(--bh-bg)]">
                                  {idx + 1}
                               </span>
                               
                               <button 
                                onClick={() => removeFromSequence(activeScenario.id, idx)}
-                               className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                               className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
                               >
                                  <X className="w-3.5 h-3.5" />
                               </button>
@@ -329,29 +329,29 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
              {/* Metrics Footer */}
              {activeResult && (
-               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-5 border border-slate-200/60 dark:border-slate-700/60">
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+               <div className="bg-slate-50 dark:bg-[var(--bh-surface-1)] rounded-xl p-5 border border-slate-200/60 dark:border-[var(--bh-border)]">
+                  <h4 className="text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider mb-4 flex items-center gap-2">
                     <BarChart3 className="w-3.5 h-3.5" />
                     Performance Breakdown
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                      <div>
-                        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block mb-1">Bits Consumed</span>
+                        <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-1">Bits Consumed</span>
                         <div className="space-y-1">
                           {activeResult.bitsUsed.length > 0 ? (
                             activeResult.bitsUsed.map((b, i) => (
-                              <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+                              <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-[var(--bh-text)]">
                                 <span>{b.name}</span>
-                                <span className="text-slate-400 dark:text-slate-500">x{b.count}</span>
+                                <span className="text-slate-400 dark:text-[var(--bh-text-mute)]">x{b.count}</span>
                               </div>
                             ))
                           ) : (
-                            <span className="text-sm text-slate-400 dark:text-slate-500 italic">None</span>
+                            <span className="text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic">None</span>
                           )}
                         </div>
                      </div>
                      <div>
-                        <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 block mb-1">Est. Total Time</span>
+                        <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-1">Est. Total Time</span>
                         {activeResult.steps.length > 1 ? (
                           <>
                             <div className="flex items-baseline gap-1">
