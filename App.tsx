@@ -9,6 +9,7 @@ import SimulationCharts from './components/SimulationCharts';
 import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText } from 'lucide-react';
 import { SAMPLE_PARAMS, SAMPLE_BITS, SAMPLE_SCENARIOS } from './sampleData';
 import clsx from 'clsx';
+import logoIcon from './img/logo_SonPham.png';
 
 const App: React.FC = () => {
   const [params, setParams] = useState<GlobalParams>(INITIAL_GLOBAL_PARAMS);
@@ -121,9 +122,11 @@ const App: React.FC = () => {
       <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-2 rounded-lg text-white shadow-md shadow-blue-200 dark:shadow-none">
-               <Activity className="w-5 h-5" />
-            </div>
+            <img 
+              src={logoIcon}
+              alt="DrillCost Pro Logo" 
+              className="w-9 h-9 rounded-lg shadow-md shadow-blue-200 dark:shadow-none"
+            />
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-none">DrillCost Pro</h1>
               <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mt-0.5">Scenario Analysis</p>
