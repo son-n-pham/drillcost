@@ -42,136 +42,144 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
   const activeScenarios = results.filter(r => r.steps.length > 1);
   const scenarioCount = activeScenarios.length;
   
-  // Optimized bottom margin: minimal values based on scenario count
-  // 1-2 scenarios fit on one line (~45px), 3-4 might wrap (~55px), 5+ use max (60px)
-  const bottomMargin = scenarioCount <= 2 ? 45 : 
-                       scenarioCount <= 4 ? 55 : 60;
+  // Optimized bottom margin for X-axis label only
+  const bottomMargin = 40;
   
-  // Optimized left margins - reduced to minimize wasted space
-  const leftMarginTime = 70;
-  const leftMarginCost = 75;
+  // Dynamic Y-axis width calculation based on max depth
+  const maxDepth = Math.max(...results.flatMap(r => r.steps.map(s => s.depth)), targetDepth);
+  
+  // Estimate width: ~8px per digit + ~15px for " m" + ~15px padding for label
+  const depthDigits = Math.floor(maxDepth).toString().length;
+  // e.g. "3000 m" -> 70px
+  const yAxisWidth = (depthDigits * 8) + 35;
   
   // Transform data for charts
   const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
   const gridColor = isDark ? '#334155' : '#f1f5f9';
   const axisColor = isDark ? '#94a3b8' : '#64748b';
 
+  // Custom Legend Component
+  const CustomLegend = () => (
+    <div className="flex flex-wrap justify-center gap-4 mt-4 px-2">
+      {results.map((res, index) => {
+        if (res.steps.length <= 1) return null;
+        return (
+          <div key={res.id} className="flex items-center gap-2 text-xs">
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: colors[index % colors.length] }}
+            />
+            <span className={`font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+              {res.name}{res.status === 'incomplete' ? ' (Incomplete)' : ''}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       {/* Time vs Depth Chart */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Depth vs. Time</h3>
-        <div className="h-[400px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart margin={{ top: 5, right: 20, left: leftMarginTime, bottom: bottomMargin }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-              <XAxis 
-                type="number" 
-                dataKey="time" 
-                name="Time" 
-                label={{ value: 'Time (hours)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
-                tick={{ fill: axisColor, fontSize: 11 }}
-              />
-              <YAxis 
-                type="number" 
-                dataKey="depth" 
-                name="Depth" 
-                unit="m" 
-                reversed={true}
-                domain={['dataMin', 'auto']}
-                label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: -15, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
-                tick={{ fill: axisColor, fontSize: 11 }}
-              />
-              <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} />} />
-              <Legend 
-                verticalAlign="bottom" 
-                align="center"
-                iconType="circle"
-                wrapperStyle={{ 
-                  paddingTop: '10px', 
-                  paddingBottom: '5px',
-                  fontSize: '12px',
-                  lineHeight: '1.5'
-                }}
-              />
-              {results.map((res, index) => {
-                if (res.steps.length <= 1) return null;
-                return (
-                  <Line
-                    key={res.id}
-                    data={res.steps}
-                    type="linear" 
-                    dataKey="depth"
-                    name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
-                    stroke={colors[index % colors.length]}
-                    strokeWidth={2}
-                    dot={false}
-                    unit="m"
-                  />
-                );
-              })}
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="h-[400px] w-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis 
+                  type="number" 
+                  dataKey="time" 
+                  name="Time" 
+                  label={{ value: 'Time (hours)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                />
+                <YAxis 
+                  type="number" 
+                  dataKey="depth" 
+                  name="Depth" 
+                  unit="m" 
+                  reversed={true}
+                  width={yAxisWidth}
+                  domain={['dataMin', 'auto']}
+                  label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                />
+                <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} />} />
+                {results.map((res, index) => {
+                  if (res.steps.length <= 1) return null;
+                  return (
+                    <Line
+                      key={res.id}
+                      data={res.steps}
+                      type="linear" 
+                      dataKey="depth"
+                      name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
+                      stroke={colors[index % colors.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      unit="m"
+                    />
+                  );
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <CustomLegend />
         </div>
       </div>
 
       {/* Depth vs Cost Chart */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900 p-3 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
         <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Depth vs. Cost</h3>
-        <div className="h-[400px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart margin={{ top: 5, right: 20, left: leftMarginCost, bottom: bottomMargin }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-              <XAxis 
-                type="number" 
-                dataKey="cost" 
-                name="Cost" 
-                domain={['dataMin', 'auto']}
-                tickFormatter={(value) => (value / 1000).toLocaleString()}
-                label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
-                tick={{ fill: axisColor, fontSize: 11 }}
-              />
-              <YAxis 
-                type="number" 
-                dataKey="depth" 
-                name="Depth" 
-                unit="m" 
-                reversed={true}
-                domain={['dataMin', 'auto']}
-                label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: -20, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
-                tick={{ fill: axisColor, fontSize: 11 }}
-              />
-              <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} />} />
-              <Legend 
-                verticalAlign="bottom" 
-                align="center"
-                iconType="circle"
-                wrapperStyle={{ 
-                  paddingTop: '10px', 
-                  paddingBottom: '5px',
-                  fontSize: '12px',
-                  lineHeight: '1.5'
-                }}
-              />
-              {results.map((res, index) => {
-                if (res.steps.length <= 1) return null;
-                return (
-                  <Line
-                    key={res.id}
-                    data={res.steps}
-                    type="linear"
-                    dataKey="depth"
-                    name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
-                    stroke={colors[index % colors.length]}
-                    strokeWidth={2}
-                    dot={false}
-                    unit="m"
-                  />
-                );
-              })}
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="h-[400px] w-full flex flex-col">
+          <div className="flex-1 min-h-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                <XAxis 
+                  type="number" 
+                  dataKey="cost" 
+                  name="Cost" 
+                  domain={['dataMin', 'auto']}
+                  tickFormatter={(value) => (value / 1000).toLocaleString()}
+                  label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -10, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                />
+                <YAxis 
+                  type="number" 
+                  dataKey="depth" 
+                  name="Depth" 
+                  unit="m" 
+                  reversed={true}
+                  width={yAxisWidth}
+                  domain={['dataMin', 'auto']}
+                  label={{ value: 'Depth (m)', angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                  tick={{ fill: axisColor, fontSize: 11 }}
+                />
+                <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} />} />
+                {results.map((res, index) => {
+                  if (res.steps.length <= 1) return null;
+                  return (
+                    <Line
+                      key={res.id}
+                      data={res.steps}
+                      type="linear"
+                      dataKey="depth"
+                      name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
+                      stroke={colors[index % colors.length]}
+                      strokeWidth={2}
+                      dot={false}
+                      unit="m"
+                    />
+                  );
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <CustomLegend />
         </div>
       </div>
 
