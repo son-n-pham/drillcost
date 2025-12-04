@@ -183,7 +183,7 @@ const App: React.FC = () => {
               className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-blue-400 transition-colors"
               title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
              >
-               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+               {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
              </button>
           </div>
         </div>
