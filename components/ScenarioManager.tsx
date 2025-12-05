@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
-import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X } from 'lucide-react';
+import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 
@@ -16,7 +16,11 @@ interface ScenarioManagerProps {
 const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [isCompareMode, setIsCompareMode] = useState(false);
+  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,6 +65,21 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     }
   };
 
+  const toggleDropdown = () => {
+    if (!isDropdownOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const dropdownHeight = 280; // Approximate dropdown height (max-h-60 = 15rem = ~240px + padding)
+      
+      if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+        setDropdownPosition('top');
+      } else {
+        setDropdownPosition('bottom');
+      }
+    }
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
   const removeFromSequence = (scenarioId: string, index: number) => {
     const s = scenarios.find(x => x.id === scenarioId);
     if (s) {
@@ -90,8 +109,58 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       return val;
   };
 
+  const toggleCompareSelection = (id: string) => {
+    setSelectedForComparison(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      }
+      if (prev.length < 2) {
+        return [...prev, id];
+      }
+      // Replace the oldest selection with the new one
+      return [prev[1], id];
+    });
+  };
+
+  const exitCompareMode = () => {
+    setIsCompareMode(false);
+    setSelectedForComparison([]);
+  };
+
+  const comparisonResults = selectedForComparison
+    .map(id => results.find(r => r.id === id))
+    .filter((r): r is ScenarioResult => !!r);
+
   return (
     <div className="space-y-6">
+      {/* Compare Mode Toggle */}
+      {scenarios.length >= 2 && (
+        <div className="flex items-center justify-end gap-3">
+          {isCompareMode && selectedForComparison.length === 2 && (
+            <span className="text-sm font-medium text-emerald-600 dark:text-[var(--bh-success)] animate-in fade-in">
+              2 scenarios selected
+            </span>
+          )}
+          {isCompareMode && selectedForComparison.length < 2 && (
+            <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">
+              Select {2 - selectedForComparison.length} more scenario{selectedForComparison.length === 1 ? '' : 's'}
+            </span>
+          )}
+          <button
+            onClick={() => isCompareMode ? exitCompareMode() : setIsCompareMode(true)}
+            className={clsx(
+              "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
+              isCompareMode
+                ? "bg-blue-500 dark:bg-[var(--bh-primary)] text-white shadow-md"
+                : "bg-white dark:bg-[var(--bh-surface-1)] text-slate-600 dark:text-[var(--bh-text-weak)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)]"
+            )}
+          >
+            <GitCompareArrows className="w-4 h-4" />
+            {isCompareMode ? 'Exit Compare' : 'Compare'}
+          </button>
+        </div>
+      )}
+
       {/* Results Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {results.map((res, idx) => {
@@ -99,35 +168,51 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             const isActive = activeTab === res.id;
             const isBlank = res.steps.length <= 1;
             const costPerUnit = displayCostPerUnit(res.costPerMeter);
+            const isSelectedForCompare = selectedForComparison.includes(res.id);
 
             return (
               <div 
                 key={res.id} 
-                onClick={() => setActiveTab(res.id)}
+                onClick={() => isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(res.id)}
                 className={clsx(
                   "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group",
-                  isActive 
-                    ? "bg-white dark:bg-[var(--bh-surface-1)] border-blue-500 shadow-md ring-1 ring-blue-500/20 scale-[1.02]" 
-                    : "bg-white dark:bg-[var(--bh-surface-0)] border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-border)] hover:shadow-sm"
+                  isCompareMode && isSelectedForCompare
+                    ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-500 shadow-md ring-2 ring-blue-500/30"
+                    : isActive && !isCompareMode
+                      ? "bg-white dark:bg-[var(--bh-surface-1)] border-blue-500 shadow-md ring-1 ring-blue-500/20 scale-[1.02]" 
+                      : "bg-white dark:bg-[var(--bh-surface-0)] border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-border)] hover:shadow-sm"
                 )}
               >
                 <div className={clsx(
                   "absolute top-0 left-0 w-full h-1", 
-                  isActive ? ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500'][idx % 4] : "bg-transparent"
+                  (isActive && !isCompareMode) || isSelectedForCompare ? ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500'][idx % 4] : "bg-transparent"
                 )}></div>
                 
-                {/* Delete Button (visible on hover) */}
-                <button
-                  onClick={(e) => removeScenario(e, res.id)}
-                  className="absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all opacity-0 group-hover:opacity-100 z-10"
-                  title="Remove Scenario"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {/* Compare Mode Checkbox */}
+                {isCompareMode && (
+                  <div className="absolute top-2 left-2 z-10">
+                    {isSelectedForCompare ? (
+                      <CheckSquare className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
+                    ) : (
+                      <Square className="w-5 h-5 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                    )}
+                  </div>
+                )}
                 
-                <div className="p-5">
+                {/* Delete Button (visible on hover, hidden in compare mode) */}
+                {!isCompareMode && (
+                  <button
+                    onClick={(e) => removeScenario(e, res.id)}
+                    className="absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all opacity-0 group-hover:opacity-100 z-10"
+                    title="Remove Scenario"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                
+                <div className={clsx("p-5", isCompareMode && "pl-9")}>
                   <div className="flex justify-between items-start mb-4 gap-3">
-                     <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]")}>
+                     <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]")}>
                         {res.name}
                      </h3>
                      <div className="flex flex-col items-end gap-1 shrink-0">
@@ -179,8 +264,191 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
         </button>
       </div>
 
+      {/* Comparison Panel */}
+      {isCompareMode && comparisonResults.length === 2 && (
+        <div className="card animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] bg-gradient-to-r from-blue-50 to-slate-50 dark:from-[var(--bh-primary)]/10 dark:to-[var(--bh-surface-1)]">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] flex items-center gap-2">
+              <GitCompareArrows className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
+              Scenario Comparison
+            </h3>
+          </div>
+          <div className="p-6">
+            {/* Comparison Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-[var(--bh-border)]">
+                    <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Metric</th>
+                    <th className="text-center py-3 px-4 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{comparisonResults[0].name}</th>
+                    <th className="text-center py-3 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{comparisonResults[1].name}</th>
+                    <th className="text-center py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Difference</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-[var(--bh-border)]">
+                  {/* Cost Per Meter */}
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Cost per {getUnitLabel(depthUnit)}</td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      ${displayCostPerUnit(comparisonResults[0].costPerMeter).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      ${displayCostPerUnit(comparisonResults[1].costPerMeter).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {(() => {
+                        const diff = displayCostPerUnit(comparisonResults[1].costPerMeter) - displayCostPerUnit(comparisonResults[0].costPerMeter);
+                        const percent = (diff / displayCostPerUnit(comparisonResults[0].costPerMeter)) * 100;
+                        return (
+                          <span className={clsx(
+                            "text-sm font-bold",
+                            diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
+                          )}>
+                            {diff > 0 ? '+' : ''}{percent.toFixed(1)}%
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                  {/* Total Cost */}
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Cost</td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      ${(comparisonResults[0].totalCost / 1000).toFixed(1)}k
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      ${(comparisonResults[1].totalCost / 1000).toFixed(1)}k
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {(() => {
+                        const diff = comparisonResults[1].totalCost - comparisonResults[0].totalCost;
+                        const percent = (diff / comparisonResults[0].totalCost) * 100;
+                        return (
+                          <span className={clsx(
+                            "text-sm font-bold",
+                            diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
+                          )}>
+                            {diff > 0 ? '+' : ''}{percent.toFixed(1)}%
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                  {/* Total Time */}
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Time</td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      {comparisonResults[0].totalTime.toFixed(1)}h
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      {comparisonResults[1].totalTime.toFixed(1)}h
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {(() => {
+                        const diff = comparisonResults[1].totalTime - comparisonResults[0].totalTime;
+                        const percent = (diff / comparisonResults[0].totalTime) * 100;
+                        return (
+                          <span className={clsx(
+                            "text-sm font-bold",
+                            diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
+                          )}>
+                            {diff > 0 ? '+' : ''}{percent.toFixed(1)}%
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                  {/* Days to Complete */}
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Days to Complete</td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      {(comparisonResults[0].totalTime / 24).toFixed(1)}
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      {(comparisonResults[1].totalTime / 24).toFixed(1)}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {(() => {
+                        const diff = comparisonResults[1].totalTime - comparisonResults[0].totalTime;
+                        const diffDays = diff / 24;
+                        return (
+                          <span className={clsx(
+                            "text-sm font-bold",
+                            diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
+                          )}>
+                            {diffDays > 0 ? '+' : ''}{diffDays.toFixed(1)} days
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                  {/* Number of Bits */}
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Bits Used</td>
+                    <td className="py-4 px-4 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {comparisonResults[0].bitsUsed.map((b, i) => (
+                          <span key={i} className="text-sm font-medium text-slate-700 dark:text-[var(--bh-text)]">{b.name} x{b.count}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {comparisonResults[1].bitsUsed.map((b, i) => (
+                          <span key={i} className="text-sm font-medium text-slate-700 dark:text-[var(--bh-text)]">{b.name} x{b.count}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {(() => {
+                        const total1 = comparisonResults[0].bitsUsed.reduce((acc, b) => acc + b.count, 0);
+                        const total2 = comparisonResults[1].bitsUsed.reduce((acc, b) => acc + b.count, 0);
+                        const diff = total2 - total1;
+                        return (
+                          <span className={clsx(
+                            "text-sm font-bold",
+                            diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
+                          )}>
+                            {diff > 0 ? '+' : ''}{diff} bits
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                  {/* Status */}
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Status</td>
+                    <td className="py-4 px-4 text-center">
+                      <span className={clsx(
+                        "px-2 py-1 text-xs font-bold rounded-full",
+                        comparisonResults[0].status === 'complete' 
+                          ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                          : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      )}>
+                        {comparisonResults[0].status === 'complete' ? 'Complete' : 'Incomplete'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className={clsx(
+                        "px-2 py-1 text-xs font-bold rounded-full",
+                        comparisonResults[1].status === 'complete' 
+                          ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" 
+                          : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                      )}>
+                        {comparisonResults[1].status === 'complete' ? 'Complete' : 'Incomplete'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Editor Area */}
-      {activeScenario && (
+      {activeScenario && !isCompareMode && (
         <div className="card animate-in fade-in duration-300 overflow-hidden transition-colors duration-300">
            {/* Scenario Header */}
            <div className="px-6 py-5 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]">
@@ -296,7 +564,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     ) : (
                       <div className="relative" ref={dropdownRef}>
                         <button 
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            ref={buttonRef}
+                            onClick={toggleDropdown}
                             className={clsx(
                               "flex items-center gap-2 text-sm font-semibold px-4 py-3 rounded-xl transition-all border shadow-sm",
                               isDropdownOpen 
@@ -309,7 +578,12 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         </button>
                         
                         {isDropdownOpen && (
-                          <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-20 animate-in fade-in zoom-in-95 duration-100 overflow-hidden">
+                          <div className={clsx(
+                            "absolute left-0 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-20 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
+                            dropdownPosition === 'top' 
+                              ? "bottom-full mb-2" 
+                              : "top-full mt-2"
+                          )}>
                               <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Select Bit Type</div>
                               <div className="max-h-60 overflow-y-auto space-y-0.5">
                                 {bits.map(bit => (
