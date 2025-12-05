@@ -26,6 +26,17 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const selectedForComparison = compareSelections;
   const setSelectedForComparison = setCompareSelections;
 
+  // Clean up stale selections when entering compare mode or when scenarios change
+  useEffect(() => {
+    if (isCompareMode) {
+      const validScenarioIds = new Set(scenarios.map(s => s.id));
+      const validSelections = selectedForComparison.filter(id => validScenarioIds.has(id));
+      if (validSelections.length !== selectedForComparison.length) {
+        setSelectedForComparison(validSelections);
+      }
+    }
+  }, [isCompareMode, scenarios, selectedForComparison, setSelectedForComparison]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
