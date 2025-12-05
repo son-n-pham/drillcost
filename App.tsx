@@ -54,6 +54,10 @@ const App: React.FC = () => {
     const saved = loadSavedState();
     return saved?.compareSelections ?? [];
   });
+  const [isCompareMode, setIsCompareMode] = useState<boolean>(() => {
+    const saved = loadSavedState();
+    return saved?.isCompareMode ?? false;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Auto-save state to localStorage whenever it changes
@@ -66,6 +70,7 @@ const App: React.FC = () => {
         theme,
         depthUnit,
         compareSelections,
+        isCompareMode,
         version: '1.0',
         lastSaved: new Date().toISOString()
       };
@@ -73,7 +78,7 @@ const App: React.FC = () => {
     } catch (e) {
       console.warn('Failed to save state to localStorage', e);
     }
-  }, [params, bits, scenarios, theme, depthUnit, compareSelections]);
+  }, [params, bits, scenarios, theme, depthUnit, compareSelections, isCompareMode]);
 
   // Apply theme class to html element
   useEffect(() => {
@@ -102,6 +107,7 @@ const App: React.FC = () => {
       scenarios,
       depthUnit,
       compareSelections,
+      isCompareMode,
       version: '1.0',
       timestamp: new Date().toISOString()
     };
@@ -131,6 +137,7 @@ const App: React.FC = () => {
         if (state.scenarios) setScenarios(state.scenarios);
         if (state.depthUnit) setDepthUnit(state.depthUnit);
         if (state.compareSelections) setCompareSelections(state.compareSelections);
+        if (state.isCompareMode !== undefined) setIsCompareMode(state.isCompareMode);
         
       } catch (error) {
         console.error('Failed to parse state file', error);
@@ -305,6 +312,8 @@ const App: React.FC = () => {
                 depthUnit={depthUnit}
                 compareSelections={compareSelections}
                 setCompareSelections={setCompareSelections}
+                isCompareMode={isCompareMode}
+                setIsCompareMode={setIsCompareMode}
               />
             </section>
 
@@ -317,6 +326,8 @@ const App: React.FC = () => {
                 bits={bits}
                 params={params}
                 depthUnit={depthUnit}
+                selectedForComparison={compareSelections}
+                isCompareMode={isCompareMode}
                />
             </section>
 

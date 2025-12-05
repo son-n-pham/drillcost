@@ -13,15 +13,16 @@ interface ScenarioManagerProps {
   depthUnit: DepthUnit;
   compareSelections: string[];
   setCompareSelections: (selections: string[]) => void;
+  isCompareMode: boolean;
+  setIsCompareMode: (isCompareMode: boolean) => void;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [isCompareMode, setIsCompareMode] = useState(false);
   // Use compareSelections from props instead of local state
   const selectedForComparison = compareSelections;
   const setSelectedForComparison = setCompareSelections;

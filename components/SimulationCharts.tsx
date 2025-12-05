@@ -9,7 +9,8 @@ import {
   Legend,
   ResponsiveContainer,
   BarChart,
-  Bar
+  Bar,
+  Cell
 } from 'recharts';
 import { ScenarioResult, Bit, GlobalParams } from '../types';
 import { DepthUnit, convertDepth, getUnitLabel } from '../utils/unitUtils';
@@ -21,6 +22,8 @@ interface SimulationChartsProps {
   bits?: Bit[];
   params?: GlobalParams;
   depthUnit: DepthUnit;
+  selectedForComparison?: string[];
+  isCompareMode?: boolean;
 }
 
 const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: any) => {
@@ -42,7 +45,7 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: an
   return null;
 };
 
-const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params, depthUnit }) => {
+const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params, depthUnit, selectedForComparison = [], isCompareMode = false }) => {
   
   // Calculate active scenarios for dynamic margin calculation
   const activeScenarios = results.filter(r => r.steps.length > 1);
@@ -118,6 +121,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
       });
       
       return {
+        id: scenario.id,
         name: scenario.status === 'incomplete' ? `${scenario.name} (Incomplete)` : scenario.name,
         drillingTime,
         flatTime,
@@ -159,22 +163,39 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
   
   const gridColor = isDark ? '#2A2B31' : '#f1f5f9';
   const axisColor = isDark ? '#8B8E97' : '#64748b';
+  
+  // Check if we should highlight (compare mode is on AND 2 scenarios are selected)
+  const shouldHighlight = isCompareMode && selectedForComparison.length === 2;
+  
+  // Helper to determine if a scenario is highlighted
+  const isHighlighted = (scenarioId: string) => 
+    !shouldHighlight || selectedForComparison.includes(scenarioId);
 
-  // Custom Legend Component
+  // Custom Legend Component with compare mode highlighting
   const CustomLegend = () => (
     <div className="flex flex-wrap justify-center gap-4 mt-2 px-2">
       {results.map((res, index) => {
         if (res.steps.length <= 1) return null;
+        const highlighted = isHighlighted(res.id);
         return (
-          <div key={res.id} className="flex items-center gap-2 text-xs">
+          <div 
+            key={res.id} 
+            className={`flex items-center gap-2 text-xs transition-opacity duration-300 ${!highlighted ? 'opacity-40' : ''}`}
+          >
             <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: colors[index % colors.length] }}
+              className={`rounded-full transition-all duration-300 ${highlighted && shouldHighlight ? 'w-4 h-4 ring-2 ring-offset-1' : 'w-3 h-3'}`}
+              style={{ 
+                backgroundColor: colors[index % colors.length],
+                ringColor: colors[index % colors.length]
+              }}
             />
-            <span className={`font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'}`}>
+            <span className={`font-medium ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-600'} ${highlighted && shouldHighlight ? 'font-bold' : ''}`}>
               {res.name}
               {res.status === 'incomplete' && (
                 <span className="text-red-500 ml-1">(Incomplete)</span>
+              )}
+              {highlighted && shouldHighlight && (
+                <span className="ml-1 text-[var(--bh-primary)] dark:text-[var(--bh-primary)]">★</span>
               )}
             </span>
           </div>
@@ -241,6 +262,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} depthUnit={depthUnit} />} />
                 {chartResults.map((res, index) => {
                   if (res.steps.length <= 1) return null;
+                  const highlighted = isHighlighted(res.id);
                   return (
                     <Line
                       key={res.id}
@@ -249,7 +271,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                       dataKey="depth"
                       name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
                       stroke={colors[index % colors.length]}
-                      strokeWidth={2}
+                      strokeWidth={highlighted ? (shouldHighlight ? 4 : 2) : 1}
+                      strokeOpacity={highlighted ? 1 : 0.25}
                       dot={false}
                       unit={getUnitLabel(depthUnit)}
                     />
@@ -293,6 +316,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} depthUnit={depthUnit} />} />
                 {chartResults.map((res, index) => {
                   if (res.steps.length <= 1) return null;
+                  const highlighted = isHighlighted(res.id);
                   return (
                     <Line
                       key={res.id}
@@ -301,7 +325,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                       dataKey="depth"
                       name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
                       stroke={colors[index % colors.length]}
-                      strokeWidth={2}
+                      strokeWidth={highlighted ? (shouldHighlight ? 4 : 2) : 1}
+                      strokeOpacity={highlighted ? 1 : 0.25}
                       dot={false}
                       unit={getUnitLabel(depthUnit)}
                     />
@@ -356,14 +381,28 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   fill={barColors.drillingTime} 
                   name="drillingTime"
                   radius={[0, 0, 0, 0]}
-                />
+                >
+                  {breakdownData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-drilling-${index}`} 
+                      fillOpacity={isHighlighted(entry.id) ? 1 : 0.25}
+                    />
+                  ))}
+                </Bar>
                 <Bar 
                   dataKey="flatTime" 
                   stackId="time" 
                   fill={barColors.flatTime} 
                   name="flatTime"
                   radius={[4, 4, 0, 0]}
-                />
+                >
+                  {breakdownData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-flat-${index}`} 
+                      fillOpacity={isHighlighted(entry.id) ? 1 : 0.25}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -431,21 +470,42 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   fill={barColors.bitCost} 
                   name="bitCost"
                   radius={[0, 0, 0, 0]}
-                />
+                >
+                  {breakdownData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-bit-${index}`} 
+                      fillOpacity={isHighlighted(entry.id) ? 1 : 0.25}
+                    />
+                  ))}
+                </Bar>
                 <Bar 
                   dataKey="drillingCost" 
                   stackId="cost" 
                   fill={barColors.drillingCost} 
                   name="drillingCost"
                   radius={[0, 0, 0, 0]}
-                />
+                >
+                  {breakdownData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-drillcost-${index}`} 
+                      fillOpacity={isHighlighted(entry.id) ? 1 : 0.25}
+                    />
+                  ))}
+                </Bar>
                 <Bar 
                   dataKey="flatTimeCost" 
                   stackId="cost" 
                   fill={barColors.flatTimeCost} 
                   name="flatTimeCost"
                   radius={[4, 4, 0, 0]}
-                />
+                >
+                  {breakdownData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-flatcost-${index}`} 
+                      fillOpacity={isHighlighted(entry.id) ? 1 : 0.25}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
