@@ -12,13 +12,63 @@ import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
 import { DepthUnit, convertDepth, getUnitLabel } from './utils/unitUtils';
 
+const STORAGE_KEY = 'drillcost-pro-state';
+
+// Helper function to safely load state from localStorage
+const loadSavedState = () => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.warn('Failed to load saved state from localStorage', e);
+  }
+  return null;
+};
+
 const App: React.FC = () => {
-  const [params, setParams] = useState<GlobalParams>(INITIAL_GLOBAL_PARAMS);
-  const [bits, setBits] = useState<Bit[]>(INITIAL_BITS);
-  const [scenarios, setScenarios] = useState<ScenarioConfig[]>(INITIAL_SCENARIOS);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [depthUnit, setDepthUnit] = useState<DepthUnit>('m');
+  // Initialize state from localStorage if available, otherwise use defaults
+  // Using lazy initialization to only load from localStorage once on mount
+  const [params, setParams] = useState<GlobalParams>(() => {
+    const saved = loadSavedState();
+    return saved?.params ?? INITIAL_GLOBAL_PARAMS;
+  });
+  const [bits, setBits] = useState<Bit[]>(() => {
+    const saved = loadSavedState();
+    return saved?.bits ?? INITIAL_BITS;
+  });
+  const [scenarios, setScenarios] = useState<ScenarioConfig[]>(() => {
+    const saved = loadSavedState();
+    return saved?.scenarios ?? INITIAL_SCENARIOS;
+  });
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = loadSavedState();
+    return saved?.theme ?? 'dark';
+  });
+  const [depthUnit, setDepthUnit] = useState<DepthUnit>(() => {
+    const saved = loadSavedState();
+    return saved?.depthUnit ?? 'm';
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Auto-save state to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      const stateToSave = {
+        params,
+        bits,
+        scenarios,
+        theme,
+        depthUnit,
+        version: '1.0',
+        lastSaved: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.warn('Failed to save state to localStorage', e);
+    }
+  }, [params, bits, scenarios, theme, depthUnit]);
 
   // Apply theme class to html element
   useEffect(() => {
