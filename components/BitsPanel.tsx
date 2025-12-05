@@ -92,6 +92,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
               <input 
                 value={bit.name}
                 onChange={(e) => updateBit(bit.id, 'name', e.target.value)}
+                title={bit.name}
                 className="bg-transparent font-bold text-xs text-slate-700 dark:text-[var(--bh-text)] outline-none w-full focus:text-blue-600 dark:focus:text-[var(--bh-primary)] transition-colors truncate"
               />
             </div>
