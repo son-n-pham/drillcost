@@ -11,16 +11,20 @@ interface ScenarioManagerProps {
   results: ScenarioResult[];
   params: GlobalParams;
   depthUnit: DepthUnit;
+  compareSelections: string[];
+  setCompareSelections: (selections: string[]) => void;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
-  const [selectedForComparison, setSelectedForComparison] = useState<string[]>([]);
+  // Use compareSelections from props instead of local state
+  const selectedForComparison = compareSelections;
+  const setSelectedForComparison = setCompareSelections;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -124,7 +128,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   const exitCompareMode = () => {
     setIsCompareMode(false);
-    setSelectedForComparison([]);
+    // Preserve selections so they're available when re-entering compare mode
   };
 
   const comparisonResults = selectedForComparison

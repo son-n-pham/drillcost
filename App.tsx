@@ -50,6 +50,10 @@ const App: React.FC = () => {
     const saved = loadSavedState();
     return saved?.depthUnit ?? 'm';
   });
+  const [compareSelections, setCompareSelections] = useState<string[]>(() => {
+    const saved = loadSavedState();
+    return saved?.compareSelections ?? [];
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Auto-save state to localStorage whenever it changes
@@ -61,6 +65,7 @@ const App: React.FC = () => {
         scenarios,
         theme,
         depthUnit,
+        compareSelections,
         version: '1.0',
         lastSaved: new Date().toISOString()
       };
@@ -68,7 +73,7 @@ const App: React.FC = () => {
     } catch (e) {
       console.warn('Failed to save state to localStorage', e);
     }
-  }, [params, bits, scenarios, theme, depthUnit]);
+  }, [params, bits, scenarios, theme, depthUnit, compareSelections]);
 
   // Apply theme class to html element
   useEffect(() => {
@@ -96,6 +101,7 @@ const App: React.FC = () => {
       bits,
       scenarios,
       depthUnit,
+      compareSelections,
       version: '1.0',
       timestamp: new Date().toISOString()
     };
@@ -124,6 +130,7 @@ const App: React.FC = () => {
         if (state.bits) setBits(state.bits);
         if (state.scenarios) setScenarios(state.scenarios);
         if (state.depthUnit) setDepthUnit(state.depthUnit);
+        if (state.compareSelections) setCompareSelections(state.compareSelections);
         
       } catch (error) {
         console.error('Failed to parse state file', error);
@@ -296,6 +303,8 @@ const App: React.FC = () => {
                 results={results}
                 params={params}
                 depthUnit={depthUnit}
+                compareSelections={compareSelections}
+                setCompareSelections={setCompareSelections}
               />
             </section>
 
