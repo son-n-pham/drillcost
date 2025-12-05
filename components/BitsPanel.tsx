@@ -89,12 +89,13 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
             
             <div className="flex items-center gap-1.5 mb-2">
               <div className="w-2.5 h-2.5 rounded-full ring-1 ring-slate-100 dark:ring-slate-600 shrink-0" style={{ backgroundColor: bit.color }}></div>
-              <input 
-                value={bit.name}
-                onChange={(e) => updateBit(bit.id, 'name', e.target.value)}
-                title={bit.name}
-                className="bg-transparent font-bold text-xs text-slate-700 dark:text-[var(--bh-text)] outline-none w-full focus:text-blue-600 dark:focus:text-[var(--bh-primary)] transition-colors truncate"
-              />
+              <div className={`w-full ${bit.name.length > 10 ? 'fast-tooltip-below' : ''}`} data-tooltip={bit.name}>
+                <input 
+                  value={bit.name}
+                  onChange={(e) => updateBit(bit.id, 'name', e.target.value)}
+                  className="bg-transparent font-bold text-xs text-slate-700 dark:text-[var(--bh-text)] outline-none w-full focus:text-blue-600 dark:focus:text-[var(--bh-primary)] transition-colors truncate"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
