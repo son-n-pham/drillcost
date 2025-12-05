@@ -44,10 +44,9 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   const removeScenario = (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent triggering card selection
-    if (scenarios.length <= 1) return;
     const newScens = scenarios.filter(s => s.id !== id);
     setScenarios(newScens);
-    if (activeTab === id) setActiveTab(newScens[0].id);
+    if (activeTab === id) setActiveTab(newScens[0]?.id || '');
   };
 
   const updateScenario = (id: string, updates: Partial<ScenarioConfig>) => {
@@ -118,15 +117,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 )}></div>
                 
                 {/* Delete Button (visible on hover) */}
-                {scenarios.length > 1 && (
-                  <button
-                    onClick={(e) => removeScenario(e, res.id)}
-                    className="absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all opacity-0 group-hover:opacity-100 z-10"
-                    title="Remove Scenario"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <button
+                  onClick={(e) => removeScenario(e, res.id)}
+                  className="absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all opacity-0 group-hover:opacity-100 z-10"
+                  title="Remove Scenario"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
                 
                 <div className="p-5">
                   <div className="flex justify-between items-start mb-4 gap-3">
