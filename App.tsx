@@ -346,7 +346,7 @@ const App: React.FC = () => {
                <SimulationCharts 
                 results={results} 
                 targetDepth={params.depthIn + params.intervalToDrill} 
-                isDark={theme === 'dark'}
+                isDark={theme === 'dark' || theme === 'xmas'}
                 bits={bits}
                 params={params}
                 depthUnit={depthUnit}

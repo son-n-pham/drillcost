@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { ScenarioResult, Bit, GlobalParams } from '../types';
 import { DepthUnit, convertDepth, getUnitLabel } from '../utils/unitUtils';
+import { SCENARIO_COLORS, BAR_CHART_COLORS, getScenarioColor } from '../utils/scenarioColors';
 
 interface SimulationChartsProps {
   results: ScenarioResult[];
@@ -135,31 +136,10 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
     });
   }, [activeScenarios, bits, params]);
 
-  // Transform data for charts
-  // Expanded chart palette for dark theme - 12 distinct colors optimized for dark green background
-  const colors = [
-    '#02BC94', // 1. Light Green (Brand Primary)
-    '#FFB547', // 2. Warm Amber
-    '#A78BFA', // 3. Soft Purple
-    '#67E8F9', // 4. Cyan
-    '#FB7185', // 5. Coral Pink
-    '#FBBF24', // 6. Golden Yellow
-    '#34D399', // 7. Emerald
-    '#F472B6', // 8. Pink
-    '#60A5FA', // 9. Sky Blue
-    '#C084FC', // 10. Violet
-    '#FCD34D', // 11. Sunflower
-    '#2DD4BF', // 12. Teal
-  ];
-  
-  // Stacked bar chart colors
-  const barColors = {
-    drillingTime: '#02BC94',  // Green - drilling
-    flatTime: '#FFB547',      // Amber - flat time
-    bitCost: '#A78BFA',       // Purple - bit costs
-    drillingCost: '#02BC94',  // Green - drilling cost
-    flatTimeCost: '#FFB547',  // Amber - flat time cost
-  };
+  // Use shared color utilities
+  const colors = SCENARIO_COLORS;
+  const barColors = BAR_CHART_COLORS;
+
   
   const gridColor = isDark ? '#2A2B31' : '#f1f5f9';
   const axisColor = isDark ? '#8B8E97' : '#64748b';

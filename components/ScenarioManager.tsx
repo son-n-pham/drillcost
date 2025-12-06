@@ -3,6 +3,7 @@ import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
 import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
+import { getScenarioColor } from '../utils/scenarioColors';
 
 interface ScenarioManagerProps {
   bits: Bit[];
@@ -215,10 +216,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       : "bg-white dark:bg-[var(--bh-surface-0)] border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-border)] hover:shadow-sm"
                 )}
               >
-                <div className={clsx(
-                  "absolute top-0 left-0 w-full h-1", 
-                  (isActive && !isCompareMode) || isSelectedForCompare ? ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-purple-500'][idx % 4] : "bg-transparent"
-                )}></div>
+                <div 
+                  className="absolute top-0 left-0 w-full h-1"
+                  style={{ 
+                    backgroundColor: (isActive && !isCompareMode) || (isCompareMode && isSelectedForCompare) 
+                      ? getScenarioColor(idx) 
+                      : 'transparent' 
+                  }}
+                ></div>
                 
                 {/* Compare Mode Checkbox */}
                 {isCompareMode && (
@@ -312,8 +317,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-[var(--bh-border)]">
                     <th className="sticky left-0 z-20 bg-white dark:bg-[var(--bh-surface-0)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] text-left py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Metric</th>
-                    <th className="text-center py-3 px-4 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{comparisonResults[0].name}</th>
-                    <th className="text-center py-3 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{comparisonResults[1].name}</th>
+                    <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: getScenarioColor(results.findIndex(r => r.id === comparisonResults[0].id)) }}>{comparisonResults[0].name}</th>
+                    <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: getScenarioColor(results.findIndex(r => r.id === comparisonResults[1].id)) }}>{comparisonResults[1].name}</th>
                     <th className="text-center py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Difference</th>
                   </tr>
                 </thead>
@@ -481,7 +486,12 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
       {/* Editor Area */}
       {activeScenario && !isCompareMode && (
-        <div className="card animate-in fade-in duration-300 overflow-hidden transition-colors duration-300">
+        <div className="card animate-in fade-in duration-300 overflow-hidden transition-colors duration-300 relative">
+           {/* Colored accent bar matching the selected scenario */}
+           <div 
+             className="absolute top-0 left-0 w-full h-1"
+             style={{ backgroundColor: getScenarioColor(scenarios.findIndex(s => s.id === activeTab)) }}
+           ></div>
            {/* Scenario Header */}
            <div className="px-6 py-5 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]">
               <div className="flex items-center gap-3 w-full max-w-md">
