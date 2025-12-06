@@ -292,17 +292,6 @@ const App: React.FC = () => {
             
             {/* Scenarios & KPIs */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center justify-between mb-4">
-                 <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-600 dark:text-slate-300">
-                      <Layers className="w-4 h-4" />
-                    </div>
-                    <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Scenarios</h2>
-                 </div>
-                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-full shadow-sm">
-                    {scenarios.length} Active
-                 </span>
-              </div>
               <ScenarioManager 
                 bits={bits} 
                 scenarios={scenarios} 
