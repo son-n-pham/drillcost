@@ -203,19 +203,19 @@ const App: React.FC = () => {
 
       {/* Header */}
       <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-20 shadow-sm transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
             <img 
               src={logoIcon}
               alt="DrillCost Pro Logo" 
-              className="w-9 h-9 rounded-lg shadow-md shadow-blue-200 dark:shadow-none"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg shadow-md shadow-blue-200 dark:shadow-none transition-all"
             />
             <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-[var(--bh-text)] tracking-tight leading-none">DrillCost Pro</h1>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wide mt-0.5">Scenario Analysis</p>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[var(--bh-text)] tracking-tight leading-none transition-all">DrillCost Pro</h1>
+              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wide mt-0.5 transition-all">Scenario Analysis</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
              <div className="hidden sm:flex flex-col items-end mr-4">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Target className="w-3 h-3" /> Target Depth
@@ -239,10 +239,10 @@ const App: React.FC = () => {
              
              <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden sm:block"></div>
 
-             <div className="flex items-center gap-2">
+             <div className="flex items-center gap-1 sm:gap-2">
                 <button 
                   onClick={triggerFileUpload}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
                   title="Load Scenarios"
                 >
                   <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -250,7 +250,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleSaveState}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
                   title="Save Scenarios"
                 >
                   <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -258,7 +258,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleClearState}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-danger)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-danger)] transition-colors flex items-center gap-2 group"
                   title="Clear All Scenarios"
                 >
                   <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -266,7 +266,7 @@ const App: React.FC = () => {
                 </button>
                 <button 
                   onClick={handleLoadSampleData}
-                  className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-accent)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-accent)] transition-colors flex items-center gap-2 group"
                   title="Load Sample Data"
                 >
                   <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -274,11 +274,11 @@ const App: React.FC = () => {
                 </button>
              </div>
 
-             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)]"></div>
+             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden sm:block"></div>
 
               <button 
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors"
+                className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors"
                 title={`Current Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`}
               >
                 {theme === 'light' && <Sun className="w-5 h-5" />}
@@ -288,6 +288,30 @@ const App: React.FC = () => {
           </div>
         </div>
       </header>
+
+      {/* Mobile Target Depth Section */}
+      <div className="sm:hidden bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] py-2 px-4 shadow-sm transition-colors duration-300">
+        <div className="flex items-center justify-between">
+           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+             <Target className="w-3 h-3" /> Target Depth
+           </span>
+           <div className="flex items-baseline gap-2">
+             <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-base">
+               {convertDepth(params.depthIn + params.intervalToDrill, depthUnit).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-xs text-slate-400">{getUnitLabel(depthUnit)}</span>
+             </span>
+             
+             {/* Unit Selector */}
+             <button 
+               onClick={toggleUnit}
+               className="flex items-center gap-0.5 text-[10px] font-bold bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)] px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[var(--bh-border)] transition-colors"
+               title="Toggle Unit (m/ft)"
+             >
+               {depthUnit.toUpperCase()}
+               <ChevronDown className="w-2.5 h-2.5" />
+             </button>
+           </div>
+        </div>
+      </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

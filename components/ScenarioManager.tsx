@@ -311,7 +311,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-[var(--bh-border)]">
-                    <th className="text-left py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Metric</th>
+                    <th className="sticky left-0 z-20 bg-white dark:bg-[var(--bh-surface-0)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] text-left py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Metric</th>
                     <th className="text-center py-3 px-4 text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">{comparisonResults[0].name}</th>
                     <th className="text-center py-3 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">{comparisonResults[1].name}</th>
                     <th className="text-center py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Difference</th>
@@ -319,8 +319,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[var(--bh-border)]">
                   {/* Cost Per Meter */}
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Cost per {getUnitLabel(depthUnit)}</td>
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Cost per {getUnitLabel(depthUnit)}</td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
                       ${displayCostPerUnit(comparisonResults[0].costPerMeter).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </td>
@@ -343,8 +343,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     </td>
                   </tr>
                   {/* Total Cost */}
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Cost</td>
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Cost</td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
                       ${(comparisonResults[0].totalCost / 1000).toFixed(1)}k
                     </td>
@@ -367,8 +367,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     </td>
                   </tr>
                   {/* Total Time */}
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Time</td>
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Time</td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
                       {comparisonResults[0].totalTime.toFixed(1)}h
                     </td>
@@ -391,8 +391,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     </td>
                   </tr>
                   {/* Days to Complete */}
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Days to Complete</td>
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Days to Complete</td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
                       {(comparisonResults[0].totalTime / 24).toFixed(1)}
                     </td>
@@ -415,8 +415,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     </td>
                   </tr>
                   {/* Number of Bits */}
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Bits Used</td>
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Bits Used</td>
                     <td className="py-4 px-4 text-center">
                       <div className="flex flex-col items-center gap-1">
                         {comparisonResults[0].bitsUsed.map((b, i) => (
@@ -448,8 +448,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     </td>
                   </tr>
                   {/* Status */}
-                  <tr className="hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
-                    <td className="py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Status</td>
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Status</td>
                     <td className="py-4 px-4 text-center">
                       <span className={clsx(
                         "px-2 py-1 text-xs font-bold rounded-full",
