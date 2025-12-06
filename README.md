@@ -58,7 +58,7 @@ The application will open at `http://localhost:5173`
 
 ### 3-Step Quick Start
 
-1. **Configure Global Parameters** — Set rig rate, trip speed, depths, and circulating hours in the Settings panel
+1. **Configure Global Parameters** — Set Operation Rate, trip speed, depths, and circulating hours in the Settings panel
 2. **Define Bit Types** — Create bit configurations with costs, ROPs, and maximum distances (use sample data or import JSON)
 3. **Build Scenarios** — Create drilling scenarios by selecting bit sequences and compare results
 
@@ -70,7 +70,7 @@ Configure global drilling parameters that apply to all scenarios:
 
 | Parameter | Description | Units | Typical Range |
 |-----------|-------------|-------|---------------|
-| **Rig Rate** | Daily operating cost of the rig | $/day | 50,000 - 500,000 |
+| **Operation Rate** | Daily operating cost of the rig | $/day | 50,000 - 500,000 |
 | **Trip Speed** | Rate of pipe movement in/out of hole | stands/hr | 40 - 100 |
 | **Stand Length** | Length of each pipe stand | meters | 27 - 30 |
 | **Depth In** | Starting depth for the interval | meters | 0 - 10,000+ |
@@ -117,7 +117,7 @@ For each scenario, the simulation engine processes the bit sequence step-by-step
 1. **Drilling Phase**
    - Calculate drilling time: `Time = Distance / ROP`
    - Add bit purchase cost
-   - Add operational cost: `Rig Rate × (Drilling Time / 24)`
+   - Add operational cost: `Operation Rate × (Drilling Time / 24)`
    - Track depth progress
 
 2. **Trip Operations** (when bit is exhausted and more drilling needed)
@@ -140,7 +140,7 @@ For each scenario, the simulation engine processes the bit sequence step-by-step
 ### Cost Calculation Formula
 
 ```
-Total Cost = Σ(Bit Costs) + (Rig Rate × Total Time / 24)
+Total Cost = Σ(Bit Costs) + (Operation Rate × Total Time / 24)
 
 Where Total Time includes:
   - Drilling time for each bit

@@ -51,7 +51,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
         {/* Operation Cost */}
         <div className="group">
           <label className="text-[11px] font-bold text-slate-500 dark:text-[var(--bh-text-weak)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <DollarSign className="w-3 h-3 text-blue-500 dark:text-[var(--bh-primary)]" /> Rig Rate
+            <DollarSign className="w-3 h-3 text-blue-500 dark:text-[var(--bh-primary)]" /> Operation Rate
           </label>
           <div className="relative">
             <input

@@ -1,10 +1,10 @@
 import { Bit, GlobalParams, ScenarioConfig } from './types';
 
 export const SAMPLE_PARAMS: GlobalParams = {
-  operationCostPerDay: 85093,
+  operationCostPerDay: 100000,
   tripSpeed: 12,
   standLength: 28,
-  depthIn: 1600,
+  depthIn: 2000,
   intervalToDrill: 1200,
   circulatingHours: 2,
 };

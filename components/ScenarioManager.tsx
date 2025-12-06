@@ -700,7 +700,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                              <div className="flex items-baseline gap-1">
                                <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k</span>
                             </div>
-                            <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on rig rate</div>
+                            <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on Operation Rate</div>
                            </>
                         ) : (
                            <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
