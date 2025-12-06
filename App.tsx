@@ -6,7 +6,8 @@ import SettingsPanel from './components/SettingsPanel';
 import BitsPanel from './components/BitsPanel';
 import ScenarioManager from './components/ScenarioManager';
 import SimulationCharts from './components/SimulationCharts';
-import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown } from 'lucide-react';
+import SnowEffect from './components/SnowEffect';
+import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown, Snowflake } from 'lucide-react';
 import { SAMPLE_PARAMS, SAMPLE_BITS, SAMPLE_SCENARIOS } from './sampleData';
 import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
@@ -42,9 +43,9 @@ const App: React.FC = () => {
     const saved = loadSavedState();
     return saved?.scenarios ?? INITIAL_SCENARIOS;
   });
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+  const [theme, setTheme] = useState<'light' | 'dark' | 'xmas'>(() => {
     const saved = loadSavedState();
-    return saved?.theme ?? 'dark';
+    return saved?.theme ?? 'xmas';
   });
   const [depthUnit, setDepthUnit] = useState<DepthUnit>(() => {
     const saved = loadSavedState();
@@ -85,6 +86,9 @@ const App: React.FC = () => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.setAttribute('data-theme', 'bakerhughes-dark');
+    } else if (theme === 'xmas') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'christmas');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.setAttribute('data-theme', 'light');
@@ -97,7 +101,11 @@ const App: React.FC = () => {
   }, [params, bits, scenarios]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme(prev => {
+      if (prev === 'light') return 'dark';
+      if (prev === 'dark') return 'xmas';
+      return 'light';
+    });
   };
 
   const handleSaveState = () => {
@@ -183,6 +191,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans pb-12 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
+      {theme === 'xmas' && <SnowEffect />}
       {/* Hidden File Input */}
       <input 
         type="file" 
@@ -267,13 +276,15 @@ const App: React.FC = () => {
 
              <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)]"></div>
 
-             <button 
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors"
-              title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-             >
-               {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-             </button>
+              <button 
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors"
+                title={`Current Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`}
+              >
+                {theme === 'light' && <Sun className="w-5 h-5" />}
+                {theme === 'dark' && <Moon className="w-5 h-5" />}
+                {theme === 'xmas' && <Snowflake className="w-5 h-5 text-red-500" />}
+              </button>
           </div>
         </div>
       </header>

@@ -1,10 +1,10 @@
 import { Bit, GlobalParams, ScenarioConfig } from './types';
 
 export const DEFAULT_GLOBAL_PARAMS: GlobalParams = {
-  operationCostPerDay: 85093,
+  operationCostPerDay: 100000,
   tripSpeed: 12,
   standLength: 28, // Standard range 2 stand approx 27-29m. Assuming 28m for calc.
-  depthIn: 1600,
+  depthIn: 2000,
   intervalToDrill: 1200,
   circulatingHours: 2,
 };
@@ -45,10 +45,10 @@ export const DEFAULT_SCENARIOS: ScenarioConfig[] = [
 
 // Initial state uses sample data so users can see how the app works
 export const INITIAL_GLOBAL_PARAMS: GlobalParams = {
-  operationCostPerDay: 85093,
+  operationCostPerDay: 10000,
   tripSpeed: 12,
   standLength: 28,
-  depthIn: 1600,
+  depthIn: 2000,
   intervalToDrill: 1200,
   circulatingHours: 2,
 };

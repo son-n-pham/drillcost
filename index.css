@@ -82,6 +82,43 @@
   --bh-gap:       12px;
 }
 
+:root[data-theme="christmas"] {
+  /* Christmas Theme - Standard Baker Hughes Dark + Snow Effect */
+  /* Reusing the EXACT same variables as bakerhughes-dark */
+  --bh-primary: #02BC94;     /* Light Green (Brand Primary) */
+  --bh-bg:      #00120F;     /* Deepest Green/Black */
+  --bh-accent:  #018374;     /* Green (Accent) */
+  --bh-accent-2:#FFFFFF;     /* White */
+
+  /* Semantic & surfaces */
+  --bh-surface-0: #05322B;   /* Brand Dark Green */
+  --bh-surface-1: #0A453B;   /* Raised surface */
+  --bh-surface-2: #0F594C;   /* Hover/active surface */
+  --bh-border:    #166355;   /* Greenish border */
+  --bh-overlay:   rgba(0, 18, 15, 0.8);
+
+  /* Text */
+  --bh-text:      #FFFFFF;
+  --bh-text-weak: #C7C9D1;
+  --bh-text-mute: #8B8E97;
+
+  /* States */
+  --bh-focus:     #5BBD72;
+  --bh-success:   #5BBD72;
+  --bh-warning:   #FAB840;
+  --bh-danger:    #D84A3B;
+
+  /* Shadows */
+  --bh-shadow-1:  0 6px 20px rgba(0,0,0,0.35);
+  --bh-shadow-2:  0 8px 30px rgba(0,0,0,0.45);
+
+  /* Radii & spacing */
+  --bh-radius-sm: 6px;
+  --bh-radius-md: 10px;
+  --bh-radius-lg: 16px;
+  --bh-gap:       12px;
+}
+
 /* Optional: respect OS dark mode automatically */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
