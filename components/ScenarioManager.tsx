@@ -16,9 +16,10 @@ interface ScenarioManagerProps {
   setCompareSelections: (selections: string[]) => void;
   isCompareMode: boolean;
   setIsCompareMode: (isCompareMode: boolean) => void;
+  children?: React.ReactNode;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
@@ -150,6 +151,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   return (
     <div className="space-y-6">
+      {/* Sticky Container for Header + Cards (large screens only) */}
+      <div className="md:sticky md:top-16 md:z-40 md:bg-slate-50 md:dark:bg-[var(--bh-bg)] md:py-4 space-y-4">
       {/* Header Row: Title + Stats + Compare Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left: Title & Count */}
@@ -299,6 +302,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           </div>
           <span className="font-semibold text-sm">New Scenario</span>
         </button>
+      </div>
       </div>
 
       {/* Comparison Panel */}
@@ -621,7 +625,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         
                         {isDropdownOpen && (
                           <div className={clsx(
-                            "absolute left-0 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-20 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
+                            "absolute left-0 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-60 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
                             dropdownPosition === 'top' 
                               ? "bottom-full mb-2" 
                               : "top-full mt-2"
@@ -722,6 +726,9 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
            </div>
         </div>
       )}
+      
+      {/* Content injected from parent (Charts) */}
+      {children}
     </div>
   );
 };

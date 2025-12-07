@@ -202,7 +202,7 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-20 shadow-sm transition-colors duration-300">
+      <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
             <img 
@@ -216,7 +216,7 @@ const App: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
-             <div className="hidden sm:flex flex-col items-end mr-4">
+             <div className="hidden lg:flex flex-col items-end mr-4">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Target className="w-3 h-3" /> Target Depth
                 </span>
@@ -237,7 +237,7 @@ const App: React.FC = () => {
                 </div>
              </div>
              
-             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden sm:block"></div>
+             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden lg:block"></div>
 
              <div className="flex items-center gap-1 sm:gap-2">
                 <button 
@@ -274,7 +274,7 @@ const App: React.FC = () => {
                 </button>
              </div>
 
-             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden sm:block"></div>
+             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden lg:block"></div>
 
               <button 
                 onClick={toggleTheme}
@@ -290,7 +290,7 @@ const App: React.FC = () => {
       </header>
 
       {/* Mobile Target Depth Section */}
-      <div className="sm:hidden bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] py-2 px-4 shadow-sm transition-colors duration-300">
+      <div className="lg:hidden bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] py-2 px-4 shadow-sm transition-colors duration-300">
         <div className="flex items-center justify-between">
            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
              <Target className="w-3 h-3" /> Target Depth
@@ -314,18 +314,18 @@ const App: React.FC = () => {
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
           {/* Left Sidebar: Controls */}
-          <div className="lg:col-span-3 flex flex-col gap-6">
+          <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-6">
             <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} />
             <BitsPanel bits={bits} setBits={setBits} depthUnit={depthUnit} />
           </div>
 
           {/* Main Content: Results & Charts */}
-          <div className="lg:col-span-9 space-y-8">
+          <div className="md:col-span-8 lg:col-span-9 space-y-8">
             
-            {/* Scenarios & KPIs */}
+            {/* Scenarios & KPIs & Visualizations */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <ScenarioManager 
                 bits={bits} 
@@ -338,21 +338,21 @@ const App: React.FC = () => {
                 setCompareSelections={setCompareSelections}
                 isCompareMode={isCompareMode}
                 setIsCompareMode={setIsCompareMode}
-              />
-            </section>
-
-            {/* Visualizations */}
-            <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-               <SimulationCharts 
-                results={results} 
-                targetDepth={params.depthIn + params.intervalToDrill} 
-                isDark={theme === 'dark' || theme === 'xmas'}
-                bits={bits}
-                params={params}
-                depthUnit={depthUnit}
-                selectedForComparison={compareSelections}
-                isCompareMode={isCompareMode}
-               />
+              >
+                {/* Visualizations (injected as children) */}
+                <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+                  <SimulationCharts 
+                    results={results} 
+                    targetDepth={params.depthIn + params.intervalToDrill} 
+                    isDark={theme === 'dark' || theme === 'xmas'}
+                    bits={bits}
+                    params={params}
+                    depthUnit={depthUnit}
+                    selectedForComparison={compareSelections}
+                    isCompareMode={isCompareMode}
+                  />
+                </div>
+              </ScenarioManager>
             </section>
 
           </div>

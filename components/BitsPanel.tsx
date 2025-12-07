@@ -75,7 +75,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
         </button>
       </div>
 
-      <div className="p-3 grid grid-cols-2 gap-2">
+      <div className="p-3 grid grid-cols-2 md:grid-cols-1 xl:grid-cols-2 gap-2">
         {bits.map((bit) => (
           <div key={bit.id} className="p-2 border border-slate-200 dark:border-[var(--bh-border)] rounded-lg bg-white dark:bg-[var(--bh-surface-0)] relative group hover:border-blue-300 dark:hover:border-[var(--bh-primary)] transition-colors shadow-sm">
             <div className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-all z-10">
