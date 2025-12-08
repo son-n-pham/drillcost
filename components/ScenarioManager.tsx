@@ -28,6 +28,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   // Use compareSelections from props instead of local state
   const selectedForComparison = compareSelections;
   const setSelectedForComparison = setCompareSelections;
+  const [diffType, setDiffType] = useState<'percentage' | 'absolute'>('percentage');
 
   // Clean up stale selections when entering compare mode or when scenarios change
   useEffect(() => {
@@ -308,11 +309,35 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       {/* Comparison Panel */}
       {isCompareMode && comparisonResults.length === 2 && (
         <div className="card animate-in fade-in slide-in-from-bottom-2 duration-300 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] bg-gradient-to-r from-blue-50 to-slate-50 dark:from-[var(--bh-primary)]/10 dark:to-[var(--bh-surface-1)]">
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] bg-gradient-to-r from-blue-50 to-slate-50 dark:from-[var(--bh-primary)]/10 dark:to-[var(--bh-surface-1)] flex justify-between items-center">
             <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] flex items-center gap-2">
               <GitCompareArrows className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
               Scenario Comparison
             </h3>
+            <div className="flex bg-slate-100 dark:bg-[var(--bh-surface-2)] p-1 rounded-lg">
+                <button
+                    onClick={() => setDiffType('percentage')}
+                    className={clsx(
+                        "px-3 py-1 text-xs font-bold rounded-md transition-all",
+                        diffType === 'percentage' 
+                            ? "bg-white dark:bg-[var(--bh-surface-0)] text-blue-600 dark:text-[var(--bh-primary)] shadow-sm" 
+                            : "text-slate-500 dark:text-[var(--bh-text-mute)] hover:text-slate-700 dark:hover:text-[var(--bh-text)]"
+                    )}
+                >
+                    %
+                </button>
+                <button
+                    onClick={() => setDiffType('absolute')}
+                    className={clsx(
+                        "px-3 py-1 text-xs font-bold rounded-md transition-all",
+                        diffType === 'absolute' 
+                            ? "bg-white dark:bg-[var(--bh-surface-0)] text-blue-600 dark:text-[var(--bh-primary)] shadow-sm" 
+                            : "text-slate-500 dark:text-[var(--bh-text-mute)] hover:text-slate-700 dark:hover:text-[var(--bh-text)]"
+                    )}
+                >
+                    #
+                </button>
+            </div>
           </div>
           <div className="p-6">
             {/* Comparison Table */}
@@ -345,7 +370,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             "text-sm font-bold",
                             diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
                           )}>
-                            {diff > 0 ? '+' : ''}{percent.toFixed(1)}%
+                            {diff > 0 ? '+' : ''}
+                            {diffType === 'percentage' 
+                                ? `${percent.toFixed(1)}%` 
+                                : `$${diff.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                           </span>
                         );
                       })()}
@@ -369,7 +397,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             "text-sm font-bold",
                             diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
                           )}>
-                            {diff > 0 ? '+' : ''}{percent.toFixed(1)}%
+                            {diff > 0 ? '+' : ''}
+                            {diffType === 'percentage'
+                                ? `${percent.toFixed(1)}%`
+                                : `$${(diff / 1000).toFixed(1)}k`}
                           </span>
                         );
                       })()}
@@ -393,7 +424,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             "text-sm font-bold",
                             diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
                           )}>
-                            {diff > 0 ? '+' : ''}{percent.toFixed(1)}%
+                            {diff > 0 ? '+' : ''}
+                            {diffType === 'percentage'
+                                ? `${percent.toFixed(1)}%`
+                                : `${diff.toFixed(1)}h`}
                           </span>
                         );
                       })()}
@@ -412,12 +446,16 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       {(() => {
                         const diff = comparisonResults[1].totalTime - comparisonResults[0].totalTime;
                         const diffDays = diff / 24;
+                        const percent = (diff / comparisonResults[0].totalTime) * 100;
                         return (
                           <span className={clsx(
                             "text-sm font-bold",
                             diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
                           )}>
-                            {diffDays > 0 ? '+' : ''}{diffDays.toFixed(1)} days
+                            {diffDays > 0 ? '+' : ''}
+                            {diffType === 'percentage'
+                                ? `${percent.toFixed(1)}%`
+                                : `${diffDays.toFixed(1)} days`}
                           </span>
                         );
                       })()}
@@ -445,12 +483,16 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         const total1 = comparisonResults[0].bitsUsed.reduce((acc, b) => acc + b.count, 0);
                         const total2 = comparisonResults[1].bitsUsed.reduce((acc, b) => acc + b.count, 0);
                         const diff = total2 - total1;
+                        const percent = total1 > 0 ? (diff / total1) * 100 : 0;
                         return (
                           <span className={clsx(
                             "text-sm font-bold",
                             diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
                           )}>
-                            {diff > 0 ? '+' : ''}{diff} bits
+                            {diff > 0 ? '+' : ''}
+                            {diffType === 'percentage'
+                                ? `${percent.toFixed(0)}%`
+                                : `${diff} bits`}
                           </span>
                         );
                       })()}
