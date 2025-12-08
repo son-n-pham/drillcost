@@ -461,6 +461,53 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       })()}
                     </td>
                   </tr>
+                  {/* Total Bit Cost */}
+                  <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
+                    <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Bit Cost</td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      {(() => {
+                        const cost1 = comparisonResults[0].bitsUsed.reduce((acc, u) => {
+                          const bit = bits.find(b => b.name === u.name);
+                          return acc + (bit ? bit.cost * u.count : 0);
+                        }, 0);
+                        return `$${(cost1 / 1000).toFixed(1)}k`;
+                      })()}
+                    </td>
+                    <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
+                      {(() => {
+                        const cost2 = comparisonResults[1].bitsUsed.reduce((acc, u) => {
+                          const bit = bits.find(b => b.name === u.name);
+                          return acc + (bit ? bit.cost * u.count : 0);
+                        }, 0);
+                        return `$${(cost2 / 1000).toFixed(1)}k`;
+                      })()}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      {(() => {
+                        const cost1 = comparisonResults[0].bitsUsed.reduce((acc, u) => {
+                          const bit = bits.find(b => b.name === u.name);
+                          return acc + (bit ? bit.cost * u.count : 0);
+                        }, 0);
+                        const cost2 = comparisonResults[1].bitsUsed.reduce((acc, u) => {
+                          const bit = bits.find(b => b.name === u.name);
+                          return acc + (bit ? bit.cost * u.count : 0);
+                        }, 0);
+                        const diff = cost2 - cost1;
+                        const percent = cost1 > 0 ? (diff / cost1) * 100 : 0;
+                        return (
+                          <span className={clsx(
+                            "text-sm font-bold",
+                            diff < 0 ? "text-emerald-600 dark:text-emerald-400" : diff > 0 ? "text-red-600 dark:text-red-400" : "text-slate-400"
+                          )}>
+                            {diff > 0 ? '+' : ''}
+                            {diffType === 'percentage'
+                                ? `${percent.toFixed(1)}%`
+                                : `$${(diff / 1000).toFixed(1)}k`}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                  </tr>
                   {/* Number of Bits */}
                   <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
                     <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Bits Used</td>
