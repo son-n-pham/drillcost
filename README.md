@@ -1,4 +1,4 @@
-# DrillCost Pro
+# DrillCost Pro!
 
 > **Professional drilling cost optimization and scenario analysis tool for drilling engineers**
 
