@@ -31,6 +31,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const setSelectedForComparison = setCompareSelections;
   const [diffType, setDiffType] = useState<'percentage' | 'absolute'>('percentage');
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Clean up stale selections when entering compare mode or when scenarios change
   useEffect(() => {
@@ -108,6 +110,19 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       newSeq.splice(index, 1);
       updateScenario(scenarioId, { bitSequence: newSeq });
     }
+  };
+
+  const reorderSequence = (scenarioId: string, fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex) return;
+    const s = scenarios.find(x => x.id === scenarioId);
+    if (s) {
+      const newSeq = [...s.bitSequence];
+      const [movedItem] = newSeq.splice(fromIndex, 1);
+      newSeq.splice(toIndex, 0, movedItem);
+      updateScenario(scenarioId, { bitSequence: newSeq });
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const activeResult = results.find(r => r.id === activeTab);
@@ -702,15 +717,57 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   {activeScenario.bitSequence.map((bitId, idx) => {
                      const bit = bits.find(b => b.id === bitId);
                      if (!bit) return null;
+                     const isDragging = draggedIndex === idx;
+                     const isDragOver = dragOverIndex === idx;
                      return (
-                        <div key={idx} className="flex items-center animate-in zoom-in-50 duration-200">
-                           <div className="relative group bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md transition-all rounded-xl p-3 pr-8 flex items-center gap-3 w-48">
+                        <div 
+                          key={`${bitId}-${idx}`} 
+                          className="flex items-center animate-in zoom-in-50 duration-200"
+                          draggable
+                          onDragStart={(e) => {
+                            setDraggedIndex(idx);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }}
+                          onDragEnd={() => {
+                            setDraggedIndex(null);
+                            setDragOverIndex(null);
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            if (draggedIndex !== null && draggedIndex !== idx) {
+                              setDragOverIndex(idx);
+                            }
+                          }}
+                          onDragLeave={() => {
+                            setDragOverIndex(null);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            if (draggedIndex !== null) {
+                              reorderSequence(activeScenario.id, draggedIndex, idx);
+                            }
+                          }}
+                        >
+                           <div className={clsx(
+                             "relative group border hover:shadow-md transition-all rounded-xl p-3 pr-8 flex items-center gap-3 w-48 cursor-grab active:cursor-grabbing",
+                             isDragging 
+                               ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-300 dark:border-[var(--bh-primary)] opacity-50 scale-95"
+                               : isDragOver
+                                 ? "bg-emerald-50 dark:bg-[var(--bh-success)]/10 border-emerald-400 dark:border-[var(--bh-success)] scale-105 shadow-lg"
+                                 : "bg-white dark:bg-[var(--bh-surface-1)] border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)]"
+                           )}>
                               <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: bit.color }}></div>
                               <div>
                                  <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)]">{bit.name}</div>
                                  <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
                               </div>
-                              <span className="absolute -top-2 -left-2 bg-emerald-600 dark:bg-[var(--bh-primary)] text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2 ring-white dark:ring-[var(--bh-bg)]">
+                              <span className={clsx(
+                                "absolute -top-2 -left-2 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2",
+                                isDragOver 
+                                  ? "bg-emerald-500 dark:bg-[var(--bh-success)] ring-emerald-200 dark:ring-[var(--bh-success)]/30"
+                                  : "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
+                              )}>
                                  {idx + 1}
                               </span>
                               
