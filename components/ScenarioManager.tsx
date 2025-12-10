@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
-import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers } from 'lucide-react';
+import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 import { getScenarioColor } from '../utils/scenarioColors';
+import { optimizeBitStrategy } from '../utils/optimizer';
 
 interface ScenarioManagerProps {
   bits: Bit[];
@@ -29,6 +30,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const selectedForComparison = compareSelections;
   const setSelectedForComparison = setCompareSelections;
   const [diffType, setDiffType] = useState<'percentage' | 'absolute'>('percentage');
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   // Clean up stale selections when entering compare mode or when scenarios change
   useEffect(() => {
@@ -146,6 +148,32 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     // Preserve selections so they're available when re-entering compare mode
   };
 
+  const handleAutoOptimize = () => {
+    if (bits.length === 0) return;
+    
+    setIsOptimizing(true);
+    
+    // Use setTimeout to allow UI to update before running optimization
+    setTimeout(() => {
+      try {
+        const result = optimizeBitStrategy(params, bits);
+        
+        if (result && result.bitSequence.length > 0) {
+          const newId = `scen-opt-${Date.now()}`;
+          const newScenario: ScenarioConfig = {
+            id: newId,
+            name: `Optimized Strategy`,
+            bitSequence: result.bitSequence,
+          };
+          setScenarios([...scenarios, newScenario]);
+          setActiveTab(newId);
+        }
+      } finally {
+        setIsOptimizing(false);
+      }
+    }, 50);
+  };
+
   const comparisonResults = selectedForComparison
     .map(id => results.find(r => r.id === id))
     .filter((r): r is ScenarioResult => !!r);
@@ -169,33 +197,54 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           </span>
         </div>
 
-        {/* Right: Compare Controls */}
-        {scenarios.length >= 2 && (
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            {isCompareMode && selectedForComparison.length === 2 && (
-              <span className="text-sm font-medium text-emerald-600 dark:text-[var(--bh-success)] animate-in fade-in">
-                2 scenarios selected
-              </span>
-            )}
-            {isCompareMode && selectedForComparison.length < 2 && (
-              <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">
-                Select {2 - selectedForComparison.length} more scenario{selectedForComparison.length === 1 ? '' : 's'}
-              </span>
-            )}
+        {/* Right: Auto-Optimize & Compare Controls */}
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          {/* Auto-Optimize Button */}
+          {bits.length > 0 && !isCompareMode && (
             <button
-              onClick={() => isCompareMode ? exitCompareMode() : setIsCompareMode(true)}
+              onClick={handleAutoOptimize}
+              disabled={isOptimizing}
               className={clsx(
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
-                isCompareMode
-                  ? "bg-blue-500 dark:bg-[var(--bh-primary)] text-white shadow-md"
-                  : "bg-white dark:bg-[var(--bh-surface-1)] text-slate-600 dark:text-[var(--bh-text-weak)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)]"
+                isOptimizing
+                  ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 cursor-wait"
+                  : "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-md hover:shadow-amber-100 dark:hover:shadow-amber-900/20"
               )}
+              title="Automatically find the lowest cost bit strategy"
             >
-              <GitCompareArrows className="w-4 h-4" />
-              {isCompareMode ? 'Exit Compare' : 'Compare'}
+              <Sparkles className={clsx("w-4 h-4", isOptimizing && "animate-pulse")} />
+              {isOptimizing ? 'Optimizing...' : 'Auto-Optimize'}
             </button>
-          </div>
-        )}
+          )}
+
+          {/* Compare Controls */}
+          {scenarios.length >= 2 && (
+            <>
+              {isCompareMode && selectedForComparison.length === 2 && (
+                <span className="text-sm font-medium text-emerald-600 dark:text-[var(--bh-success)] animate-in fade-in">
+                  2 scenarios selected
+                </span>
+              )}
+              {isCompareMode && selectedForComparison.length < 2 && (
+                <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">
+                  Select {2 - selectedForComparison.length} more scenario{selectedForComparison.length === 1 ? '' : 's'}
+                </span>
+              )}
+              <button
+                onClick={() => isCompareMode ? exitCompareMode() : setIsCompareMode(true)}
+                className={clsx(
+                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
+                  isCompareMode
+                    ? "bg-blue-500 dark:bg-[var(--bh-primary)] text-white shadow-md"
+                    : "bg-white dark:bg-[var(--bh-surface-1)] text-slate-600 dark:text-[var(--bh-text-weak)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)]"
+                )}
+              >
+                <GitCompareArrows className="w-4 h-4" />
+                {isCompareMode ? 'Exit Compare' : 'Compare'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Results Summary Cards */}
