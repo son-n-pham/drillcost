@@ -180,7 +180,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             name: `Optimized Strategy`,
             bitSequence: result.bitSequence,
           };
-          setScenarios([...scenarios, newScenario]);
+          setScenarios(prev => [...prev, newScenario]);
           setActiveTab(newId);
         }
       } finally {
