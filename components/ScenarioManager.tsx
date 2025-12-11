@@ -18,9 +18,10 @@ interface ScenarioManagerProps {
   isCompareMode: boolean;
   setIsCompareMode: (isCompareMode: boolean) => void;
   children?: React.ReactNode;
+  isScrolled?: boolean;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children, isScrolled = false }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
@@ -33,6 +34,33 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  
+  // State for scenario card dragging
+  const [cardDraggedIndex, setCardDraggedIndex] = useState<number | null>(null);
+  const [cardDragOverIndex, setCardDragOverIndex] = useState<number | null>(null);
+
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  const [stickyOffset, setStickyOffset] = useState(280); // Default fallback
+
+  useEffect(() => {
+    const updateOffset = () => {
+      if (stickyHeaderRef.current) {
+        // top-16 is 4rem = 64px
+        // logic: 64px (sticky top) + container height
+        const height = stickyHeaderRef.current.offsetHeight;
+        setStickyOffset(height + 64); 
+      }
+    };
+
+    // Update initially and on resize/changes
+    updateOffset();
+    const resizeObserver = new ResizeObserver(updateOffset);
+    if (stickyHeaderRef.current) {
+        resizeObserver.observe(stickyHeaderRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [scenarios.length, isScrolled, isCompareMode]); // Re-calculate when layout shifting props change
 
   // Clean up stale selections when entering compare mode or when scenarios change
   useEffect(() => {
@@ -125,6 +153,16 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     setDragOverIndex(null);
   };
 
+  const reorderScenarios = (fromIndex: number, toIndex: number) => {
+      if (fromIndex === toIndex) return;
+      const newScenarios = [...scenarios];
+      const [movedItem] = newScenarios.splice(fromIndex, 1);
+      newScenarios.splice(toIndex, 0, movedItem);
+      setScenarios(newScenarios);
+      setCardDraggedIndex(null);
+      setCardDragOverIndex(null);
+  };
+
   const activeResult = results.find(r => r.id === activeTab);
   const activeScenario = scenarios.find(s => s.id === activeTab);
 
@@ -196,7 +234,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   return (
     <div className="space-y-6">
       {/* Sticky Container for Header + Cards (large screens only) */}
-      <div className="md:sticky md:top-16 md:z-40 md:bg-slate-50 md:dark:bg-[var(--bh-bg)] md:py-4 space-y-4">
+      <div ref={stickyHeaderRef} className="md:sticky md:top-16 md:z-40 md:bg-slate-50 md:dark:bg-[var(--bh-bg)] md:py-4 space-y-4 transition-[height] duration-300">
       {/* Header Row: Title + Stats + Compare Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left: Title & Count */}
@@ -273,10 +311,43 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
             return (
               <div 
-                key={res.id} 
-                onClick={() => isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(res.id)}
+                key={res.id}
+                draggable={!isCompareMode}
+                onDragStart={(e) => {
+                    setCardDraggedIndex(idx);
+                    e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragEnd={() => {
+                    setCardDraggedIndex(null);
+                    setCardDragOverIndex(null);
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (cardDraggedIndex !== null && cardDraggedIndex !== idx) {
+                        setCardDragOverIndex(idx);
+                    }
+                }}
+                onDragLeave={() => {
+                    setCardDragOverIndex(null);
+                }}
+                onDrop={(e) => {
+                    e.preventDefault();
+                    if (cardDraggedIndex !== null) {
+                        reorderScenarios(cardDraggedIndex, idx);
+                    }
+                }}
+                onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(res.id);
+                }}
                 className={clsx(
                   "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group",
+                  cardDraggedIndex === idx 
+                    ? "opacity-50 scale-95 border-dashed border-slate-400" 
+                    : cardDragOverIndex === idx
+                      ? "border-blue-500 ring-2 ring-blue-500/30 scale-105 z-10"
+                      : "",
                   isCompareMode && isSelectedForCompare
                     ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-500 shadow-md ring-2 ring-blue-500/30"
                     : isActive && !isCompareMode
@@ -315,12 +386,12 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   </button>
                 )}
                 
-                <div className={clsx("p-3", isCompareMode && "pl-9")}>
+                <div className={clsx("transition-all duration-300", isScrolled ? "p-2" : "p-3", isCompareMode && "pl-9")}>
                   <div className="flex justify-between items-start mb-2 gap-3">
-                     <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]")}>
+                     <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0 transition-all", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]", isScrolled && "text-xs")}>
                         {res.name}
                      </h3>
-                     <div className="flex flex-col items-end gap-1 shrink-0">
+                     <div className={clsx("flex flex-col items-end gap-1 shrink-0 transition-opacity duration-300", isScrolled ? "opacity-0 group-hover:opacity-100 absolute right-2 top-2" : "relative opacity-100")}>
                        {isBestCost && <span className="text-[9px] font-bold bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-600 dark:text-[var(--bh-success)] border border-emerald-100 dark:border-[var(--bh-success)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Low Cost</span>}
                        {!isBlank && res.status === 'incomplete' && <span className="text-[9px] font-bold bg-amber-50 dark:bg-[var(--bh-warning)]/10 text-amber-600 dark:text-[var(--bh-warning)] border border-amber-100 dark:border-[var(--bh-warning)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Incomplete</span>}
                      </div>
@@ -330,27 +401,29 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                      <div className="flex justify-between items-baseline">
                         <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
                         {isBlank ? (
-                           <span className={clsx("text-xl font-bold tracking-tight", isActive ? "text-slate-300 dark:text-[var(--bh-text-weak)]" : "text-slate-300 dark:text-[var(--bh-text-mute)]")}>N/A</span>
+                           <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-300 dark:text-[var(--bh-text-weak)]" : "text-slate-300 dark:text-[var(--bh-text-mute)]", isScrolled ? "text-lg" : "text-xl")}>N/A</span>
                         ) : (
-                          <span className={clsx("text-2xl font-bold tracking-tight", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
+                          <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]", isScrolled ? "text-xl" : "text-2xl")}>
                             ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </span>
                         )}
                      </div>
-                     <div className="flex justify-between items-center pt-1 border-t border-slate-50 dark:border-[var(--bh-border)]">
-                        <div className="flex flex-col">
-                           <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
-                           <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                             {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`}
-                           </span>
-                        </div>
-                        <div className="w-px h-6 bg-slate-100 dark:bg-[var(--bh-border)] mx-2"></div>
-                        <div className="flex flex-col items-end">
-                           <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Time</span>
-                           <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                             {isBlank ? 'N/A' : `${res.totalTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}h`}
-                           </span>
-                        </div>
+                     <div className={clsx("overflow-hidden transition-all duration-300", isScrolled ? "max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100" : "max-h-20 opacity-100")}>
+                       <div className="flex justify-between items-center pt-1 border-t border-slate-50 dark:border-[var(--bh-border)]">
+                          <div className="flex flex-col">
+                             <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
+                             <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
+                               {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`}
+                             </span>
+                          </div>
+                          <div className="w-px h-6 bg-slate-100 dark:bg-[var(--bh-border)] mx-2"></div>
+                          <div className="flex flex-col items-end">
+                             <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Time</span>
+                             <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
+                               {isBlank ? 'N/A' : `${res.totalTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}h`}
+                             </span>
+                          </div>
+                       </div>
                      </div>
                   </div>
                 </div>
@@ -359,10 +432,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
         })}
          <button 
           onClick={addScenario}
-          className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-2 min-h-[100px] group"
+          className={clsx(
+            "flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-2 group",
+            isScrolled ? "p-2 min-h-[60px]" : "p-4 min-h-[100px]"
+          )}
         >
-          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors">
-            <Plus className="w-5 h-5" />
+          <div className={clsx("rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors", isScrolled ? "w-6 h-6" : "w-10 h-10")}>
+            <Plus className={clsx(isScrolled ? "w-3 h-3" : "w-5 h-5")} />
           </div>
           <span className="font-semibold text-sm">New Scenario</span>
         </button>
@@ -408,10 +484,22 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-[var(--bh-border)]">
-                    <th className="sticky left-0 z-20 bg-white dark:bg-[var(--bh-surface-0)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] text-left py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Metric</th>
-                    <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: getScenarioColor(results.findIndex(r => r.id === comparisonResults[0].id)) }}>{comparisonResults[0].name}</th>
-                    <th className="text-center py-3 px-4 text-xs font-bold uppercase tracking-wider" style={{ color: getScenarioColor(results.findIndex(r => r.id === comparisonResults[1].id)) }}>{comparisonResults[1].name}</th>
-                    <th className="text-center py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Difference</th>
+                    <th className="sticky left-0 z-30 bg-white dark:bg-[var(--bh-surface-0)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] text-left py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider md:transition-[top] md:duration-300" style={{ top: 0 }}>
+                      <span className="md:hidden">Metric</span>
+                      <span className="hidden md:block" style={{ position: 'sticky', top: stickyOffset }}>Metric</span>
+                    </th>
+                    <th className="sticky top-0 z-20 bg-white dark:bg-[var(--bh-surface-0)] text-center py-3 px-4 text-xs font-bold uppercase tracking-wider md:transition-[top] md:duration-300" style={{ color: getScenarioColor(results.findIndex(r => r.id === comparisonResults[0].id)) }}>
+                      <span className="md:hidden">{comparisonResults[0].name}</span>
+                       <span className="hidden md:block" style={{ position: 'sticky', top: stickyOffset }}>{comparisonResults[0].name}</span>
+                    </th>
+                    <th className="sticky top-0 z-20 bg-white dark:bg-[var(--bh-surface-0)] text-center py-3 px-4 text-xs font-bold uppercase tracking-wider md:transition-[top] md:duration-300" style={{ color: getScenarioColor(results.findIndex(r => r.id === comparisonResults[1].id)) }}>
+                       <span className="md:hidden">{comparisonResults[1].name}</span>
+                       <span className="hidden md:block" style={{ position: 'sticky', top: stickyOffset }}>{comparisonResults[1].name}</span>
+                    </th>
+                    <th className="sticky top-0 z-20 bg-white dark:bg-[var(--bh-surface-0)] text-center py-3 px-4 text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider md:transition-[top] md:duration-300">
+                       <span className="md:hidden">Difference</span>
+                       <span className="hidden md:block" style={{ position: 'sticky', top: stickyOffset }}>Difference</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-[var(--bh-border)]">

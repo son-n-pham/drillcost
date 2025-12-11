@@ -33,7 +33,7 @@ export const DEFAULT_SCENARIOS: ScenarioConfig[] = [
     id: 'scenario-1',
     name: 'Scenario 1: Type B then A',
     // 3 Type B (450*3 > 1200) covers it
-    bitSequence: ['type-b', 'type-b', 'type-b'], 
+    bitSequence: ['type-b', 'type-b', 'type-a'], 
   },
   {
     id: 'scenario-2',
@@ -76,7 +76,7 @@ export const INITIAL_SCENARIOS: ScenarioConfig[] = [
   {
     id: 'scenario-1',
     name: 'Scenario 1: Type B then A',
-    bitSequence: ['type-b', 'type-b', 'type-b'],
+    bitSequence: ['type-b', 'type-b', 'type-a'],
   },
   {
     id: 'scenario-2',

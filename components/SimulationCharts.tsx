@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   LineChart,
   Line,
@@ -47,6 +47,14 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: an
 };
 
 const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params, depthUnit, selectedForComparison = [], isCompareMode = false }) => {
+  // Track if component is mounted to prevent Recharts rendering before container dimensions are calculated
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    // Delay chart rendering to ensure containers have valid dimensions
+    const timer = setTimeout(() => setIsMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Calculate active scenarios for dynamic margin calculation
   const activeScenarios = results.filter(r => r.steps.length > 1);
@@ -216,50 +224,56 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
       {/* Time vs Depth Chart */}
       <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
         <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Depth vs. Time</h3>
-        <div className="h-[400px] w-full flex flex-col">
+        <div className="h-[400px] w-full flex flex-col" style={{ minHeight: '400px' }}>
           <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-              <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                <XAxis 
-                  type="number" 
-                  dataKey="time" 
-                  name="Time" 
-                  label={{ value: 'Time (hours)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
-                  tick={{ fill: axisColor, fontSize: 11 }}
-                />
-                <YAxis 
-                  type="number" 
-                  dataKey="depth" 
-                  name="Depth" 
-                  reversed={true}
-                  width={yAxisWidth}
-                  domain={['dataMin', 'auto']}
-                  label={{ value: `Depth (${getUnitLabel(depthUnit)})`, angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
-                  tick={{ fill: axisColor, fontSize: 11 }}
-                  tickFormatter={(value) => value.toLocaleString()}
-                />
-                <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} depthUnit={depthUnit} />} />
-                {chartResults.map((res, index) => {
-                  if (res.steps.length <= 1) return null;
-                  const highlighted = isHighlighted(res.id);
-                  return (
-                    <Line
-                      key={res.id}
-                      data={res.steps}
-                      type="linear" 
-                      dataKey="depth"
-                      name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
-                      stroke={colors[index % colors.length]}
-                      strokeWidth={highlighted ? (shouldHighlight ? 4 : 2) : 1}
-                      strokeOpacity={highlighted ? 1 : 0.25}
-                      dot={false}
-                      unit={getUnitLabel(depthUnit)}
-                    />
-                  );
-                })}
-              </LineChart>
-            </ResponsiveContainer>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                  <XAxis 
+                    type="number" 
+                    dataKey="time" 
+                    name="Time" 
+                    label={{ value: 'Time (hours)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                    tick={{ fill: axisColor, fontSize: 11 }}
+                  />
+                  <YAxis 
+                    type="number" 
+                    dataKey="depth" 
+                    name="Depth" 
+                    reversed={true}
+                    width={yAxisWidth}
+                    domain={['dataMin', 'auto']}
+                    label={{ value: `Depth (${getUnitLabel(depthUnit)})`, angle: -90, position: 'insideLeft', offset: 10, style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                    tick={{ fill: axisColor, fontSize: 11 }}
+                    tickFormatter={(value) => value.toLocaleString()}
+                  />
+                  <Tooltip content={<CustomTooltip xLabel="Time (hrs)" isDark={isDark} depthUnit={depthUnit} />} />
+                  {chartResults.map((res, index) => {
+                    if (res.steps.length <= 1) return null;
+                    const highlighted = isHighlighted(res.id);
+                    return (
+                      <Line
+                        key={res.id}
+                        data={res.steps}
+                        type="linear" 
+                        dataKey="depth"
+                        name={`${res.name}${res.status === 'incomplete' ? ' (Incomplete)' : ''}`}
+                        stroke={colors[index % colors.length]}
+                        strokeWidth={highlighted ? (shouldHighlight ? 4 : 2) : 1}
+                        strokeOpacity={highlighted ? 1 : 0.25}
+                        dot={false}
+                        unit={getUnitLabel(depthUnit)}
+                      />
+                    );
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className={`text-sm ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-500'}`}>Loading chart...</div>
+              </div>
+            )}
           </div>
           <CustomLegend />
         </div>
@@ -268,9 +282,10 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
       {/* Depth vs Cost Chart */}
       <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
         <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Depth vs. Cost</h3>
-        <div className="h-[400px] w-full flex flex-col">
+        <div className="h-[400px] w-full flex flex-col" style={{ minHeight: '400px' }}>
           <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%">
               <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                 <XAxis 
@@ -314,6 +329,11 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 })}
               </LineChart>
             </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className={`text-sm ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-500'}`}>Loading chart...</div>
+              </div>
+            )}
           </div>
           <CustomLegend />
         </div>
@@ -323,8 +343,9 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
       {breakdownData.length > 0 && (
         <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
           <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Time Breakdown by Scenario</h3>
-          <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+          <div className="h-[320px] w-full" style={{ minHeight: '320px' }}>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={breakdownData} 
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -385,6 +406,11 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className={`text-sm ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-500'}`}>Loading chart...</div>
+              </div>
+            )}
           </div>
           {/* Custom Legend - outside chart to prevent overlap */}
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-3 px-2">
@@ -408,8 +434,9 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
       {breakdownData.length > 0 && (
         <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
           <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Cost Breakdown by Scenario</h3>
-          <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+          <div className="h-[320px] w-full" style={{ minHeight: '320px' }}>
+            {isMounted ? (
+              <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={breakdownData} 
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -488,6 +515,11 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <div className={`text-sm ${isDark ? 'text-[var(--bh-text-weak)]' : 'text-slate-500'}`}>Loading chart...</div>
+              </div>
+            )}
           </div>
           {/* Custom Legend - outside chart to prevent overlap */}
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mt-3 px-2">

@@ -371,6 +371,7 @@ const App: React.FC = () => {
                 setCompareSelections={setCompareSelections}
                 isCompareMode={isCompareMode}
                 setIsCompareMode={setIsCompareMode}
+                isScrolled={isScrolled}
               >
                 {/* Visualizations (injected as children) */}
                 <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">

@@ -32,7 +32,7 @@ export const SAMPLE_SCENARIOS: ScenarioConfig[] = [
   {
     id: 'scenario-1',
     name: 'Scenario 1: Type B then A',
-    bitSequence: ['type-b', 'type-b', 'type-b'],
+    bitSequence: ['type-b', 'type-b', 'type-a'],
   },
   {
     id: 'scenario-2',
