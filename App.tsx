@@ -15,6 +15,24 @@ import { DepthUnit, convertDepth, getUnitLabel } from './utils/unitUtils';
 
 const STORAGE_KEY = 'drillcost-pro-state';
 
+const useScrolled = (threshold: number = 20): boolean => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > threshold);
+    };
+
+    // Check initial state
+    handleScroll();
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [threshold]);
+
+  return isScrolled;
+};
+
 // Helper function to safely load state from localStorage
 const loadSavedState = () => {
   try {
@@ -59,6 +77,9 @@ const App: React.FC = () => {
     const saved = loadSavedState();
     return saved?.isCompareMode ?? false;
   });
+  
+  const isScrolled = useScrolled();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Auto-save state to localStorage whenever it changes
@@ -242,35 +263,47 @@ const App: React.FC = () => {
              <div className="flex items-center gap-1 sm:gap-2">
                 <button 
                   onClick={triggerFileUpload}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center group"
                   title="Load Scenarios"
                 >
                   <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-semibold hidden md:block">Load</span>
+                  <span className={clsx(
+                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
+                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
+                  )}>Load</span>
                 </button>
                 <button 
                   onClick={handleSaveState}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center group"
                   title="Save Scenarios"
                 >
                   <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-semibold hidden md:block">Save</span>
+                  <span className={clsx(
+                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
+                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
+                  )}>Save</span>
                 </button>
                 <button 
                   onClick={handleClearState}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-danger)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-danger)] transition-colors flex items-center group"
                   title="Clear All Scenarios"
                 >
                   <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-semibold hidden md:block">Clear</span>
+                  <span className={clsx(
+                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
+                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
+                  )}>Clear</span>
                 </button>
                 <button 
                   onClick={handleLoadSampleData}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-accent)] transition-colors flex items-center gap-2 group"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-accent)] transition-colors flex items-center group"
                   title="Load Sample Data"
                 >
                   <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-semibold hidden md:block">Sample</span>
+                  <span className={clsx(
+                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
+                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
+                  )}>Sample</span>
                 </button>
              </div>
 
