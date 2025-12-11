@@ -211,7 +211,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans pb-12 selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
       {theme === 'xmas' && <SnowEffect />}
       {/* Hidden File Input */}
       <input 
@@ -346,7 +346,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           
           {/* Left Sidebar: Controls */}
@@ -392,6 +392,35 @@ const App: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="w-full border-t border-slate-200 dark:border-[var(--bh-border)] py-6 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">
+          <div className="flex items-center gap-1">
+             <span>Developed by</span>
+             <span className="text-slate-700 dark:text-[var(--bh-text)] font-semibold">Son Pham</span>
+          </div>
+          <div className="flex items-center gap-6">
+             <a 
+               href="https://opensource.org/licenses/MIT" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
+             >
+               MIT License
+             </a>
+             <a 
+               href="https://github.com/son-n-pham/cost-per-meter" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
+             >
+               <FileText className="w-3.5 h-3.5" />
+               Source Code
+             </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

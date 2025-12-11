@@ -47,33 +47,33 @@
 }
 
 :root[data-theme="bakerhughes-dark"] {
-  /* Core brand - Strictly from brandcolorcode.com */
-  --bh-primary: #02BC94;     /* Light Green (Brand Primary) */
-  --bh-bg:      #00120F;     /* Deepest Green/Black (New Background) */
-  --bh-accent:  #018374;     /* Green (Accent) */
-  --bh-accent-2:#FFFFFF;     /* White (Secondary Accent) */
+  /* Core brand - User Provided Palette */
+  --bh-primary: #4a9eff;     /* Primary Accent (Blue) */
+  --bh-bg:      #121212;     /* Background (Near-black) */
+  --bh-accent:  #6c63ff;     /* Secondary Accent (Purple) */
+  --bh-accent-2:#e0e0e0;     /* Primary Text as secondary accent for contrast */
 
-  /* Semantic & surfaces - tinted with Dark Green */
-  --bh-surface-0: #05322B;   /* Brand Dark Green (Now used for Cards) */
-  --bh-surface-1: #0A453B;   /* Raised surface */
-  --bh-surface-2: #0F594C;   /* Hover/active surface */
-  --bh-border:    #166355;   /* Greenish border */
-  --bh-overlay:   rgba(0, 18, 15, 0.8);
+  /* Semantic & surfaces */
+  --bh-surface-0: #1e1e1e;   /* Cards/Containers */
+  --bh-surface-1: #2a2a2a;   /* Surface 1 (Slightly lighter) */
+  --bh-surface-2: #3a3a3a;   /* Hover States */
+  --bh-border:    #2a2a2a;   /* Borders (Very dark gray) */
+  --bh-overlay:   rgba(0,0,0,0.7);
 
   /* Text */
-  --bh-text:      #FFFFFF;   /* Primary text */
-  --bh-text-weak: #C7C9D1;   /* Secondary text */
-  --bh-text-mute: #8B8E97;   /* Tertiary text */
+  --bh-text:      #e0e0e0;   /* Primary Text (Light Gray) */
+  --bh-text-weak: #a0a0a0;   /* Secondary Text (Medium Gray) */
+  --bh-text-mute: #606060;   /* Muted Text (Dark Gray) */
 
   /* States */
-  --bh-focus:     #5BBD72;   /* Accessible focus ring (Brandfetch Fern) */
-  --bh-success:   #5BBD72;
-  --bh-warning:   #FAB840;   /* Non-brand warning for clarity */
-  --bh-danger:    #D84A3B;
+  --bh-focus:     #4a9eff;   /* Primary Accent */
+  --bh-success:   #4caf50;   /* Success (Green) */
+  --bh-warning:   #ff9800;   /* Warning (Orange) */
+  --bh-danger:    #f44336;   /* Error (Red) */
 
   /* Shadows */
-  --bh-shadow-1:  0 6px 20px rgba(0,0,0,0.35);
-  --bh-shadow-2:  0 8px 30px rgba(0,0,0,0.45);
+  --bh-shadow-1:  0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --bh-shadow-2:  0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
 
   /* Radii & spacing */
   --bh-radius-sm: 6px;
@@ -83,34 +83,33 @@
 }
 
 :root[data-theme="christmas"] {
-  /* Christmas Theme - Standard Baker Hughes Dark + Snow Effect */
-  /* Reusing the EXACT same variables as bakerhughes-dark */
-  --bh-primary: #02BC94;     /* Light Green (Brand Primary) */
-  --bh-bg:      #00120F;     /* Deepest Green/Black */
-  --bh-accent:  #018374;     /* Green (Accent) */
-  --bh-accent-2:#FFFFFF;     /* White */
+  /* Christmas Theme - Same as Dark but with Snow Effect (handled in App.tsx) */
+  --bh-primary: #4a9eff;
+  --bh-bg:      #121212;
+  --bh-accent:  #6c63ff;
+  --bh-accent-2:#e0e0e0;
 
   /* Semantic & surfaces */
-  --bh-surface-0: #05322B;   /* Brand Dark Green */
-  --bh-surface-1: #0A453B;   /* Raised surface */
-  --bh-surface-2: #0F594C;   /* Hover/active surface */
-  --bh-border:    #166355;   /* Greenish border */
-  --bh-overlay:   rgba(0, 18, 15, 0.8);
+  --bh-surface-0: #1e1e1e;
+  --bh-surface-1: #2a2a2a;
+  --bh-surface-2: #3a3a3a;
+  --bh-border:    #2a2a2a;
+  --bh-overlay:   rgba(0,0,0,0.7);
 
   /* Text */
-  --bh-text:      #FFFFFF;
-  --bh-text-weak: #C7C9D1;
-  --bh-text-mute: #8B8E97;
+  --bh-text:      #e0e0e0;
+  --bh-text-weak: #a0a0a0;
+  --bh-text-mute: #606060;
 
   /* States */
-  --bh-focus:     #5BBD72;
-  --bh-success:   #5BBD72;
-  --bh-warning:   #FAB840;
-  --bh-danger:    #D84A3B;
+  --bh-focus:     #4a9eff;
+  --bh-success:   #4caf50;
+  --bh-warning:   #ff9800;
+  --bh-danger:    #f44336;
 
   /* Shadows */
-  --bh-shadow-1:  0 6px 20px rgba(0,0,0,0.35);
-  --bh-shadow-2:  0 8px 30px rgba(0,0,0,0.45);
+  --bh-shadow-1:  0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --bh-shadow-2:  0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
 
   /* Radii & spacing */
   --bh-radius-sm: 6px;
@@ -122,25 +121,25 @@
 /* Optional: respect OS dark mode automatically */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    /* If you don’t explicitly set data-theme, default to BH dark */
-    --bh-primary: #005AA9;
-    --bh-bg:      #1B1B1F;
-    --bh-accent:  #02BC94;
-    --bh-accent-2:#018374;
-    --bh-surface-0: #111216;
-    --bh-surface-1: #15161A;
-    --bh-surface-2: #1D1E23;
-    --bh-border:    #2A2B31;
-    --bh-overlay:   rgba(0,0,0,0.5);
-    --bh-text:      #FFFFFF;
-    --bh-text-weak: #C7C9D1;
-    --bh-text-mute: #8B8E97;
-    --bh-focus:     #5BBD72;
-    --bh-success:   #5BBD72;
-    --bh-warning:   #FAB840;
-    --bh-danger:    #D84A3B;
-    --bh-shadow-1:  0 6px 20px rgba(0,0,0,0.35);
-    --bh-shadow-2:  0 8px 30px rgba(0,0,0,0.45);
+    /* If you don’t explicitly set data-theme, default to new Dark */
+    --bh-primary: #4a9eff;
+    --bh-bg:      #121212;
+    --bh-accent:  #6c63ff;
+    --bh-accent-2:#e0e0e0;
+    --bh-surface-0: #1e1e1e;
+    --bh-surface-1: #2a2a2a;
+    --bh-surface-2: #3a3a3a;
+    --bh-border:    #2a2a2a;
+    --bh-overlay:   rgba(0,0,0,0.7);
+    --bh-text:      #e0e0e0;
+    --bh-text-weak: #a0a0a0;
+    --bh-text-mute: #606060;
+    --bh-focus:     #4a9eff;
+    --bh-success:   #4caf50;
+    --bh-warning:   #ff9800;
+    --bh-danger:    #f44336;
+    --bh-shadow-1:  0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --bh-shadow-2:  0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
     --bh-radius-sm: 6px;
     --bh-radius-md: 10px;
     --bh-radius-lg: 16px;

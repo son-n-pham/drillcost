@@ -149,8 +149,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
   const barColors = BAR_CHART_COLORS;
 
   
-  const gridColor = isDark ? '#2A2B31' : '#f1f5f9';
-  const axisColor = isDark ? '#8B8E97' : '#64748b';
+  const gridColor = isDark ? '#2a2a2a' : '#f1f5f9';
+  const axisColor = isDark ? '#a0a0a0' : '#64748b';
   
   // Check if we should highlight (compare mode is on AND 2 scenarios are selected)
   const shouldHighlight = isCompareMode && selectedForComparison.length === 2;
