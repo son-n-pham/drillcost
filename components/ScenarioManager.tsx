@@ -177,7 +177,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           const newId = `scen-opt-${Date.now()}`;
           const newScenario: ScenarioConfig = {
             id: newId,
-            name: `Optimized Strategy`,
+            name: `Optimized Strategy ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
             bitSequence: result.bitSequence,
           };
           setScenarios(prev => [...prev, newScenario]);
@@ -315,8 +315,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   </button>
                 )}
                 
-                <div className={clsx("p-5", isCompareMode && "pl-9")}>
-                  <div className="flex justify-between items-start mb-4 gap-3">
+                <div className={clsx("p-3", isCompareMode && "pl-9")}>
+                  <div className="flex justify-between items-start mb-2 gap-3">
                      <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]")}>
                         {res.name}
                      </h3>
@@ -326,7 +326,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                      </div>
                   </div>
                   
-                  <div className="space-y-2.5">
+                  <div className="space-y-1">
                      <div className="flex justify-between items-baseline">
                         <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
                         {isBlank ? (
@@ -334,11 +334,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         ) : (
                           <span className={clsx("text-2xl font-bold tracking-tight", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
                             ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            <span className="text-sm font-normal text-slate-400 dark:text-[var(--bh-text-mute)]">.{(costPerUnit % 1).toFixed(2).substring(2)}</span>
                           </span>
                         )}
                      </div>
-                     <div className="flex justify-between items-center pt-2 border-t border-slate-50 dark:border-[var(--bh-border)]">
+                     <div className="flex justify-between items-center pt-1 border-t border-slate-50 dark:border-[var(--bh-border)]">
                         <div className="flex flex-col">
                            <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
                            <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
@@ -360,7 +359,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
         })}
          <button 
           onClick={addScenario}
-          className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-2 min-h-[140px] group"
+          className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-2 min-h-[100px] group"
         >
           <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors">
             <Plus className="w-5 h-5" />

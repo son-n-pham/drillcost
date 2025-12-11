@@ -34,8 +34,8 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: an
         <p className={`font-bold mb-2 ${isDark ? 'text-[var(--bh-text)]' : 'text-slate-700'}`}>
            {xLabel || 'Value'}: {typeof label === 'number' ? label.toLocaleString(undefined, { maximumFractionDigits: 0 }) : label}
         </p>
-        {payload.map((p: any) => (
-          <div key={p.name} style={{ color: p.color }} className="flex items-center gap-2 mb-1">
+        {payload.map((p: any, index: number) => (
+          <div key={`${p.name}-${index}`} style={{ color: p.color }} className="flex items-center gap-2 mb-1">
              <span className="font-medium">{p.name}:</span>
              <span>{Number(p.value).toLocaleString()} {p.unit || getUnitLabel(depthUnit)}</span>
           </div>
@@ -218,7 +218,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Depth vs. Time</h3>
         <div className="h-[400px] w-full flex flex-col">
           <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                 <XAxis 
@@ -270,7 +270,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Depth vs. Cost</h3>
         <div className="h-[400px] w-full flex flex-col">
           <div className="flex-1 min-h-0">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                 <XAxis 
@@ -324,7 +324,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
           <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Time Breakdown by Scenario</h3>
           <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart 
                 data={breakdownData} 
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -409,7 +409,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <div className="bg-white dark:bg-[var(--bh-surface-0)] p-3 rounded-xl shadow-sm border border-slate-200 dark:border-[var(--bh-border)] transition-colors duration-300">
           <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Cost Breakdown by Scenario</h3>
           <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <BarChart 
                 data={breakdownData} 
                 margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
