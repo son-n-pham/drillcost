@@ -397,7 +397,7 @@ const App: React.FC = () => {
       <footer className="w-full border-t border-slate-200 dark:border-[var(--bh-border)] py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-sm text-slate-600 dark:text-[var(--bh-text-mute)]">
           <div className="max-w-xl">
-        <div className="font-semibold text-slate-800 dark:text-[var(--bh-text)]">Open Source — All Contributions Welcome</div>
+        <div className="font-semibold text-slate-800 dark:text-[var(--bh-text)]"><a href="https://youtu.be/a4ap0R_OQIE?si=HRt_-Y2UeGuxWlBd" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">Open Source</a> — All Contributions Welcome</div>
 
         <p className="mt-2 text-xs">
           Start here: <a href="https://github.com/son-n-pham/cost-per-meter/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">open an issue</a>, fork the repo, or contact me via <a href="https://son-n-pham.github.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">my site</a>.
