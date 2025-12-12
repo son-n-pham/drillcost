@@ -339,7 +339,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 }}
                 onClick={() => {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
-                  isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(res.id);
+                  isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(activeTab === res.id ? '' : res.id);
                 }}
                 className={clsx(
                   "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group",
