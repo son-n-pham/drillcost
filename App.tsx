@@ -395,29 +395,34 @@ const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="w-full border-t border-slate-200 dark:border-[var(--bh-border)] py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">
-          <div className="flex items-center gap-1">
-             <span>Developed by</span>
-             <span className="text-slate-700 dark:text-[var(--bh-text)] font-semibold">Son Pham</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-sm text-slate-600 dark:text-[var(--bh-text-mute)]">
+          <div className="max-w-xl">
+        <div className="font-semibold text-slate-800 dark:text-[var(--bh-text)]">Open Source — All Contributions Welcome</div>
+
+        <p className="mt-2 text-xs">
+          Start here: <a href="https://github.com/son-n-pham/cost-per-meter/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">open an issue</a>, fork the repo, or contact me via <a href="https://son-n-pham.github.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">my site</a>.
+        </p>
           </div>
-          <div className="flex items-center gap-6">
-             <a 
-               href="https://opensource.org/licenses/MIT" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
-             >
-               MIT License
-             </a>
-             <a 
-               href="https://github.com/son-n-pham/cost-per-meter" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
-             >
-               <FileText className="w-3.5 h-3.5" />
-               Source Code
-             </a>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <a
+          href="https://github.com/son-n-pham/cost-per-meter"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
+        >
+          <FileText className="w-4 h-4" />
+          <span className="text-xs font-medium">Source on GitHub</span>
+        </a>
+
+        <a
+          href="https://github.com/son-n-pham/cost-per-meter/blob/main/LICENSE"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors text-xs font-medium"
+        >
+          MIT License
+        </a>
           </div>
         </div>
       </footer>
