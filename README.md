@@ -318,22 +318,42 @@ These simplifications are acceptable for comparative scenario analysis where all
 
 This project is available under the MIT License. See the `LICENSE` file for details.
 
+
 ## Disclaimer
 
-The calculations and simulations provided by DrillCost Pro are for general informational and planning purposes only and may not account for all site-specific factors. The authors and contributors make no representations or warranties about the accuracy, completeness, or suitability of the results, and accept no professional liability for decisions made using this tool. Users should independently verify key assumptions and consult qualified professionals before relying on outputs for operational or financial decisions.
+This project is a personal, open‑source initiative. It is **not affiliated with, endorsed by, or representative of any employer**.
+
+No confidential or proprietary information is used.
+
+Provided **“as is,”** without warranties or conditions of any kind. See the MIT License for full terms.
+
 
 ## 👤 Author
 
 **Son Pham**  
 GitHub: [@son-n-pham](https://github.com/son-n-pham)
 
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/son-n-pham/cost-per-meter/issues).
 
 ## 📧 Support
 
 For questions or support, please open an issue on GitHub.
+
+
+## Non‑affiliation & open source
+
+This is a personal, open‑source project. It is **not affiliated with, endorsed by, or representative of any employer or brand**.
+
+- License: MIT (see LICENSE)
+- Source: https://github.com/son-n-pham/cost-per-meter
+- Contributions: Welcome via Issues and Pull Requests (see CONTRIBUTING)
+- Code of Conduct: See CODE_OF_CONDUCT
+
+The software is provided **“as is”**, without warranty of any kind. See the MIT license terms for details.
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/son-n-pham/cost-per-meter/issues).
+
 
 ---
 
