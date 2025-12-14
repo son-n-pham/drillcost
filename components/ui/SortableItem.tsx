@@ -18,11 +18,12 @@ interface SortableItemProps {
     id: string;
     children: React.ReactNode;
     className?: string;
+    style?: React.CSSProperties;
     trigger?: 'item' | 'handle';
     disabled?: boolean;
 }
 
-export function SortableItem({ id, children, className, trigger = 'handle', disabled = false }: SortableItemProps) {
+export function SortableItem({ id, children, className, style: propStyle, trigger = 'handle', disabled = false }: SortableItemProps) {
     const {
         attributes,
         listeners,
@@ -37,6 +38,7 @@ export function SortableItem({ id, children, className, trigger = 'handle', disa
         transform: CSS.Translate.toString(transform),
         transition,
         zIndex: isDragging ? 999 : undefined,
+        ...propStyle,
     };
 
     return (
@@ -56,7 +58,7 @@ export function SortableItem({ id, children, className, trigger = 'handle', disa
     );
 }
 
-export function DragHandle({ className }: { className?: string }) {
+export function DragHandle({ className, style }: { className?: string; style?: React.CSSProperties }) {
     const context = useContext(SortableItemContext);
     if (!context) {
         throw new Error('DragHandle must be used within a SortableItem');
@@ -69,6 +71,7 @@ export function DragHandle({ className }: { className?: string }) {
             ref={setActivatorNodeRef}
             {...attributes}
             {...listeners}
+            style={style}
             className={twMerge(
                 'cursor-grab flex items-center justify-center p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 touch-none active:cursor-grabbing',
                 isDragging && 'cursor-grabbing text-blue-500',
