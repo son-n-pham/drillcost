@@ -42,8 +42,9 @@ export const runSimulation = (
     const bit = bitMap.get(bitId);
 
     if (!bit) {
-      console.error(`Bit ID ${bitId} not found in configuration.`);
-      break; 
+      console.warn(`Bit ID ${bitId} not found in configuration, skipping.`);
+      sequenceIndex++;
+      continue; 
     }
 
     // Increment usage counter

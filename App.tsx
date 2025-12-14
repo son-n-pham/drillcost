@@ -46,6 +46,14 @@ const loadSavedState = () => {
   return null;
 };
 
+// Helper function to sanitize scenarios by removing orphan bit IDs
+const sanitizeScenarios = (scenarios: ScenarioConfig[], validBitIds: Set<string>): ScenarioConfig[] => {
+  return scenarios.map(scenario => ({
+    ...scenario,
+    bitSequence: scenario.bitSequence.filter(id => validBitIds.has(id))
+  }));
+};
+
 const App: React.FC = () => {
   // Initialize state from localStorage if available, otherwise use defaults
   // Using lazy initialization to only load from localStorage once on mount
@@ -59,7 +67,10 @@ const App: React.FC = () => {
   });
   const [scenarios, setScenarios] = useState<ScenarioConfig[]>(() => {
     const saved = loadSavedState();
-    return saved?.scenarios ?? INITIAL_SCENARIOS;
+    const loadedScenarios = saved?.scenarios ?? INITIAL_SCENARIOS;
+    const loadedBits = saved?.bits ?? INITIAL_BITS;
+    const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
+    return sanitizeScenarios(loadedScenarios, validBitIds);
   });
   const [theme, setTheme] = useState<'light' | 'dark' | 'xmas'>(() => {
     const saved = loadSavedState();
@@ -163,7 +174,12 @@ const App: React.FC = () => {
         
         if (state.params) setParams(state.params);
         if (state.bits) setBits(state.bits);
-        if (state.scenarios) setScenarios(state.scenarios);
+        if (state.scenarios) {
+          // Sanitize scenarios to remove orphan bit IDs
+          const validBitIds = new Set((state.bits || bits).map((b: Bit) => b.id));
+          const sanitizedScenarios = sanitizeScenarios(state.scenarios, validBitIds);
+          setScenarios(sanitizedScenarios);
+        }
         if (state.depthUnit) setDepthUnit(state.depthUnit);
         if (state.compareSelections) setCompareSelections(state.compareSelections);
         if (state.isCompareMode !== undefined) setIsCompareMode(state.isCompareMode);
@@ -208,6 +224,17 @@ const App: React.FC = () => {
 
   const toggleUnit = () => {
     setDepthUnit(prev => prev === 'm' ? 'ft' : 'm');
+  };
+
+  const handleRemoveBit = (bitId: string) => {
+    // 1. Remove from bits list
+    setBits(prevBits => prevBits.filter(b => b.id !== bitId));
+
+    // 2. Remove from all scenarios
+    setScenarios(prevScenarios => prevScenarios.map(scen => ({
+      ...scen,
+      bitSequence: scen.bitSequence.filter(id => id !== bitId)
+    })));
   };
 
   return (
@@ -352,7 +379,7 @@ const App: React.FC = () => {
           {/* Left Sidebar: Controls */}
           <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-6">
             <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} />
-            <BitsPanel bits={bits} setBits={setBits} depthUnit={depthUnit} />
+            <BitsPanel bits={bits} setBits={setBits} onRemoveBit={handleRemoveBit} depthUnit={depthUnit} />
           </div>
 
           {/* Main Content: Results & Charts */}

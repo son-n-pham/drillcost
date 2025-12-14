@@ -996,8 +996,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         <SortableItem
                           key={uniqueId}
                           id={uniqueId}
-                          className="flex mb-2"
-                          style={{ width: 'calc(100% / 3)' }}
+                          className="flex mb-2 w-full md:w-1/2 lg:w-1/3"
+                          style={{}}
                           trigger="handle"
                           disabled={isTouch && !isEditMode}
                         >
@@ -1256,9 +1256,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-stretch gap-2">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                   {activeScenario.bitSequence.length === 0 && (
-                    <div className="w-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-2">No bits added yet.</div>
+                    <div className="col-span-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-2">No bits added yet.</div>
                   )}
 
                   {activeScenario.bitSequence.map((bitId, idx) => {
@@ -1266,7 +1267,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     if (!bit) return null;
 
                     return (
-                      <div key={`zoom-${bitId}-${idx}`} className="flex items-center" style={{ width: 'calc(33.333% - 0.5rem)' }}>
+                      <div key={`zoom-${bitId}-${idx}`} className="flex items-center">
                         <div className={clsx(
                           "relative group border hover:shadow-md transition-all rounded-lg p-3 flex items-center gap-2 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
                           "border-slate-200 dark:border-[var(--bh-border)]"

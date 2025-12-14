@@ -29,10 +29,11 @@ import { UndoToast } from './ui/UndoToast';
 interface BitsPanelProps {
   bits: Bit[];
   setBits: (bits: Bit[]) => void;
+  onRemoveBit: (id: string) => void;
   depthUnit: DepthUnit;
 }
 
-const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
+const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depthUnit }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [deletedBit, setDeletedBit] = useState<Bit | null>(null);
@@ -88,7 +89,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
     const bitToRemove = bits.find(b => b.id === id);
     if (bitToRemove) {
       setDeletedBit(bitToRemove);
-      setBits(bits.filter(b => b.id !== id));
+      onRemoveBit(id); // Use the callback to remove safely from all places
       setUndoToastVisible(true);
     }
   };
@@ -164,11 +165,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
           style={{ backgroundColor: bit.color, opacity: 0.7 }}
         >
           {/* Drag Handle */}
-          <div className={clsx(
-            "hidden md:flex shrink-0",
-            isEditMode && "flex",
-            !isEditMode && "md:flex hidden"
-          )}>
+          <div className="flex shrink-0">
             {isOverlay ? (
               <GripVertical className="w-4 h-4 text-white/80 cursor-grabbing" />
             ) : (
@@ -196,12 +193,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
           {/* Delete Button */}
           <button
             onClick={() => removeBit(bit.id)}
-            className={clsx(
-              "p-1 text-white/70 hover:text-white hover:bg-white/20 rounded transition-colors shrink-0",
-              "hidden md:block",
-              isEditMode && "block",
-              !isEditMode && "md:block hidden"
-            )}
+            className="p-1 text-white/70 hover:text-white hover:bg-white/20 rounded transition-colors shrink-0"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -256,12 +248,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
 
         <div className="flex items-center gap-2">
           {/* Mobile Edit Toggle */}
-          <button
-            onClick={() => setIsEditMode(!isEditMode)}
-            className="md:hidden p-1.5 text-slate-500 hover:text-blue-600 dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] rounded transition-colors"
-          >
-            {isEditMode ? <Check className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-          </button>
+
 
           <button
             onClick={addBit}
