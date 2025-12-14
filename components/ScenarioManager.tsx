@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
-import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical } from 'lucide-react';
+import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 import { getScenarioColor } from '../utils/scenarioColors';
@@ -892,7 +892,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           <div className="px-6 py-5 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]">
             <div className="flex items-center gap-3 w-full max-w-md">
               <div className="p-2 bg-white dark:bg-[var(--bh-surface-0)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-slate-400 dark:text-[var(--bh-text-mute)]">
-                <GripHorizontal className="w-5 h-5" />
+                <BookOpen className="w-5 h-5" />
               </div>
               <div className="w-full">
                 <input

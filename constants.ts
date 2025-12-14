@@ -16,7 +16,7 @@ export const DEFAULT_BITS: Bit[] = [
     cost: 15000,
     rop: 5,
     maxDistance: 150,
-    color: '#3b82f6', // blue-500
+    color: '#1e40af', // dark blue
   },
   {
     id: 'type-b',
@@ -24,7 +24,7 @@ export const DEFAULT_BITS: Bit[] = [
     cost: 25000,
     rop: 5,
     maxDistance: 450,
-    color: '#10b981', // emerald-500
+    color: '#047857', // dark emerald
   },
 ];
 
@@ -60,7 +60,7 @@ export const INITIAL_BITS: Bit[] = [
     cost: 15000,
     rop: 5,
     maxDistance: 150,
-    color: '#3b82f6',
+    color: '#1e40af',
   },
   {
     id: 'type-b',
@@ -68,7 +68,7 @@ export const INITIAL_BITS: Bit[] = [
     cost: 25000,
     rop: 5,
     maxDistance: 450,
-    color: '#10b981',
+    color: '#047857',
   },
 ];
 

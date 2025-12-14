@@ -5,7 +5,7 @@ export interface Bit {
   rop: number; // m/hr
   maxDistance: number; // m
   color: string;
-  isActive: boolean;
+  isActive?: boolean;
   order: number;
 }
 

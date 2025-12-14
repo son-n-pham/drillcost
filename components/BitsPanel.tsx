@@ -56,7 +56,8 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
     })
   );
 
-  const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  // Dark color scheme for bits
+  const colors = ['#1e40af', '#047857', '#b45309', '#b91c1c', '#6d28d9', '#0f766e', '#9333ea', '#c2410c'];
 
   const updateBit = (id: string, field: keyof Bit, value: any) => {
     setBits(bits.map(b => b.id === id ? { ...b, [field]: value } : b));
@@ -71,7 +72,6 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
       rop: 5,
       maxDistance: 200,
       color: colors[bits.length % colors.length],
-      isActive: true,
       order: bits.length,
     };
     setBits([...bits, newBit]);
@@ -153,60 +153,66 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
 
   // Render Item Component
   const renderBitRow = (bit: Bit, isOverlay = false) => {
-    const isActive = bit.isActive ?? true; // Default to true if undefined
-
-    // In edit mode (mobile), we show handles/delete.
-    // On desktop, we always show handles/delete? 
-    // Plan said: 
-    // Desktop: Handle | Content | Controls (Toggle, Trash)
-    // Mobile Normal: Content | Toggle
-    // Mobile Edit: Handle | Content | Trash
-
-    // We can use CSS media queries or just use `isEditMode` which is toggled on mobile.
-    // Let's assume on desktop `isEditMode` is irrelevant or always effectively "sortable".
-    // Actually, making "Edit Mode" only relevant for mobile is cleaner.
-
     return (
       <div className={clsx(
-        "flex items-center gap-2 p-2 border border-slate-200 dark:border-[var(--bh-border)] rounded-lg bg-white dark:bg-[var(--bh-surface-0)] shadow-sm transition-all",
-        !isOverlay && !isActive && "opacity-60 grayscale",
+        "border border-slate-200 dark:border-[var(--bh-border)] rounded-lg bg-white dark:bg-[var(--bh-surface-0)] shadow-sm transition-all overflow-hidden",
         isOverlay && "border-blue-500 ring-2 ring-blue-500/20"
       )}>
-        {/* Drag Handle - Visible on Desktop OR (Mobile + EditMode) */}
-        <div className={clsx("hidden md:block", isEditMode && "block", !isEditMode && "md:block hidden")}>
-          {isOverlay ? (
-            <GripVertical className="w-5 h-5 text-slate-400 cursor-grabbing" />
-          ) : (
-            <DragHandle />
-          )}
-        </div>
+        {/* Header with drag handle, bit name, and delete - bit color background */}
+        <div 
+          className="flex items-center gap-2 px-2 py-2"
+          style={{ backgroundColor: bit.color }}
+        >
+          {/* Drag Handle */}
+          <div className={clsx(
+            "hidden md:flex shrink-0",
+            isEditMode && "flex",
+            !isEditMode && "md:flex hidden"
+          )}>
+            {isOverlay ? (
+              <GripVertical className="w-4 h-4 text-white/80 cursor-grabbing" />
+            ) : (
+              <DragHandle className="text-white/80 hover:text-white p-0" />
+            )}
+          </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 grid grid-cols-1 gap-1.5">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: bit.color }}></div>
-            <input
+          {/* Bit Name - centered both horizontally and vertically */}
+          <div className="flex-1 min-w-0 flex items-center justify-center">
+            <textarea
               value={bit.name}
               onChange={(e) => updateBit(bit.id, 'name', e.target.value)}
-              className="bg-transparent font-bold text-sm text-slate-800 dark:text-[var(--bh-text)] outline-none w-full focus:text-blue-600 dark:focus:text-[var(--bh-primary)] truncate"
+              className="w-full bg-transparent font-bold text-sm text-white outline-none focus:text-blue-200 resize-none overflow-hidden leading-snug text-center py-0"
               placeholder="Bit Name"
+              rows={1}
+              onInput={(e) => {
+                const target = e.target as HTMLTextAreaElement;
+                target.style.height = 'auto';
+                target.style.height = target.scrollHeight + 'px';
+              }}
+              style={{ height: 'auto' }}
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {/* Cost */}
-            <div>
-              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block">Cost</label>
-              <input
-                type="text"
-                value={bit.cost.toLocaleString()}
-                onChange={(e) => handleCostChange(bit.id, e.target.value)}
-                className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
-              />
-            </div>
+          {/* Delete Button */}
+          <button
+            onClick={() => removeBit(bit.id)}
+            className={clsx(
+              "p-1 text-white/70 hover:text-white hover:bg-white/20 rounded transition-colors shrink-0",
+              "hidden md:block",
+              isEditMode && "block",
+              !isEditMode && "md:block hidden"
+            )}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-2">
+          <div className="grid grid-cols-2 gap-2">
             {/* ROP */}
             <div>
-              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block">ROP ({getSpeedLabel(depthUnit)})</label>
+              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">ROP ({getSpeedLabel(depthUnit)})</label>
               <input
                 type="number"
                 value={getDisplayValue(bit.rop)}
@@ -216,7 +222,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
             </div>
             {/* Max Dist */}
             <div>
-              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block">Dist ({getUnitLabel(depthUnit)})</label>
+              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Dist ({getUnitLabel(depthUnit)})</label>
               <input
                 type="number"
                 value={getDisplayValue(bit.maxDistance)}
@@ -224,36 +230,16 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
                 className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
               />
             </div>
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-1">
-          {/* Toggle Switch - Hidden in Edit Mode on Mobile? Plan said "View 2 (Edit Mode): ... Hide Toggle" */}
-          <div className={clsx(isEditMode ? "hidden" : "block")}>
-            <button
-              onClick={() => updateBit(bit.id, 'isActive', !isActive)}
-              className={clsx(
-                "w-8 h-4 rounded-full relative transition-colors duration-200 ease-in-out font-sans",
-                isActive ? "bg-blue-500" : "bg-slate-300 dark:bg-slate-600"
-              )}
-              title={isActive ? "Deactivate" : "Activate"}
-            >
-              <span className={clsx(
-                "absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow-sm transform transition-transform duration-200 ease-in-out",
-                isActive ? "translate-x-4" : "translate-x-0"
-              )} />
-            </button>
-          </div>
-
-          {/* Delete Button - Visible on Desktop OR (Mobile + EditMode) */}
-          <div className={clsx("hidden md:block", isEditMode && "block", !isEditMode && "md:block hidden")}>
-            <button
-              onClick={() => removeBit(bit.id)}
-              className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {/* Cost */}
+            <div className="col-span-2">
+              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Cost</label>
+              <input
+                type="text"
+                value={bit.cost.toLocaleString()}
+                onChange={(e) => handleCostChange(bit.id, e.target.value)}
+                className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
+              />
+            </div>
           </div>
         </div>
       </div>

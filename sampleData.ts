@@ -16,8 +16,7 @@ export const SAMPLE_BITS: Bit[] = [
     cost: 15000,
     rop: 5,
     maxDistance: 150,
-    color: '#3b82f6',
-    isActive: true,
+    color: '#1e40af',
     order: 0,
   },
   {
@@ -26,8 +25,7 @@ export const SAMPLE_BITS: Bit[] = [
     cost: 25000,
     rop: 5,
     maxDistance: 450,
-    color: '#10b981',
-    isActive: true,
+    color: '#047857',
     order: 1,
   },
 ];
