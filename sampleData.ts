@@ -17,6 +17,8 @@ export const SAMPLE_BITS: Bit[] = [
     rop: 5,
     maxDistance: 150,
     color: '#3b82f6',
+    isActive: true,
+    order: 0,
   },
   {
     id: 'type-b',
@@ -25,6 +27,8 @@ export const SAMPLE_BITS: Bit[] = [
     rop: 5,
     maxDistance: 450,
     color: '#10b981',
+    isActive: true,
+    order: 1,
   },
 ];
 

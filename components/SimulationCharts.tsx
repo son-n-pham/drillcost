@@ -281,7 +281,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <div className="h-[400px] w-full flex flex-col" style={{ minHeight: '400px' }}>
           <div className="flex-1 min-h-0">
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis
@@ -352,7 +352,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
         <div className="h-[400px] w-full flex flex-col" style={{ minHeight: '400px' }}>
           <div className="flex-1 min-h-0">
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <LineChart margin={{ top: 5, right: 20, left: 0, bottom: bottomMargin }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis
@@ -425,7 +425,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
           <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Time Breakdown by Scenario</h3>
           <div className="h-[320px] w-full" style={{ minHeight: '320px' }}>
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart
                   data={breakdownData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -529,7 +529,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
           <h3 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] mb-4">Cost Breakdown by Scenario</h3>
           <div className="h-[320px] w-full" style={{ minHeight: '320px' }}>
             {isMounted ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart
                   data={breakdownData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
@@ -670,7 +670,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
               <div className="h-[70vh] w-full">
                 {isMounted && zoomedChart === 'depthVsTime' && (
                   <>
-                    <ResponsiveContainer width="100%" height="90%">
+                    <ResponsiveContainer width="100%" height="90%" minWidth={0}>
                       <LineChart margin={{ top: 20, right: 30, left: 20, bottom: bottomMargin }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                         <XAxis
@@ -718,7 +718,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
 
                 {isMounted && zoomedChart === 'depthVsCost' && (
                   <>
-                    <ResponsiveContainer width="100%" height="90%">
+                    <ResponsiveContainer width="100%" height="90%" minWidth={0}>
                       <LineChart margin={{ top: 20, right: 30, left: 20, bottom: bottomMargin }}>
                         <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                         <XAxis
@@ -768,7 +768,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
 
                 {isMounted && zoomedChart === 'timeBreakdown' && breakdownData.length > 0 && (
                   <>
-                    <ResponsiveContainer width="100%" height="85%">
+                    <ResponsiveContainer width="100%" height="85%" minWidth={0}>
                       <BarChart
                         data={breakdownData}
                         margin={{ top: 20, right: 30, left: 20, bottom: 40 }}

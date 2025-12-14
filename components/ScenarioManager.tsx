@@ -1,11 +1,34 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
-import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles } from 'lucide-react';
+import { Plus, Trash2, BarChart3, GripHorizontal, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 import { getScenarioColor } from '../utils/scenarioColors';
 import { optimizeBitStrategy } from '../utils/optimizer';
 import { useTouchSelection, isTouchDevice } from '../hooks/useTouchInteraction';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  TouchSensor,
+  MouseSensor
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { UndoToast } from './ui/UndoToast';
+import { SortableItem, DragHandle } from './ui/SortableItem';
 
 interface ScenarioManagerProps {
   bits: Bit[];
@@ -33,23 +56,32 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const setSelectedForComparison = setCompareSelections;
   const [diffType, setDiffType] = useState<'percentage' | 'absolute'>('percentage');
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  // State for scenario card dragging
-  const [cardDraggedIndex, setCardDraggedIndex] = useState<number | null>(null);
-  const [cardDragOverIndex, setCardDragOverIndex] = useState<number | null>(null);
+  // Mobile Edit Mode
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+
+  // Undo Toast
+  const [toast, setToast] = useState<{ message: string; onUndo: () => void } | null>(null);
+
+  const handleUndo = useCallback(() => {
+    if (toast) {
+      toast.onUndo();
+      setToast(null);
+    }
+  }, [toast]);
 
   // Touch support: track which items are "selected" to show delete button
   const touchCardSelection = useTouchSelection<string | null>(null);
   const touchBitSelection = useTouchSelection<number | null>(null);
   const isTouch = isTouchDevice();
 
-  // State for touch-based reordering
-  const [touchDragCardIndex, setTouchDragCardIndex] = useState<number | null>(null);
-  const [touchDragBitIndex, setTouchDragBitIndex] = useState<number | null>(null);
-  const touchStartY = useRef<number>(0);
-  const touchCurrentY = useRef<number>(0);
+  // Dnd Sensors
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const stickyHeaderRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -86,19 +118,19 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     if (!isCompareMode && activeTab && detailsRef.current) {
       // Check if we are on desktop (md breakpoint is usually 768px)
       const isDesktop = window.matchMedia('(min-width: 768px)').matches;
-      
+
       // App Header is 64px (h-16)
       const headerHeight = 64;
-      
+
       // On desktop, the scenario cards container is sticky.
       // On mobile, it is not sticky.
-      const stickyHeight = isDesktop && stickyHeaderRef.current 
-        ? stickyHeaderRef.current.offsetHeight 
+      const stickyHeight = isDesktop && stickyHeaderRef.current
+        ? stickyHeaderRef.current.offsetHeight
         : 0;
-        
+
       // Calculate total offset
       const totalOffset = headerHeight + stickyHeight + 20; // +20 for some breathing room
-      
+
       detailsRef.current.style.scrollMarginTop = `${totalOffset}px`;
       detailsRef.current.scrollIntoView({ behavior: 'smooth' });
     }
@@ -141,9 +173,18 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   const removeScenario = (e: React.MouseEvent, id: string) => {
     e.stopPropagation(); // Prevent triggering card selection
+    const prevScenarios = [...scenarios];
     const newScens = scenarios.filter(s => s.id !== id);
     setScenarios(newScens);
     if (activeTab === id) setActiveTab(newScens[0]?.id || '');
+
+    setToast({
+      message: 'Scenario deleted',
+      onUndo: () => {
+        setScenarios(prevScenarios);
+        setActiveTab(id);
+      }
+    });
   };
 
   const updateScenario = (id: string, updates: Partial<ScenarioConfig>) => {
@@ -176,33 +217,18 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const removeFromSequence = (scenarioId: string, index: number) => {
     const s = scenarios.find(x => x.id === scenarioId);
     if (s) {
+      const prevSeq = [...s.bitSequence];
       const newSeq = [...s.bitSequence];
       newSeq.splice(index, 1);
       updateScenario(scenarioId, { bitSequence: newSeq });
-    }
-  };
 
-  const reorderSequence = (scenarioId: string, fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex) return;
-    const s = scenarios.find(x => x.id === scenarioId);
-    if (s) {
-      const newSeq = [...s.bitSequence];
-      const [movedItem] = newSeq.splice(fromIndex, 1);
-      newSeq.splice(toIndex, 0, movedItem);
-      updateScenario(scenarioId, { bitSequence: newSeq });
+      setToast({
+        message: 'Bit removed from sequence',
+        onUndo: () => {
+          updateScenario(scenarioId, { bitSequence: prevSeq });
+        }
+      });
     }
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const reorderScenarios = (fromIndex: number, toIndex: number) => {
-    if (fromIndex === toIndex) return;
-    const newScenarios = [...scenarios];
-    const [movedItem] = newScenarios.splice(fromIndex, 1);
-    newScenarios.splice(toIndex, 0, movedItem);
-    setScenarios(newScenarios);
-    setCardDraggedIndex(null);
-    setCardDragOverIndex(null);
   };
 
   const activeResult = results.find(r => r.id === activeTab);
@@ -220,120 +246,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       return [prev[1], id];
     });
   };
-
-  // Touch handlers for scenario cards
-  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const bitRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-
-  const handleCardTouchStart = useCallback((e: React.TouchEvent, idx: number, resId: string) => {
-    if (isCompareMode) return; // Don't enable drag in compare mode
-    const touch = e.touches[0];
-    touchStartY.current = touch.clientY;
-    touchCurrentY.current = touch.clientY;
-    setTouchDragCardIndex(idx);
-
-    // Haptic feedback
-    if (navigator.vibrate) navigator.vibrate(30);
-  }, [isCompareMode]);
-
-  const handleCardTouchMove = useCallback((e: React.TouchEvent, idx: number) => {
-    if (touchDragCardIndex === null || isCompareMode) return;
-
-    const touch = e.touches[0];
-    touchCurrentY.current = touch.clientY;
-
-    // Find which card we're over based on Y position
-    let targetIndex = idx;
-    cardRefs.current.forEach((el, i) => {
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-          targetIndex = i;
-        }
-      }
-    });
-
-    if (targetIndex !== cardDragOverIndex && targetIndex !== touchDragCardIndex) {
-      setCardDragOverIndex(targetIndex);
-    }
-  }, [touchDragCardIndex, cardDragOverIndex, isCompareMode]);
-
-  const handleCardTouchEnd = useCallback((e: React.TouchEvent, idx: number, resId: string) => {
-    const moved = Math.abs(touchCurrentY.current - touchStartY.current) > 20;
-
-    if (moved && touchDragCardIndex !== null && cardDragOverIndex !== null) {
-      // Was a drag - reorder
-      reorderScenarios(touchDragCardIndex, cardDragOverIndex);
-    } else if (!moved && !isCompareMode) {
-      // Was a tap
-      const wasSelected = touchCardSelection.isSelected(resId);
-      if (wasSelected) {
-        // Second tap - activate the card
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        setActiveTab(activeTab === resId ? '' : resId);
-        touchCardSelection.clear();
-      } else {
-        // First tap - select to show delete button
-        touchCardSelection.select(resId);
-      }
-    } else if (!moved && isCompareMode) {
-      // Tap in compare mode - toggle selection
-      toggleCompareSelection(resId);
-    }
-
-    setTouchDragCardIndex(null);
-    setCardDragOverIndex(null);
-  }, [touchDragCardIndex, cardDragOverIndex, isCompareMode, activeTab, touchCardSelection, reorderScenarios, toggleCompareSelection]);
-
-  // Touch handlers for bit sequence items
-  const handleBitTouchStart = useCallback((e: React.TouchEvent, idx: number) => {
-    const touch = e.touches[0];
-    touchStartY.current = touch.clientY;
-    touchCurrentY.current = touch.clientY;
-    setTouchDragBitIndex(idx);
-
-    if (navigator.vibrate) navigator.vibrate(30);
-  }, []);
-
-  const handleBitTouchMove = useCallback((e: React.TouchEvent, idx: number) => {
-    if (touchDragBitIndex === null) return;
-
-    const touch = e.touches[0];
-    touchCurrentY.current = touch.clientY;
-
-    // Find which bit we're over
-    let targetIndex = idx;
-    bitRefs.current.forEach((el, i) => {
-      if (el) {
-        const rect = el.getBoundingClientRect();
-        const centerY = rect.top + rect.height / 2;
-        if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
-          targetIndex = i;
-        }
-      }
-    });
-
-    if (targetIndex !== dragOverIndex && targetIndex !== touchDragBitIndex) {
-      setDragOverIndex(targetIndex);
-    }
-  }, [touchDragBitIndex, dragOverIndex]);
-
-  const handleBitTouchEnd = useCallback((e: React.TouchEvent, idx: number) => {
-    if (!activeScenario) return;
-
-    const moved = Math.abs(touchCurrentY.current - touchStartY.current) > 20;
-
-    if (moved && touchDragBitIndex !== null && dragOverIndex !== null) {
-      // Was a drag - reorder
-      reorderSequence(activeScenario.id, touchDragBitIndex, dragOverIndex);
-    } else if (!moved) {
-      // Was a tap - toggle selection for delete button
-      touchBitSelection.select(idx);
-    }
-
-    setTouchDragBitIndex(null);
-    setDragOverIndex(null);
-  }, [touchDragBitIndex, dragOverIndex, activeScenario, touchBitSelection, reorderSequence]);
 
   const currentSequenceCapacity = activeScenario
     ? activeScenario.bitSequence.reduce((acc, bitId) => {
@@ -382,6 +294,62 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       }
     }, 50);
   };
+
+  // Dnd Handlers
+  const handleDragStart = useCallback((event: { active: { id: string | number } }) => {
+    setActiveDragId(String(event.active.id));
+  }, []);
+
+  const handleScenarioDragEnd = useCallback((event: DragEndEvent) => {
+    setActiveDragId(null);
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = scenarios.findIndex(s => s.id === active.id);
+      const newIndex = scenarios.findIndex(s => s.id === over.id);
+      setScenarios(arrayMove(scenarios, oldIndex, newIndex));
+    }
+  }, [scenarios, setScenarios]);
+
+  const handleBitSequenceDragEnd = useCallback((event: DragEndEvent) => {
+    setActiveDragId(null);
+    if (!activeScenario) return;
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      // IDs are suffixed with index or unique? 
+      // In the render loop, bitId is just the ID string. This is problematic if multiple bits of same type exist!
+      // The render key was `${bitId}-${idx}`.
+      // We MUST use unique IDs for Sortable items.
+      // `active.id` will be the unique key. 
+
+      // Wait, `arrayMove` needs indices.
+      // I should set the SortableItem id to be the index or a unique string represented by index?
+      // Actually, dnd-kit recommends unique IDs. 
+      // Since `bitSequence` is an array of strings (IDs) and can have duplicates, using the bit ID as the sortable ID is WRONG.
+      // I must use a unique identifier for each position.
+      // I can use `${bitId}-${index}` as the ID.
+
+      const oldId = String(active.id);
+      const newId = String(over.id);
+
+      // Extract indices from IDs if I use `${bitId}-${index}` strategy.
+      // Or better: just use the `index` as the ID? dnd-kit supports number IDs.
+      // But `useSortable({id: ...})` expects strings usually or unique numbers.
+      // If I use index as ID, it might be tricky during reorder.
+      // Best practice: Wrap the `bit sequence` items in objects with unique IDs, OR generate unique IDs on the fly.
+      // Since I can't easily change the data structure of `bitSequence` (array of strings) globally right now without breaking things,
+      // I will use `${bitId}-${index}` as the Sortable ID.
+
+      const oldIndex = parseInt(oldId.split('::').pop() || '-1');
+      const newIndex = parseInt(newId.split('::').pop() || '-1');
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newSeq = arrayMove(activeScenario.bitSequence, oldIndex, newIndex) as string[];
+        updateScenario(activeScenario.id, { bitSequence: newSeq });
+      }
+    }
+  }, [activeScenario, updateScenario]);
+
 
   const comparisonResults = selectedForComparison
     .map(id => results.find(r => r.id === id))
@@ -458,145 +426,162 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
         {/* Results Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {results.map((res, idx) => {
-            const isBestCost = results.every(r => (r.status === 'incomplete' || r.steps.length <= 1 ? Infinity : r.totalCost) >= (res.status === 'incomplete' || res.steps.length <= 1 ? Infinity : res.totalCost)) && res.status === 'complete' && res.steps.length > 1;
-            const isActive = activeTab === res.id;
-            const isBlank = res.steps.length <= 1;
-            const costPerUnit = displayCostPerUnit(res.costPerMeter);
-            const isSelectedForCompare = selectedForComparison.includes(res.id);
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleScenarioDragEnd}
+          >
+            <SortableContext
+              items={scenarios.map(s => s.id)}
+              strategy={rectSortingStrategy}
+            >
+              {results.map((res, idx) => {
+                const isBestCost = results.every(r => (r.status === 'incomplete' || r.steps.length <= 1 ? Infinity : r.totalCost) >= (res.status === 'incomplete' || res.steps.length <= 1 ? Infinity : res.totalCost)) && res.status === 'complete' && res.steps.length > 1;
+                const isActive = activeTab === res.id;
+                const isBlank = res.steps.length <= 1;
+                const costPerUnit = displayCostPerUnit(res.costPerMeter);
+                const isSelectedForCompare = selectedForComparison.includes(res.id);
 
-            return (
-              <div
-                key={res.id}
-                ref={(el) => { if (el) cardRefs.current.set(idx, el); }}
-                draggable={!isCompareMode && !isTouch}
-                onDragStart={(e) => {
-                  setCardDraggedIndex(idx);
-                  e.dataTransfer.effectAllowed = 'move';
-                }}
-                onDragEnd={() => {
-                  setCardDraggedIndex(null);
-                  setCardDragOverIndex(null);
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'move';
-                  if (cardDraggedIndex !== null && cardDraggedIndex !== idx) {
-                    setCardDragOverIndex(idx);
-                  }
-                }}
-                onDragLeave={() => {
-                  setCardDragOverIndex(null);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (cardDraggedIndex !== null) {
-                    reorderScenarios(cardDraggedIndex, idx);
-                  }
-                }}
-                onClick={() => {
-                  // On touch-only devices (no hover), let touch handlers manage selection/activation
-                  // On hybrid devices (touch + mouse), allow click to activate immediately
-                  if (isTouch && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
-
-                  isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(activeTab === res.id ? '' : res.id);
-                }}
-                onTouchStart={(e) => handleCardTouchStart(e, idx, res.id)}
-                onTouchMove={(e) => handleCardTouchMove(e, idx)}
-                onTouchEnd={(e) => handleCardTouchEnd(e, idx, res.id)}
-                className={clsx(
-                  "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group",
-                  cardDraggedIndex === idx || touchDragCardIndex === idx
-                    ? "opacity-50 scale-95 border-dashed border-slate-400"
-                    : cardDragOverIndex === idx
-                      ? "border-blue-500 ring-2 ring-blue-500/30 scale-105 z-10"
-                      : "",
-                  isCompareMode && isSelectedForCompare
-                    ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-500 shadow-md ring-2 ring-blue-500/30"
-                    : isActive && !isCompareMode
-                      ? "bg-white dark:bg-[var(--bh-surface-1)] border-blue-500 shadow-md ring-1 ring-blue-500/20 scale-[1.02]"
-                      : "bg-white dark:bg-[var(--bh-surface-0)] border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-border)] hover:shadow-sm",
-                  touchCardSelection.isSelected(res.id) && "ring-2 ring-blue-400"
-                )}
-              >
-                <div
-                  className="absolute top-0 left-0 w-full h-1"
-                  style={{
-                    backgroundColor: (isActive && !isCompareMode) || (isCompareMode && isSelectedForCompare)
-                      ? getScenarioColor(idx)
-                      : 'transparent'
-                  }}
-                ></div>
-
-                {/* Compare Mode Checkbox */}
-                {isCompareMode && (
-                  <div className="absolute top-2 left-2 z-10">
-                    {isSelectedForCompare ? (
-                      <CheckSquare className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
-                    ) : (
-                      <Square className="w-5 h-5 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
-                    )}
-                  </div>
-                )}
-
-                {/* Delete Button (visible on hover for desktop, or on touch selection for mobile) */}
-                {!isCompareMode && (
-                  <button
-                    onClick={(e) => removeScenario(e, res.id)}
-                    className={clsx(
-                      "absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all z-10",
-                      touchCardSelection.isSelected(res.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                    )}
-                    title="Remove Scenario"
+                return (
+                  <SortableItem
+                    key={res.id}
+                    id={res.id}
+                    className="h-full"
+                    trigger="handle"
+                    disabled={isTouch && !isEditMode}
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
-                <div className={clsx("transition-all duration-300", isScrolled ? "p-2" : "p-3", isCompareMode && "pl-9")}>
-                  <div className="flex justify-between items-start mb-2 gap-3">
-                    <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0 transition-all", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]", isScrolled && "text-xs")}>
-                      {res.name}
-                    </h3>
-                    <div className={clsx("flex flex-col items-end gap-1 shrink-0 transition-opacity duration-300", isScrolled ? "opacity-0 group-hover:opacity-100 absolute right-2 top-2" : "relative opacity-100")}>
-                      {isBestCost && <span className="text-[9px] font-bold bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-600 dark:text-[var(--bh-success)] border border-emerald-100 dark:border-[var(--bh-success)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Low Cost</span>}
-                      {!isBlank && res.status === 'incomplete' && <span className="text-[9px] font-bold bg-amber-50 dark:bg-[var(--bh-warning)]/10 text-amber-600 dark:text-[var(--bh-warning)] border border-amber-100 dark:border-[var(--bh-warning)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Incomplete</span>}
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
-                      {isBlank ? (
-                        <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-300 dark:text-[var(--bh-text-weak)]" : "text-slate-300 dark:text-[var(--bh-text-mute)]", isScrolled ? "text-lg" : "text-xl")}>N/A</span>
-                      ) : (
-                        <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]", isScrolled ? "text-xl" : "text-2xl")}>
-                          ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </span>
+                    <div
+                      onClick={(e) => {
+                        // Prevent click if dragging (handled by sensors potentially, but good to be safe)
+                        // On touch-only devices (no hover), let touch handlers manage selection/activation
+                        // On hybrid devices (touch + mouse), allow click to activate immediately
+                        if (isTouch && window.matchMedia && !window.matchMedia('(hover: hover)').matches) {
+                          // With dnd-kit, the click event might fire after drag. 
+                          // We need to distinguish tap from drag? dnd-kit sensors handle this.
+                          // So we can simpler: just handle click.
+                        }
+                        isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(activeTab === res.id ? '' : res.id);
+                      }}
+                      className={clsx(
+                        "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group h-full bg-white dark:bg-[var(--bh-surface-0)]", // Ensure bg is set
+                        isCompareMode && isSelectedForCompare
+                          ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-500 shadow-md ring-2 ring-blue-500/30"
+                          : isActive && !isCompareMode
+                            ? "bg-white dark:bg-[var(--bh-surface-1)] border-blue-500 shadow-md ring-1 ring-blue-500/20 scale-[1.02]"
+                            : "border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-border)] hover:shadow-sm",
+                        touchCardSelection.isSelected(res.id) && "ring-2 ring-blue-400"
                       )}
-                    </div>
-                    <div className={clsx("overflow-hidden transition-all duration-300", isScrolled ? "max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100" : "max-h-20 opacity-100")}>
-                      <div className="flex justify-between items-center pt-1 border-t border-slate-50 dark:border-[var(--bh-border)]">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
-                          <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                            {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`}
-                          </span>
+                    >
+                      <div
+                        className="absolute top-0 left-0 w-full h-1"
+                        style={{
+                          backgroundColor: (isActive && !isCompareMode) || (isCompareMode && isSelectedForCompare)
+                            ? getScenarioColor(idx)
+                            : 'transparent'
+                        }}
+                      ></div>
+
+                      {/* Compare Mode Checkbox */}
+                      {isCompareMode && (
+                        <div className="absolute top-2 left-2 z-10">
+                          {isSelectedForCompare ? (
+                            <CheckSquare className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
+                          ) : (
+                            <Square className="w-5 h-5 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                          )}
                         </div>
-                        <div className="w-px h-6 bg-slate-100 dark:bg-[var(--bh-border)] mx-2"></div>
-                        <div className="flex flex-col items-end">
-                          <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Time</span>
-                          <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                            {isBlank ? 'N/A' : `${res.totalTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}h`}
-                          </span>
+                      )}
+
+                      {/* Delete Button (visible on hover for desktop, or on touch selection for mobile) */}
+                      {!isCompareMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeScenario(e, res.id);
+                          }}
+                          className={clsx(
+                            "absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all z-10",
+                            isTouch
+                              ? (isEditMode ? "opacity-100" : "opacity-0 hidden")
+                              : "opacity-0 group-hover:opacity-100"
+                          )}
+                          title="Remove Scenario"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {/* Drag Handle - 6 dots */}
+                      <div className={clsx(
+                        "absolute top-2 left-2 z-20",
+                        isCompareMode ? "hidden" : ""
+                      )}>
+                        <DragHandle className="p-1 hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded bg-white/50 dark:bg-black/20 backdrop-blur-sm" />
+                      </div>
+
+                      <div className={clsx("transition-all duration-300", isScrolled ? "p-2" : "p-3", isCompareMode && "pl-9", !isCompareMode && "pl-8")}>
+                        <div className="flex justify-between items-start mb-2 gap-3">
+                          <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0 transition-all", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]", isScrolled && "text-xs")}>
+                            {res.name}
+                          </h3>
+                          <div className={clsx("flex flex-col items-end gap-1 shrink-0 transition-opacity duration-300", isScrolled ? "opacity-0 group-hover:opacity-100 absolute right-2 top-2" : "relative opacity-100")}>
+                            {isBestCost && <span className="text-[9px] font-bold bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-600 dark:text-[var(--bh-success)] border border-emerald-100 dark:border-[var(--bh-success)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Low Cost</span>}
+                            {!isBlank && res.status === 'incomplete' && <span className="text-[9px] font-bold bg-amber-50 dark:bg-[var(--bh-warning)]/10 text-amber-600 dark:text-[var(--bh-warning)] border border-amber-100 dark:border-[var(--bh-warning)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Incomplete</span>}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
+                            {isBlank ? (
+                              <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-300 dark:text-[var(--bh-text-weak)]" : "text-slate-300 dark:text-[var(--bh-text-mute)]", isScrolled ? "text-lg" : "text-xl")}>N/A</span>
+                            ) : (
+                              <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]", isScrolled ? "text-xl" : "text-2xl")}>
+                                ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              </span>
+                            )}
+                          </div>
+                          <div className={clsx("overflow-hidden transition-all duration-300", isScrolled ? "max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100" : "max-h-20 opacity-100")}>
+                            <div className="flex justify-between items-center pt-1 border-t border-slate-50 dark:border-[var(--bh-border)]">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
+                                  {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`}
+                                </span>
+                              </div>
+                              <div className="w-px h-6 bg-slate-100 dark:bg-[var(--bh-border)] mx-2"></div>
+                              <div className="flex flex-col items-end">
+                                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Time</span>
+                                <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
+                                  {isBlank ? 'N/A' : `${res.totalTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}h`}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  </SortableItem>
+                );
+              })}
+            </SortableContext>
+            <DragOverlay dropAnimation={null}>
+              {activeDragId && !activeDragId.includes('::') ? (() => {
+                const s = scenarios.find(i => i.id === activeDragId);
+                if (!s) return null;
+                return (
+                  <div className="bg-white dark:bg-[var(--bh-surface-0)] rounded-xl border border-blue-500 shadow-2xl p-4 w-[280px] h-[150px] overflow-hidden relative cursor-grabbing opacity-90 ring-2 ring-blue-500/20">
+                    <div className="absolute top-2 left-2 z-20"><GripVertical className="p-1 w-5 h-5 text-blue-500" /></div>
+                    <div className="pl-8 pt-1">
+                      <div className="font-bold text-sm mb-1">{s.name}</div>
+                      <div className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">{s.bitSequence.length} bits configured</div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })() : null}
+            </DragOverlay>
+          </DndContext>
           <button
             onClick={addScenario}
             className={clsx(
@@ -968,89 +953,91 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   <div className="text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2">No bits added yet. Click "Next Bit" to start.</div>
                 )}
 
-                {activeScenario.bitSequence.map((bitId, idx) => {
-                  const bit = bits.find(b => b.id === bitId);
-                  if (!bit) return null;
-                  const isDragging = draggedIndex === idx || touchDragBitIndex === idx;
-                  const isDragOver = dragOverIndex === idx;
-                  const isTouchSelected = touchBitSelection.isSelected(idx);
-                  return (
-                    <div
-                      key={`${bitId}-${idx}`}
-                      ref={(el) => { if (el) bitRefs.current.set(idx, el); }}
-                      className="flex items-center animate-in zoom-in-50 duration-200"
-                      draggable={!isTouch}
-                      onDragStart={(e) => {
-                        setDraggedIndex(idx);
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                      onDragEnd={() => {
-                        setDraggedIndex(null);
-                        setDragOverIndex(null);
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = 'move';
-                        if (draggedIndex !== null && draggedIndex !== idx) {
-                          setDragOverIndex(idx);
-                        }
-                      }}
-                      onDragLeave={() => {
-                        setDragOverIndex(null);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        if (draggedIndex !== null) {
-                          reorderSequence(activeScenario.id, draggedIndex, idx);
-                        }
-                      }}
-                      onTouchStart={(e) => handleBitTouchStart(e, idx)}
-                      onTouchMove={(e) => handleBitTouchMove(e, idx)}
-                      onTouchEnd={(e) => handleBitTouchEnd(e, idx)}
-                    >
-                      <div className={clsx(
-                        "relative group border hover:shadow-md transition-all rounded-xl p-3 pr-8 flex items-center gap-3 w-48 cursor-grab active:cursor-grabbing",
-                        isDragging
-                          ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-300 dark:border-[var(--bh-primary)] opacity-50 scale-95"
-                          : isDragOver
-                            ? "bg-emerald-50 dark:bg-[var(--bh-success)]/10 border-emerald-400 dark:border-[var(--bh-success)] scale-105 shadow-lg"
-                            : "bg-white dark:bg-[var(--bh-surface-1)] border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)]",
-                        isTouchSelected && "ring-2 ring-blue-400"
-                      )}>
-                        <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: bit.color }}></div>
-                        <div>
-                          <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)]">{bit.name}</div>
-                          <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
-                        </div>
-                        <span className={clsx(
-                          "absolute -top-2 -left-2 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2",
-                          isDragOver
-                            ? "bg-emerald-500 dark:bg-[var(--bh-success)] ring-emerald-200 dark:ring-[var(--bh-success)]/30"
-                            : "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
-                        )}>
-                          {idx + 1}
-                        </span>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleBitSequenceDragEnd}
+                >
+                  <SortableContext
+                    items={activeScenario.bitSequence.map((b, i) => `${b}::${i}`)}
+                    strategy={rectSortingStrategy}
+                  >
+                    {activeScenario.bitSequence.map((bitId, idx) => {
+                      const bit = bits.find(b => b.id === bitId);
+                      if (!bit) return null;
+                      const uniqueId = `${bitId}::${idx}`;
 
-                        <button
-                          onClick={() => removeFromSequence(activeScenario.id, idx)}
-                          className={clsx(
-                            "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors",
-                            isTouchSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      return (
+                        <div key={uniqueId} className="flex items-center">
+                          <SortableItem
+                            id={uniqueId}
+                            className="flex-shrink-0"
+                            trigger="handle"
+                            disabled={isTouch && !isEditMode}
+                          >
+                            <div className={clsx(
+                              "relative group border hover:shadow-md transition-all rounded-xl p-3 pr-8 flex items-center gap-3 w-48 bg-white dark:bg-[var(--bh-surface-0)]",
+                              "border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)]",
+                              /* Let's rely on SortableItem's isDragging style for opacity/drag state overrides if needed */
+                              touchBitSelection.isSelected(idx) && "ring-2 ring-blue-400"
+                            )}>
+                              <DragHandle className="mr-1 -ml-1" />
+                              <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: bit.color }}></div>
+                              <div>
+                                <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)]">{bit.name}</div>
+                                <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
+                              </div>
+                              <span className={clsx(
+                                "absolute -top-2 -left-2 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2",
+                                "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
+                              )}>
+                                {idx + 1}
+                              </span>
+
+                              <button
+                                onPointerDown={(e) => e.stopPropagation()} /* Prevent Drag start when clicking delete? With dnd-kit handles, simple click usually fine, but safe to stop propagation */
+                                onClick={() => removeFromSequence(activeScenario.id, idx)}
+                                className={clsx(
+                                  "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors",
+                                  isTouch
+                                    ? (isEditMode ? "opacity-100" : "opacity-0 hidden")
+                                    : "opacity-0 group-hover:opacity-100"
+                                )}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </SortableItem>
+
+                          {/* Connector */}
+                          {idx < activeScenario.bitSequence.length - 1 && (
+                            <div className="w-8 flex justify-center text-slate-300 dark:text-[var(--bh-text-mute)] mx-1">
+                              <ChevronRight className="w-4 h-4" />
+                            </div>
                           )}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {/* Connector or Next Button */}
-                      {idx < activeScenario.bitSequence.length - 1 && (
-                        <div className="w-8 flex justify-center text-slate-300 dark:text-[var(--bh-text-mute)]">
-                          <ChevronRight className="w-4 h-4" />
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      );
+                    })}
+                  </SortableContext>
+                  <DragOverlay dropAnimation={null}>
+                    {activeDragId && activeDragId.includes('::') ? (() => {
+                      const [bitId] = activeDragId.split('::');
+                      const bit = bits.find(b => b.id === bitId);
+                      if (!bit) return null;
+                      return (
+                        <div className="bg-white dark:bg-[var(--bh-surface-0)] border border-blue-500 shadow-2xl rounded-xl p-3 pr-8 flex items-center gap-3 w-48 cursor-grabbing opacity-90 ring-2 ring-blue-500/20">
+                          <GripVertical className="mr-1 -ml-1 w-5 h-5 text-blue-500" />
+                          <div className="w-1.5 h-10 rounded-full" style={{ backgroundColor: bit.color }}></div>
+                          <div>
+                            <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)]">{bit.name}</div>
+                            <div className="text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Moving...</div>
+                          </div>
+                        </div>
+                      );
+                    })() : null}
+                  </DragOverlay>
+                </DndContext>
 
                 {/* Add Button Logic */}
                 <div className="ml-2 flex items-center">
@@ -1187,6 +1174,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
       {/* Content injected from parent (Charts) */}
       {children}
+
+      <UndoToast
+        message={toast?.message || ''}
+        isVisible={!!toast}
+        onUndo={handleUndo}
+        onClose={() => setToast(null)}
+      />
     </div>
   );
 };
