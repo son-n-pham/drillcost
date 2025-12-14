@@ -240,7 +240,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
 
   return (
     <div className="card h-full flex flex-col">
-      <div className="px-4 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center justify-between">
+      <div className="px-2 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Drill className="w-4 h-4 text-slate-500 dark:text-[var(--bh-text-mute)]" />
           <h2 className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wide">Bit Options</h2>
@@ -260,7 +260,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
         </div>
       </div>
 
-      <div className="p-3 flex-1 overflow-y-auto">
+      <div className="px-2 py-3 flex-1 overflow-y-auto">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}

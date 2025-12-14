@@ -41,12 +41,12 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
 
   return (
     <div className="card transition-colors duration-300">
-      <div className="px-5 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center gap-2">
+      <div className="px-3 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center gap-2">
         <Settings className="w-4 h-4 text-slate-500 dark:text-[var(--bh-text-mute)]" />
         <h2 className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wide">Input Parameters</h2>
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="px-3 py-5 space-y-5">
         
         {/* Operation Cost */}
         <div className="group">
