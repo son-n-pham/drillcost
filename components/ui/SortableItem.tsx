@@ -73,7 +73,7 @@ export function DragHandle({ className, style }: { className?: string; style?: R
             {...listeners}
             style={style}
             className={twMerge(
-                'cursor-grab flex items-center justify-center p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 touch-none active:cursor-grabbing',
+                'relative cursor-grab flex items-center justify-center p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 touch-none active:cursor-grabbing after:absolute after:-inset-4 after:content-[""]',
                 isDragging && 'cursor-grabbing text-blue-500',
                 className
             )}

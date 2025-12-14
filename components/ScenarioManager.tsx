@@ -389,6 +389,62 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     .map(id => results.find(r => r.id === id))
     .filter((r): r is ScenarioResult => !!r);
 
+  const renderSequenceItem = (bit: Bit, idx: number, isOverlay = false) => {
+    return (
+      <div className="w-full flex items-center">
+        <div className={clsx(
+          "relative group border transition-all rounded-lg p-2 pr-7 flex items-center gap-2 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
+          isOverlay 
+            ? "border-blue-500 shadow-2xl ring-2 ring-blue-500/20 cursor-grabbing opacity-90"
+            : `border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md ${touchBitSelection.isSelected(idx) ? "ring-2 ring-blue-400" : ""}`
+        )}>
+          {isOverlay ? (
+             <GripVertical className="mr-0 -ml-1 scale-90 flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
+          ) : (
+             <DragHandle className="mr-0 -ml-1 scale-90 flex-shrink-0" style={{ color: bit.color }} />
+          )}
+          
+          <div className="min-w-0 flex-1">
+            <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
+            <div className="text-[10px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] truncate">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
+          </div>
+          
+          <span className={clsx(
+            "absolute -top-1.5 -left-1.5 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm ring-1",
+            "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
+          )}>
+            {idx + 1}
+          </span>
+
+          {!isOverlay && (
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); removeFromSequence(activeScenario!.id, idx); }}
+              className={clsx(
+                "absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors"
+                // Hide on mobile touch unless selected? keeping simple for now
+              )}
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Connector Arrow - Hidden in overlay or if last item? In list it was separated. */}
+        {/* The overlay shouldn't carry the arrow usually, or maybe it should? */}
+        {/* Original overlay code didn't have the arrow. The list item wrapper did. */}
+        {/* Let's include the arrow container but leave it empty/invisible for overlay if we want structure match, */}
+        {/* or just exclude it. The overlay code used to wrap in `w-full flex items-center pr-1` but didn't put arrow. */}
+        {/* But we need the layout to be `flex` to push the box. */}
+        
+        <div className="flex-shrink-0 w-8 flex justify-center text-slate-300 dark:text-[var(--bh-text-mute)]">
+          {!isOverlay && <ChevronRight className="w-4 h-4" />}
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Sticky Container for Header + Cards (large screens only) */}
@@ -483,7 +539,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     id={res.id}
                     className="h-full"
                     trigger="handle"
-                    disabled={isTouch && !isEditMode}
                   >
                     <div
                       onClick={(e) => {
@@ -893,7 +948,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       {activeScenario && !isCompareMode && (
         <div
           ref={detailsRef}
-          className="card animate-in fade-in duration-300 overflow-hidden transition-all duration-300 relative cursor-pointer hover:shadow-lg hover:scale-[1.005] group"
+          className="card animate-in fade-in duration-300 overflow-hidden transition-all duration-300 relative cursor-pointer hover:shadow-lg group"
           onClick={() => setIsScenarioZoomed(true)}
         >
           {/* Zoom indicator */}
@@ -993,64 +1048,28 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       const uniqueId = `${bitId}::${idx}`;
 
                       return (
-                        <SortableItem
-                          key={uniqueId}
-                          id={uniqueId}
-                          className="flex mb-2 w-full md:w-1/2 lg:w-1/3"
-                          style={{}}
-                          trigger="handle"
-                          disabled={isTouch && !isEditMode}
-                        >
-                          <div className="w-full flex items-center pr-1">
-                            <div className={clsx(
-                              "relative group border hover:shadow-md transition-all rounded-lg p-2 pr-7 flex items-center gap-2 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
-                              "border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)]",
-                              touchBitSelection.isSelected(idx) && "ring-2 ring-blue-400"
-                            )}>
-                              <DragHandle className="mr-0 -ml-1 scale-90 flex-shrink-0" style={{ color: bit.color }} />
-                              <div className="min-w-0 flex-1">
-                                <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
-                                <div className="text-[10px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] truncate">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
-                              </div>
-                              <span className={clsx(
-                                "absolute -top-1.5 -left-1.5 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm ring-1",
-                                "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
-                              )}>
-                                {idx + 1}
-                              </span>
-
-                              <button
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => { e.stopPropagation(); removeFromSequence(activeScenario.id, idx); }}
-                                className={clsx(
-                                  "absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors"
-                                )}
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-
-                            {/* Connector Arrow */}
-                            <div className="flex-shrink-0 w-8 flex justify-center text-slate-300 dark:text-[var(--bh-text-mute)]">
-                              <ChevronRight className="w-4 h-4" />
-                            </div>
-                          </div>
-                        </SortableItem>
+                        <div key={uniqueId} className="w-full md:w-1/2 lg:w-1/3 mb-2 pr-1">
+                          <SortableItem
+                            id={uniqueId}
+                            trigger="handle"
+                          >
+                            {renderSequenceItem(bit, idx)}
+                          </SortableItem>
+                        </div>
                       );
                     })}
                   </SortableContext>
                   <DragOverlay dropAnimation={null}>
                     {activeDragId && activeDragId.includes('::') ? (() => {
-                      const [bitId] = activeDragId.split('::');
+                      const [bitId, idxStr] = activeDragId.split('::');
+                      const idx = parseInt(idxStr, 10);
                       const bit = bits.find(b => b.id === bitId);
                       if (!bit) return null;
+                      
                       return (
-                        <div className="bg-white dark:bg-[var(--bh-surface-0)] border border-blue-500 shadow-2xl rounded-lg p-2 pr-7 flex items-center gap-2 w-48 cursor-grabbing opacity-90 ring-2 ring-blue-500/20">
-                          <GripVertical className="mr-0 -ml-1 w-4 h-4 text-blue-500" />
-                          <div className="w-1 h-8 rounded-full" style={{ backgroundColor: bit.color }}></div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate">{bit.name}</div>
-                            <div className="text-[10px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)]">Moving...</div>
+                        <div className="w-72 cursor-grabbing">
+                          <div className="w-full">
+                             {renderSequenceItem(bit, idx, true)}
                           </div>
                         </div>
                       );
