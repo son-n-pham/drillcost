@@ -465,7 +465,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   }
                 }}
                 onClick={() => {
-                  if (isTouch) return; // Touch devices use touch handlers
+                  // On touch-only devices (no hover), let touch handlers manage selection/activation
+                  // On hybrid devices (touch + mouse), allow click to activate immediately
+                  if (isTouch && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
+
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                   isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(activeTab === res.id ? '' : res.id);
                 }}
