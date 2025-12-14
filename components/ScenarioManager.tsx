@@ -459,7 +459,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
         </div>
 
         {/* Results Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -560,7 +560,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       </div>
 
                       {/* Body */}
-                      <div className="flex-1 flex flex-col items-center justify-center p-4">
+                      <div className="flex-1 flex flex-col items-center justify-center p-2">
                          <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase mb-1">Cost/{getUnitLabel(depthUnit)}</span>
                          {isBlank ? (
                             <span className="text-xl font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
