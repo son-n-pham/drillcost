@@ -161,7 +161,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, depthUnit }) => {
         {/* Header with drag handle, bit name, and delete - bit color background */}
         <div 
           className="flex items-center gap-2 px-2 py-2"
-          style={{ backgroundColor: bit.color }}
+          style={{ backgroundColor: bit.color, opacity: 0.7 }}
         >
           {/* Drag Handle */}
           <div className={clsx(

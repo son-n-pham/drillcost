@@ -30,6 +30,13 @@ import { CSS } from '@dnd-kit/utilities';
 import { UndoToast } from './ui/UndoToast';
 import { SortableItem, DragHandle } from './ui/SortableItem';
 
+const hexToRgba = (hex: string, alpha: number) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
 interface ScenarioManagerProps {
   bits: Bit[];
   scenarios: ScenarioConfig[];
@@ -464,7 +471,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(activeTab === res.id ? '' : res.id);
                       }}
                       className={clsx(
-                        "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group h-full bg-white dark:bg-[var(--bh-surface-0)]", // Ensure bg is set
+                        "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group h-full bg-white dark:bg-[var(--bh-surface-0)] flex flex-col", // Ensure bg is set
                         isCompareMode && isSelectedForCompare
                           ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-500 shadow-md ring-2 ring-blue-500/30"
                           : isActive && !isCompareMode
@@ -473,93 +480,68 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         touchCardSelection.isSelected(res.id) && "ring-2 ring-blue-400"
                       )}
                     >
+                      {/* Header */}
                       <div
-                        className="absolute top-0 left-0 w-full h-1"
+                        className="flex items-center justify-between px-2 py-2 transition-colors duration-200"
                         style={{
                           backgroundColor: (isActive && !isCompareMode) || (isCompareMode && isSelectedForCompare)
-                            ? getScenarioColor(idx)
-                            : 'transparent'
+                            ? hexToRgba(getScenarioColor(idx), 0.7)
+                            : hexToRgba(getScenarioColor(idx), 0.1)
                         }}
-                      ></div>
-
-                      {/* Compare Mode Checkbox */}
-                      {isCompareMode && (
-                        <div className="absolute top-2 left-2 z-10">
-                          {isSelectedForCompare ? (
-                            <CheckSquare className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
+                      >
+                        {/* Left: Drag or Checkbox */}
+                        <div className="flex-shrink-0 w-6 flex justify-center">
+                          {isCompareMode ? (
+                             isSelectedForCompare ? (
+                               <CheckSquare className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
+                             ) : (
+                               <Square className="w-5 h-5 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                             )
                           ) : (
-                            <Square className="w-5 h-5 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                             <DragHandle className={clsx("p-1 rounded", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
                           )}
                         </div>
-                      )}
 
-                      {/* Delete Button (visible on hover for desktop, or on touch selection for mobile) */}
-                      {!isCompareMode && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeScenario(e, res.id);
-                          }}
-                          className={clsx(
-                            "absolute top-2 right-2 p-1.5 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded-md transition-all z-10",
-                            isTouch
-                              ? (isEditMode ? "opacity-100" : "opacity-0 hidden")
-                              : "opacity-0 group-hover:opacity-100"
-                          )}
-                          title="Remove Scenario"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-
-                      {/* Drag Handle - 6 dots */}
-                      <div className={clsx(
-                        "absolute top-2 left-2 z-20",
-                        isCompareMode ? "hidden" : ""
-                      )}>
-                        <DragHandle className="p-1 hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] rounded bg-white/50 dark:bg-black/20 backdrop-blur-sm" />
-                      </div>
-
-                      <div className={clsx("transition-all duration-300", isScrolled ? "p-2" : "p-3", isCompareMode && "pl-9", !isCompareMode && "pl-8")}>
-                        <div className="flex justify-between items-start mb-2 gap-3">
-                          <h3 className={clsx("font-bold text-sm leading-snug flex-1 min-w-0 transition-all", (isActive && !isCompareMode) ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-600 dark:text-[var(--bh-text-mute)]", isScrolled && "text-xs")}>
+                        {/* Middle: Name */}
+                        <div className="flex-1 px-2 min-w-0 text-center">
+                          <h3 className={clsx(
+                            "font-bold text-sm truncate leading-snug",
+                            isActive ? "text-slate-900" : "text-slate-600 dark:text-[var(--bh-text-mute)]"
+                          )}>
                             {res.name}
                           </h3>
-                          <div className={clsx("flex flex-col items-end gap-1 shrink-0 transition-opacity duration-300", isScrolled ? "opacity-0 group-hover:opacity-100 absolute right-2 top-2" : "relative opacity-100")}>
-                            {isBestCost && <span className="text-[9px] font-bold bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-600 dark:text-[var(--bh-success)] border border-emerald-100 dark:border-[var(--bh-success)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Low Cost</span>}
-                            {!isBlank && res.status === 'incomplete' && <span className="text-[9px] font-bold bg-amber-50 dark:bg-[var(--bh-warning)]/10 text-amber-600 dark:text-[var(--bh-warning)] border border-amber-100 dark:border-[var(--bh-warning)]/20 px-2 py-0.5 rounded-full whitespace-nowrap">Incomplete</span>}
-                          </div>
                         </div>
 
-                        <div className="space-y-1">
-                          <div className="flex justify-between items-baseline">
-                            <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
-                            {isBlank ? (
-                              <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-300 dark:text-[var(--bh-text-weak)]" : "text-slate-300 dark:text-[var(--bh-text-mute)]", isScrolled ? "text-lg" : "text-xl")}>N/A</span>
-                            ) : (
-                              <span className={clsx("font-bold tracking-tight transition-all", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]", isScrolled ? "text-xl" : "text-2xl")}>
-                                ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                              </span>
-                            )}
-                          </div>
-                          <div className={clsx("overflow-hidden transition-all duration-300", isScrolled ? "max-h-0 opacity-0 group-hover:max-h-20 group-hover:opacity-100" : "max-h-20 opacity-100")}>
-                            <div className="flex justify-between items-center pt-1 border-t border-slate-50 dark:border-[var(--bh-border)]">
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Cost</span>
-                                <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                                  {isBlank ? 'N/A' : `$${(res.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`}
-                                </span>
-                              </div>
-                              <div className="w-px h-6 bg-slate-100 dark:bg-[var(--bh-border)] mx-2"></div>
-                              <div className="flex flex-col items-end">
-                                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Est. Total Time</span>
-                                <span className="text-sm font-semibold text-slate-700 dark:text-[var(--bh-text-weak)]">
-                                  {isBlank ? 'N/A' : `${res.totalTime.toLocaleString(undefined, { maximumFractionDigits: 0 })}h`}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                        {/* Right: Delete */}
+                        <div className="flex-shrink-0 w-6 flex justify-center">
+                          {!isCompareMode && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeScenario(e, res.id);
+                              }}
+                              className={clsx(
+                                "p-1 rounded-md transition-all",
+                                isActive ? "text-slate-800 hover:text-red-700 hover:bg-white/20" : "text-slate-400 dark:text-slate-500 hover:text-red-600 hover:bg-slate-100"
+                              )}
+                              title="Remove Scenario"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
+                      </div>
+
+                      {/* Body */}
+                      <div className="flex-1 flex flex-col items-center justify-center p-4">
+                         <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase mb-1">Cost/{getUnitLabel(depthUnit)}</span>
+                         {isBlank ? (
+                            <span className="text-xl font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
+                         ) : (
+                            <span className={clsx("font-bold tracking-tight text-2xl", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
+                              ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            </span>
+                         )}
                       </div>
                     </div>
                   </SortableItem>
@@ -586,11 +568,11 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             onClick={addScenario}
             className={clsx(
               "flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-2 group",
-              isScrolled ? "p-2 min-h-[60px]" : "p-4 min-h-[100px]"
+              "p-4 min-h-[100px]"
             )}
           >
-            <div className={clsx("rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors", isScrolled ? "w-6 h-6" : "w-10 h-10")}>
-              <Plus className={clsx(isScrolled ? "w-3 h-3" : "w-5 h-5")} />
+            <div className={clsx("rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors", "w-10 h-10")}>
+              <Plus className={clsx("w-5 h-5")} />
             </div>
             <span className="font-semibold text-sm">New Scenario</span>
           </button>
