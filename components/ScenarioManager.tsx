@@ -409,10 +409,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             <div className="text-[10px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] truncate">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
           </div>
           
-          <span className={clsx(
-            "absolute -top-1.5 -left-1.5 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm ring-1",
-            "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
-          )}>
+          <span 
+            className="absolute -top-1.5 -left-1.5 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm ring-1 ring-white dark:ring-[var(--bh-bg)]"
+            style={{ backgroundColor: bit.color }}
+          >
             {idx + 1}
           </span>
 
