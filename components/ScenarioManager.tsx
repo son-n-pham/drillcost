@@ -52,6 +52,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const touchCurrentY = useRef<number>(0);
 
   const stickyHeaderRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const isFirstRun = useRef(true);
   const [stickyOffset, setStickyOffset] = useState(280); // Default fallback
 
   useEffect(() => {
@@ -73,6 +75,34 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
     return () => resizeObserver.disconnect();
   }, [scenarios.length, isScrolled, isCompareMode]); // Re-calculate when layout shifting props change
+
+  // Scroll to details when active scenario changes
+  useEffect(() => {
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+
+    if (!isCompareMode && activeTab && detailsRef.current) {
+      // Check if we are on desktop (md breakpoint is usually 768px)
+      const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+      
+      // App Header is 64px (h-16)
+      const headerHeight = 64;
+      
+      // On desktop, the scenario cards container is sticky.
+      // On mobile, it is not sticky.
+      const stickyHeight = isDesktop && stickyHeaderRef.current 
+        ? stickyHeaderRef.current.offsetHeight 
+        : 0;
+        
+      // Calculate total offset
+      const totalOffset = headerHeight + stickyHeight + 20; // +20 for some breathing room
+      
+      detailsRef.current.style.scrollMarginTop = `${totalOffset}px`;
+      detailsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [activeTab, isCompareMode]);
 
   // Clean up stale selections when entering compare mode or when scenarios change
   useEffect(() => {
@@ -469,7 +499,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   // On hybrid devices (touch + mouse), allow click to activate immediately
                   if (isTouch && window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
 
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
                   isCompareMode ? toggleCompareSelection(res.id) : setActiveTab(activeTab === res.id ? '' : res.id);
                 }}
                 onTouchStart={(e) => handleCardTouchStart(e, idx, res.id)}
@@ -868,7 +897,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
       {/* Editor Area */}
       {activeScenario && !isCompareMode && (
-        <div className="card animate-in fade-in duration-300 overflow-hidden transition-colors duration-300 relative">
+        <div ref={detailsRef} className="card animate-in fade-in duration-300 overflow-hidden transition-colors duration-300 relative">
           {/* Colored accent bar matching the selected scenario */}
           <div
             className="absolute top-0 left-0 w-full h-1"
