@@ -885,7 +885,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     >
                       {/* Header */}
                       <div
-                        className="flex items-center justify-between px-2 py-2 transition-colors duration-200"
+                        className="flex items-center justify-between px-2 py-1.5 transition-colors duration-200"
                         style={{
                           backgroundColor: (isActive && !isCompareMode) || (isCompareMode && isSelectedForCompare)
                             ? hexToRgba(getScenarioColor(idx), 0.7)
@@ -896,19 +896,31 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         <div className="flex-shrink-0 w-6 flex justify-center">
                           {isCompareMode ? (
                              isSelectedForCompare ? (
-                               <CheckSquare className="w-5 h-5 text-blue-500 dark:text-[var(--bh-primary)]" />
+                               <CheckSquare className="w-4 h-4 text-blue-500 dark:text-[var(--bh-primary)]" />
                              ) : (
-                               <Square className="w-5 h-5 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                               <Square className="w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
                              )
                           ) : (
-                             <DragHandle className={clsx("p-1 rounded", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
+                             <DragHandle className={clsx("p-1 rounded w-5 h-5", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
                           )}
                         </div>
 
-                        {/* Middle: Name */}
-                        <div className="flex-1 px-2 min-w-0 text-center">
+                        {/* Middle: Name & Indicators */}
+                        <div className="flex-1 px-1 min-w-0 text-center flex items-center justify-center gap-1.5">
+                           {/* Status Icons */}
+                           {res.status === 'incomplete' && (
+                            <div className="relative group/tooltip">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0" />
+                            </div>
+                           )}
+                           {isBestCost && (
+                            <div className="relative group/tooltip">
+                              <Sparkles className="w-4 h-4 text-yellow-500 dark:text-yellow-400 shrink-0 fill-yellow-500/20 dark:fill-yellow-400/20 animate-pulse drop-shadow-sm" />
+                            </div>
+                           )}
+                           
                           <h3 className={clsx(
-                            "font-bold text-sm truncate leading-snug",
+                            "font-bold text-xs truncate leading-snug",
                             isActive ? "text-slate-900" : "text-slate-600 dark:text-[var(--bh-text-mute)]"
                           )}>
                             {res.name}
@@ -936,12 +948,12 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       </div>
 
                       {/* Body */}
-                      <div className="flex-1 flex flex-col items-center justify-center p-2">
-                         <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase mb-1">Cost/{getUnitLabel(depthUnit)}</span>
+                      <div className="flex-1 flex flex-col items-center justify-center p-1.5 min-h-[50px]">
+                         <span className="text-[10px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
                          {isBlank ? (
-                            <span className="text-xl font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
+                            <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
                          ) : (
-                            <span className={clsx("font-bold tracking-tight text-2xl", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
+                            <span className={clsx("font-bold tracking-tight text-xl", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
                               ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                             </span>
                          )}
@@ -956,7 +968,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 const s = scenarios.find(i => i.id === activeDragId);
                 if (!s) return null;
                 return (
-                  <div className="bg-white dark:bg-[var(--bh-surface-0)] rounded-xl border border-blue-500 shadow-2xl p-4 w-[280px] h-[150px] overflow-hidden relative cursor-grabbing opacity-90 ring-2 ring-blue-500/20">
+                  <div className="bg-white dark:bg-[var(--bh-surface-0)] rounded-xl border border-blue-500 shadow-2xl p-4 w-[280px] h-[100px] overflow-hidden relative cursor-grabbing opacity-90 ring-2 ring-blue-500/20">
                     <div className="absolute top-2 left-2 z-20"><GripVertical className="p-1 w-5 h-5 text-blue-500" /></div>
                     <div className="pl-8 pt-1">
                       <div className="font-bold text-sm mb-1">{s.name}</div>
@@ -970,14 +982,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           <button
             onClick={addScenario}
             className={clsx(
-              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-2 group",
-              "p-4 min-h-[100px]"
+              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-1 group",
+              "p-2 min-h-[85px] w-full"
             )}
           >
-            <div className={clsx("rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors", "w-10 h-10")}>
-              <Plus className={clsx("w-5 h-5")} />
+            <div className={clsx("rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors", "w-8 h-8")}>
+              <Plus className={clsx("w-4 h-4")} />
             </div>
-            <span className="font-semibold text-sm">New Scenario</span>
+            <span className="font-semibold text-xs">New Scenario</span>
           </button>
         </div>
       </div>
