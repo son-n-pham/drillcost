@@ -1012,18 +1012,18 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
             {/* Sequence Builder */}
             <div className="mb-8">
-              <div className="flex justify-between items-end mb-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-4">
                 <h4 className="text-sm font-bold text-slate-700 dark:text-[var(--bh-text)] flex items-center gap-2">
                   Sequence Strategy
                 </h4>
-                <div className="flex items-center gap-3">
-                  <div className="flex flex-col items-end">
+                <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
+                  <div className="flex flex-col items-start sm:items-end">
                     <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold tracking-wider">Coverage</span>
                     <span className="text-xs font-mono font-medium text-slate-600 dark:text-[var(--bh-text-weak)]">
                       {displayDepth(currentSequenceCapacity)} / {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}
                     </span>
                   </div>
-                  <div className="w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
+                  <div className="w-32 sm:w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
                     <div className="h-full bg-blue-500 dark:bg-[var(--bh-primary)] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                   </div>
                 </div>
@@ -1260,18 +1260,18 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
               {/* Sequence Builder */}
               <div className="mb-8">
-                <div className="flex justify-between items-end mb-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-4">
                   <h4 className="text-sm font-bold text-slate-700 dark:text-[var(--bh-text)] flex items-center gap-2">
                     Sequence Strategy
                   </h4>
-                  <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
+                    <div className="flex flex-col items-start sm:items-end">
                       <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold tracking-wider">Coverage</span>
                       <span className="text-xs font-mono font-medium text-slate-600 dark:text-[var(--bh-text-weak)]">
                         {displayDepth(currentSequenceCapacity)} / {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}
                       </span>
                     </div>
-                    <div className="w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
+                    <div className="w-32 sm:w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
                       <div className="h-full bg-blue-500 dark:bg-[var(--bh-primary)] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
                     </div>
                   </div>
