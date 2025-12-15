@@ -7,11 +7,12 @@ import BitsPanel from './components/BitsPanel';
 import ScenarioManager from './components/ScenarioManager';
 import SimulationCharts from './components/SimulationCharts';
 import SnowEffect from './components/SnowEffect';
-import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown, Snowflake } from 'lucide-react';
+import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown, Snowflake, Undo, Redo, MoreVertical } from 'lucide-react';
 import { SAMPLE_PARAMS, SAMPLE_BITS, SAMPLE_SCENARIOS } from './sampleData';
 import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
 import { DepthUnit, convertDepth, getUnitLabel } from './utils/unitUtils';
+import { useUndoRedo } from './hooks/useUndoRedo';
 
 const STORAGE_KEY = 'drillcost-pro-state';
 
@@ -57,21 +58,67 @@ const sanitizeScenarios = (scenarios: ScenarioConfig[], validBitIds: Set<string>
 const App: React.FC = () => {
   // Initialize state from localStorage if available, otherwise use defaults
   // Using lazy initialization to only load from localStorage once on mount
-  const [params, setParams] = useState<GlobalParams>(() => {
+  const [appData, setAppData, undo, redo, canUndo, canRedo] = useUndoRedo(() => {
     const saved = loadSavedState();
-    return saved?.params ?? INITIAL_GLOBAL_PARAMS;
-  });
-  const [bits, setBits] = useState<Bit[]>(() => {
-    const saved = loadSavedState();
-    return saved?.bits ?? INITIAL_BITS;
-  });
-  const [scenarios, setScenarios] = useState<ScenarioConfig[]>(() => {
-    const saved = loadSavedState();
-    const loadedScenarios = saved?.scenarios ?? INITIAL_SCENARIOS;
-    const loadedBits = saved?.bits ?? INITIAL_BITS;
+    const loadedBits = (saved?.bits ?? INITIAL_BITS) as Bit[];
+    const loadedScenarios = (saved?.scenarios ?? INITIAL_SCENARIOS) as ScenarioConfig[];
     const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
-    return sanitizeScenarios(loadedScenarios, validBitIds);
-  });
+    const sanitizedScenarios = sanitizeScenarios(loadedScenarios, validBitIds);
+
+    return {
+      params: (saved?.params ?? INITIAL_GLOBAL_PARAMS) as GlobalParams,
+      bits: loadedBits,
+      scenarios: sanitizedScenarios
+    };
+  }, 3);
+
+  const { params, bits, scenarios } = appData;
+
+  // Keyboard shortcuts for Undo/Redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if input or textarea is focused to avoid conflict
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          if (canRedo) redo();
+        } else {
+          if (canUndo) undo();
+        }
+        e.preventDefault();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === 'y') {
+        if (canRedo) redo();
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, canUndo, canRedo]);
+
+  const setParams = (newParams: GlobalParams | ((prev: GlobalParams) => GlobalParams)) => {
+    setAppData(prev => ({
+      ...prev,
+      params: typeof newParams === 'function' ? newParams(prev.params) : newParams
+    }));
+  };
+
+  const setBits = (newBits: Bit[] | ((prev: Bit[]) => Bit[])) => {
+    setAppData(prev => ({
+      ...prev,
+      bits: typeof newBits === 'function' ? newBits(prev.bits) : newBits
+    }));
+  };
+
+  const setScenarios = (newScenarios: ScenarioConfig[] | ((prev: ScenarioConfig[]) => ScenarioConfig[])) => {
+    setAppData(prev => ({
+      ...prev,
+      scenarios: typeof newScenarios === 'function' ? newScenarios(prev.scenarios) : newScenarios
+    }));
+  };
   const [theme, setTheme] = useState<'light' | 'dark' | 'xmas'>(() => {
     const saved = loadSavedState();
     return saved?.theme ?? 'xmas';
@@ -90,9 +137,26 @@ const App: React.FC = () => {
   });
   
   const isScrolled = useScrolled();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Auto-save state to localStorage whenever it changes
   // Auto-save state to localStorage whenever it changes
   useEffect(() => {
     try {
@@ -160,6 +224,7 @@ const App: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    setIsMenuOpen(false);
   };
 
   const handleLoadState = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,13 +237,25 @@ const App: React.FC = () => {
         const content = e.target?.result as string;
         const state = JSON.parse(content);
         
-        if (state.params) setParams(state.params);
-        if (state.bits) setBits(state.bits);
-        if (state.scenarios) {
-          // Sanitize scenarios to remove orphan bit IDs
-          const validBitIds = new Set((state.bits || bits).map((b: Bit) => b.id));
-          const sanitizedScenarios = sanitizeScenarios(state.scenarios, validBitIds);
-          setScenarios(sanitizedScenarios);
+        if (state.params && state.bits && state.scenarios) {
+           const validBitIds = new Set((state.bits as Bit[]).map((b: Bit) => b.id));
+           const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
+           
+           setAppData(prev => ({
+             ...prev,
+             params: state.params,
+             bits: state.bits as Bit[],
+             scenarios: sanitizedScenarios
+           }));
+        } else {
+             // Fallback partial updates if strictly needed, but for now assuming valid full file
+             if (state.params) setParams(state.params);
+             if (state.bits) setBits(state.bits as Bit[]);
+             if (state.scenarios) {
+                const validBitIds = new Set(((state.bits || bits) as Bit[]).map((b: Bit) => b.id));
+                const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
+                setScenarios(sanitizedScenarios);
+             }
         }
         if (state.depthUnit) setDepthUnit(state.depthUnit);
         if (state.compareSelections) setCompareSelections(state.compareSelections);
@@ -192,34 +269,42 @@ const App: React.FC = () => {
     reader.readAsText(file);
     // Reset input so same file can be selected again if needed
     event.target.value = '';
+    setIsMenuOpen(false);
   };
 
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
+    setIsMenuOpen(false);
   };
 
   const handleClearState = () => {
-    setParams({
-      operationCostPerDay: 0,
-      tripSpeed: 0,
-      standLength: 0,
-      depthIn: 0,
-      intervalToDrill: 0,
-      circulatingHours: 0,
+    setAppData({
+      params: {
+        operationCostPerDay: 0,
+        tripSpeed: 0,
+        standLength: 0,
+        depthIn: 0,
+        intervalToDrill: 0,
+        circulatingHours: 0,
+      },
+      bits: [],
+      scenarios: []
     });
-    setBits([]);
-    setScenarios([]);
     try {
       localStorage.clear();
     } catch (e) {
       console.warn('Failed to clear localStorage', e);
     }
+    setIsMenuOpen(false);
   };
 
   const handleLoadSampleData = () => {
-    setParams(SAMPLE_PARAMS);
-    setBits(SAMPLE_BITS);
-    setScenarios(SAMPLE_SCENARIOS);
+    setAppData({
+      params: SAMPLE_PARAMS,
+      bits: SAMPLE_BITS,
+      scenarios: SAMPLE_SCENARIOS
+    });
+    setIsMenuOpen(false);
   };
 
   const toggleUnit = () => {
@@ -227,14 +312,14 @@ const App: React.FC = () => {
   };
 
   const handleRemoveBit = (bitId: string) => {
-    // 1. Remove from bits list
-    setBits(prevBits => prevBits.filter(b => b.id !== bitId));
-
-    // 2. Remove from all scenarios
-    setScenarios(prevScenarios => prevScenarios.map(scen => ({
-      ...scen,
-      bitSequence: scen.bitSequence.filter(id => id !== bitId)
-    })));
+    setAppData(prev => ({
+       ...prev,
+       bits: prev.bits.filter(b => b.id !== bitId),
+       scenarios: prev.scenarios.map(scen => ({
+         ...scen,
+         bitSequence: scen.bitSequence.filter(id => id !== bitId)
+       }))
+    }));
   };
 
   return (
@@ -251,20 +336,145 @@ const App: React.FC = () => {
 
       {/* Header */}
       <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <img 
-              src={logoIcon}
-              alt="DrillCost Logo" 
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg shadow-md shadow-blue-200 dark:shadow-none transition-all"
-            />
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[var(--bh-text)] tracking-tight leading-none transition-all">DrillCost</h1>
-              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wide mt-0.5 transition-all">What-If?!</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+          
+          {/* Left Side: Identity + Action Toolbar */}
+          <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0 pr-2">
+            
+            {/* Identity */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <img 
+                src={logoIcon}
+                alt="DrillCost Logo" 
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shadow-lg shadow-blue-500/20 dark:shadow-none transition-all hover:scale-105"
+              />
+              <div className="flex flex-col">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent tracking-tight leading-none">
+                  DrillCost
+                </h1>
+                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 tracking-widest uppercase mt-0.5 hidden sm:inline-block">
+                  What-If?!
+                </span>
+              </div>
+            </div>
+
+            <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] flex-shrink-0"></div>
+
+            {/* Actions Toolbar */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+               {/* History Group - Always Visible */}
+               <div className="flex items-center gap-0.5 bg-slate-50 dark:bg-[var(--bh-surface-2)] p-1 rounded-lg border border-slate-100 dark:border-[var(--bh-border)]">
+                 <button 
+                   onClick={undo}
+                   disabled={!canUndo}
+                   className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-white dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] dark:hover:bg-[var(--bh-surface-1)] disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm hover:shadow"
+                   title="Undo (Ctrl+Z)"
+                 >
+                   <Undo className="w-4 h-4" />
+                 </button>
+                 <button 
+                   onClick={redo}
+                   disabled={!canRedo}
+                   className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-white dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] dark:hover:bg-[var(--bh-surface-1)] disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm hover:shadow"
+                   title="Redo (Ctrl+Y)"
+                 >
+                   <Redo className="w-4 h-4" />
+                 </button>
+               </div>
+
+               <div className="w-2"></div>
+
+               {/* Desktop: Full Toolbar */}
+               <div className="hidden md:flex items-center gap-1">
+                  {/* File Group */}
+                  <div className="flex items-center gap-1">
+                    <button 
+                      onClick={triggerFileUpload}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                      title="Load Scenarios"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span className="hidden xl:inline">Load</span>
+                    </button>
+                    <button 
+                      onClick={handleSaveState}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                      title="Save Scenarios"
+                    >
+                      <Download className="w-4 h-4" />
+                      <span className="hidden xl:inline">Save</span>
+                    </button>
+                  </div>
+
+                  <div className="h-4 w-px bg-slate-200 dark:bg-[var(--bh-border)] mx-1"></div>
+
+                  {/* Utility Group */}
+                  <button 
+                    onClick={handleLoadSampleData}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                    title="Load Sample Data"
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span className="hidden xl:inline">Sample</span>
+                  </button>
+                  <button 
+                    onClick={handleClearState}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 dark:text-[var(--bh-text-mute)] dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                    title="Clear All Scenarios"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden xl:inline">Clear</span>
+                  </button>
+               </div>
+
+               {/* Mobile: More Dropdown */}
+               <div className="md:hidden relative" ref={menuRef}>
+                  <button 
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {isMenuOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-200 dark:border-[var(--bh-border)] backdrop-blur-md overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                      <div className="p-1 flex flex-col gap-0.5">
+                        <button 
+                          onClick={triggerFileUpload}
+                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
+                        >
+                          <Upload className="w-4 h-4" /> Load
+                        </button>
+                        <button 
+                          onClick={handleSaveState}
+                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" /> Save
+                        </button>
+                        <div className="h-px bg-slate-100 dark:bg-[var(--bh-border)] my-1"></div>
+                        <button 
+                          onClick={handleLoadSampleData}
+                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" /> Sample Data
+                        </button>
+                        <button 
+                          onClick={handleClearState}
+                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                        >
+                          <Trash2 className="w-4 h-4" /> Clear All
+                        </button>
+                      </div>
+                    </div>
+                  )}
+               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4">
-             <div className="hidden lg:flex flex-col items-end mr-4">
+
+          {/* Right Side: Target & Theme */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+             <div className="hidden lg:flex flex-col items-end border-r border-slate-200 dark:border-[var(--bh-border)] pr-4">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Target className="w-3 h-3" /> Target Depth
                 </span>
@@ -284,61 +494,10 @@ const App: React.FC = () => {
                   </button>
                 </div>
              </div>
-             
-             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden lg:block"></div>
-
-             <div className="flex items-center gap-1 sm:gap-2">
-                <button 
-                  onClick={triggerFileUpload}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center group"
-                  title="Load Scenarios"
-                >
-                  <Upload className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className={clsx(
-                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
-                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
-                  )}>Load</span>
-                </button>
-                <button 
-                  onClick={handleSaveState}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors flex items-center group"
-                  title="Save Scenarios"
-                >
-                  <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className={clsx(
-                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
-                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
-                  )}>Save</span>
-                </button>
-                <button 
-                  onClick={handleClearState}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-danger)] transition-colors flex items-center group"
-                  title="Clear All Scenarios"
-                >
-                  <Trash2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className={clsx(
-                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
-                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
-                  )}>Clear</span>
-                </button>
-                <button 
-                  onClick={handleLoadSampleData}
-                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-accent)] transition-colors flex items-center group"
-                  title="Load Sample Data"
-                >
-                  <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span className={clsx(
-                    "text-xs font-semibold overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-out hidden md:inline-block",
-                    isScrolled ? "max-w-0 opacity-0 ml-0" : "max-w-[60px] opacity-100 ml-2"
-                  )}>Sample</span>
-                </button>
-             </div>
-
-             <div className="h-8 w-px bg-slate-200 dark:bg-[var(--bh-border)] hidden lg:block"></div>
 
               <button 
                 onClick={toggleTheme}
-                className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-colors"
+                className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-all hover:scale-105 active:scale-95"
                 title={`Current Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`}
               >
                 {theme === 'light' && <Sun className="w-5 h-5" />}

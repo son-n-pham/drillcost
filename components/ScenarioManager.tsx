@@ -75,6 +75,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   // Scenario Detail Zoom State
   const [isScenarioZoomed, setIsScenarioZoomed] = useState(false);
   const zoomModalRef = useRef<HTMLDivElement>(null);
+  const [scenarioToDelete, setScenarioToDelete] = useState<string | null>(null);
 
   const handleUndo = useCallback(() => {
     if (toast) {
@@ -102,7 +103,18 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       }
     };
     document.addEventListener('keydown', handleEscKey);
-    return () => document.removeEventListener('keydown', handleEscKey);
+    
+    // Lock body scroll when zoomed
+    if (isScenarioZoomed) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = '';
+    };
   }, [isScenarioZoomed, closeZoomModal]);
 
   // Touch support: track which items are "selected" to show delete button
@@ -446,6 +458,313 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     );
   };
 
+  // Helper to render the editor content (shared between inline and portal)
+  const renderEditor = (isZoomed: boolean) => {
+    if (!activeScenario) return null;
+
+    return (
+      <>
+        {/* Backdrop for Zoom */}
+        {isZoomed && (
+            <div 
+              className="fixed inset-0 z-[9998] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300"
+              onClick={closeZoomModal}
+            />
+        )}
+        
+        <div
+          ref={isZoomed ? zoomModalRef : detailsRef}
+          className={clsx(
+            "animate-in fade-in duration-300 transition-all duration-300 group", // Base classes (removed relative/overflow-hidden)
+            isZoomed
+              ? "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] sm:w-[90vw] md:w-full md:max-w-5xl h-auto max-h-[90vh] z-[9999] bg-white dark:bg-[var(--bh-surface-0)] overflow-y-auto cursor-default shadow-2xl rounded-2xl border border-slate-200 dark:border-[var(--bh-border)]"
+              : "relative overflow-hidden card cursor-pointer hover:shadow-lg rounded-xl border border-slate-200 dark:border-[var(--bh-border)] bg-white dark:bg-[var(--bh-surface-0)]"
+          )}
+          onClick={(e) => {
+             if (!isZoomed) {
+                setIsScenarioZoomed(true);
+             }
+             e.stopPropagation();
+          }}
+        >
+          {/* Zoom indicator - Only show when NOT zoomed */}
+          {!isZoomed && (
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+              </div>
+            </div>
+          )}
+          {/* Colored accent bar matching the selected scenario */}
+          <div
+            className="absolute top-0 left-0 w-full h-1"
+            style={{ backgroundColor: getScenarioColor(scenarios.findIndex(s => s.id === activeTab)) }}
+          ></div>
+          {/* Scenario Header */}
+          <div className={clsx("px-6 py-5 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]", isZoomed && "sticky top-0 z-30 backdrop-blur-sm bg-white/80 dark:bg-[var(--bh-surface-0)]/80")}>
+            <div className="flex items-center gap-3 w-full max-w-md">
+              <div className="p-2 bg-white dark:bg-[var(--bh-surface-0)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-slate-400 dark:text-[var(--bh-text-mute)]">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div className="w-full" onClick={(e) => e.stopPropagation()}>
+                <input
+                  className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] bg-transparent outline-none w-full placeholder:text-slate-300 dark:placeholder:text-[var(--bh-text-mute)] focus:text-blue-700 dark:focus:text-[var(--bh-primary)] transition-colors"
+                  value={activeScenario.name}
+                  onChange={(e) => updateScenario(activeScenario.id, { name: e.target.value })}
+                  placeholder="Scenario Name"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => { 
+                   e.stopPropagation(); 
+                   setScenarioToDelete(activeScenario.id);
+                }}
+                className="text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-surface-2)] p-2 rounded-lg transition-colors group"
+                title="Delete Scenario"
+              >
+                <Trash2 className="w-4 h-4 group-hover:stroke-red-500" />
+              </button>
+              
+              {isZoomed && (
+                <>
+                  <div className="w-px h-6 bg-slate-200 dark:bg-[var(--bh-border)] mx-2" />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); closeZoomModal(); }}
+                    className="text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-slate-600 dark:hover:text-[var(--bh-text)] hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] p-2 rounded-lg transition-colors"
+                    title="Close Zoom"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Alerts */}
+            {activeResult?.status === 'incomplete' && activeResult.steps.length > 1 && (
+              <div className="mb-6 bg-amber-50 dark:bg-[var(--bh-warning)]/10 border border-amber-200 dark:border-[var(--bh-warning)]/20 rounded-lg p-4 flex items-start gap-4 shadow-sm">
+                <div className="p-2 bg-amber-100 dark:bg-[var(--bh-warning)]/20 rounded-full shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-[var(--bh-warning)]" />
+                </div>
+                <div>
+                  <h5 className="text-sm font-bold text-amber-900 dark:text-[var(--bh-warning)]">Target Not Reached</h5>
+                  <p className="text-sm text-amber-700 dark:text-[var(--bh-text-weak)] mt-1 leading-relaxed">
+                    Current sequence covers <span className="font-bold">{displayDepth(currentSequenceCapacity)}{getUnitLabel(depthUnit)}</span> of the required {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}.
+                    You need <strong>{displayDepth(params.intervalToDrill - currentSequenceCapacity)}{getUnitLabel(depthUnit)}</strong> more.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Sequence Builder */}
+            <div className="mb-8">
+              <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-4">
+                <h4 className="text-sm font-bold text-slate-700 dark:text-[var(--bh-text)] flex items-center gap-2">
+                  Sequence Strategy
+                </h4>
+                <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
+                  <div className="flex flex-col items-start sm:items-end">
+                    <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold tracking-wider">Coverage</span>
+                    <span className="text-xs font-mono font-medium text-slate-600 dark:text-[var(--bh-text-weak)]">
+                      {displayDepth(currentSequenceCapacity)} / {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}
+                    </span>
+                  </div>
+                  <div className="w-32 sm:w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 dark:bg-[var(--bh-primary)] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-stretch">
+                {activeScenario.bitSequence.length === 0 && (
+                  <div className="w-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-2">No bits added yet. Click "Next Bit" to start.</div>
+                )}
+
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleBitSequenceDragEnd}
+                >
+                  <SortableContext
+                    items={activeScenario.bitSequence.map((b, i) => `${b}::${i}`)}
+                    strategy={rectSortingStrategy}
+                  >
+                    {activeScenario.bitSequence.map((bitId, idx) => {
+                      const bit = bits.find(b => b.id === bitId);
+                      if (!bit) return null;
+                      const uniqueId = `${bitId}::${idx}`;
+
+                      return (
+                        <div key={uniqueId} className="w-full md:w-1/2 lg:w-1/3 mb-2 pr-1">
+                          <SortableItem
+                            id={uniqueId}
+                            trigger="handle"
+                          >
+                            {renderSequenceItem(bit, idx)}
+                          </SortableItem>
+                        </div>
+                      );
+                    })}
+                  </SortableContext>
+                  <DragOverlay dropAnimation={null}>
+                    {activeDragId && activeDragId.includes('::') ? (() => {
+                      const [bitId, idxStr] = activeDragId.split('::');
+                      const idx = parseInt(idxStr, 10);
+                      const bit = bits.find(b => b.id === bitId);
+                      if (!bit) return null;
+                      
+                      return (
+                        <div className="w-72 cursor-grabbing">
+                          <div className="w-full">
+                             {renderSequenceItem(bit, idx, true)}
+                          </div>
+                        </div>
+                      );
+                    })() : null}
+                  </DragOverlay>
+                </DndContext>
+
+                {/* Next/Complete Button - sits after the last bit, wraps if needed */}
+                <div className="flex items-center mb-2">
+                  {/* Small spacer if it lands on a new line? No, flex gap handles spacing generally, but we need consistency. 
+                      Since bits have 'w-full pr-1', the button should just plop in. 
+                  */}
+                  
+                  {isTargetReached ? (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-700 dark:text-[var(--bh-success)] rounded-lg border border-emerald-200 dark:border-[var(--bh-success)]/20 text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-left-2 h-[50px]">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Complete</span>
+                    </div>
+                  ) : (
+                    <div className="relative" ref={dropdownRef}>
+                      <button
+                        ref={buttonRef}
+                        onClick={(e) => { e.stopPropagation(); toggleDropdown(); }}
+                        className={clsx(
+                          "flex items-center gap-2 text-sm font-semibold px-4 py-3 rounded-xl transition-all border shadow-sm h-[50px]",
+                          isDropdownOpen
+                            ? "bg-blue-50 dark:bg-[var(--bh-surface-2)] text-blue-700 dark:text-[var(--bh-primary)] border-blue-200 dark:border-[var(--bh-primary)] ring-2 ring-blue-100 dark:ring-[var(--bh-primary)]/30"
+                            : "bg-white dark:bg-[var(--bh-surface-0)] text-slate-600 dark:text-[var(--bh-text-weak)] border-dashed border-slate-300 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)]"
+                        )}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Next Bit</span>
+                      </button>
+
+                      {isDropdownOpen && (
+                        <div className={clsx(
+                          "absolute left-0 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-60 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
+                          dropdownPosition === 'top'
+                            ? "bottom-full mb-2"
+                            : "top-full mt-2"
+                        )}>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Select Bit Type</div>
+                          <div className="max-h-60 overflow-y-auto space-y-0.5">
+                            {bits.map(bit => (
+                              <button
+                                key={bit.id}
+                                onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
+                                className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] hover:text-blue-700 dark:hover:text-[var(--bh-primary)] rounded-lg flex items-center gap-3 transition-colors group"
+                              >
+                                <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold">{bit.name}</span>
+                                  <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Metrics Footer */}
+            {activeResult && (
+              <div className="bg-slate-50 dark:bg-[var(--bh-surface-1)] rounded-xl p-5 border border-slate-200/60 dark:border-[var(--bh-border)]">
+                <h4 className="text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  Performance Breakdown
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Bits Consumed</span>
+                    <div className="space-y-3">
+                      {activeResult.bitsUsed.length > 0 ? (
+                        activeResult.bitsUsed.map((b, i) => (
+                          <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-[var(--bh-text)]">
+                            <span>{b.name}</span>
+                            <span className="text-slate-400 dark:text-[var(--bh-text-mute)]">x{b.count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic">None</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Est. Total Time</span>
+                    {activeResult.steps.length > 1 ? (
+                      <>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">{(activeResult.totalTime / 24).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
+                          <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">days</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">{activeResult.totalTime.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} hours</div>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Avg ROP (Gross)</span>
+                    {activeResult.steps.length > 1 ? (
+                      <>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">
+                            {(activeResult.totalTime > 0 ? convertDepth(((activeResult.steps[activeResult.steps.length - 1]?.depth - params.depthIn) / activeResult.totalTime), depthUnit).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0)}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">{getSpeedLabel(depthUnit)}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Includes tripping</div>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Est. Total Cost</span>
+                    {activeResult.steps.length > 1 ? (
+                      <>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on Operation Rate</div>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -947,460 +1266,60 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       )}
 
       {/* Editor Area */}
-      {activeScenario && !isCompareMode && (
-        <div
-          ref={detailsRef}
-          className="card animate-in fade-in duration-300 overflow-hidden transition-all duration-300 relative cursor-pointer hover:shadow-lg group"
-          onClick={() => setIsScenarioZoomed(true)}
-        >
-          {/* Zoom indicator */}
-          <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
-            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <polyline points="9 21 3 21 3 15"></polyline>
-                <line x1="21" y1="3" x2="14" y2="10"></line>
-                <line x1="3" y1="21" x2="10" y2="14"></line>
-              </svg>
-            </div>
-          </div>
-          {/* Colored accent bar matching the selected scenario */}
-          <div
-            className="absolute top-0 left-0 w-full h-1"
-            style={{ backgroundColor: getScenarioColor(scenarios.findIndex(s => s.id === activeTab)) }}
-          ></div>
-          {/* Scenario Header */}
-          <div className="px-6 py-5 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]">
-            <div className="flex items-center gap-3 w-full max-w-md">
-              <div className="p-2 bg-white dark:bg-[var(--bh-surface-0)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-slate-400 dark:text-[var(--bh-text-mute)]">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <div className="w-full" onClick={(e) => e.stopPropagation()}>
-                <input
-                  className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)] bg-transparent outline-none w-full placeholder:text-slate-300 dark:placeholder:text-[var(--bh-text-mute)] focus:text-blue-700 dark:focus:text-[var(--bh-primary)] transition-colors"
-                  value={activeScenario.name}
-                  onChange={(e) => updateScenario(activeScenario.id, { name: e.target.value })}
-                  placeholder="Scenario Name"
-                />
-              </div>
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); removeScenario(e, activeScenario.id); }}
-              className="text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-surface-2)] p-2 rounded-lg transition-colors"
-              title="Delete Scenario"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+      {/* Editor Area */}
+      {/* If NOT zoomed, render normally. If zoomed, the Portal will handle it below. */}
+      {activeScenario && !isCompareMode && !isScenarioZoomed && renderEditor(false)}
 
-          <div className="p-6">
-            {/* Alerts */}
-            {activeResult?.status === 'incomplete' && activeResult.steps.length > 1 && (
-              <div className="mb-6 bg-amber-50 dark:bg-[var(--bh-warning)]/10 border border-amber-200 dark:border-[var(--bh-warning)]/20 rounded-lg p-4 flex items-start gap-4 shadow-sm">
-                <div className="p-2 bg-amber-100 dark:bg-[var(--bh-warning)]/20 rounded-full shrink-0">
-                  <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-[var(--bh-warning)]" />
-                </div>
-                <div>
-                  <h5 className="text-sm font-bold text-amber-900 dark:text-[var(--bh-warning)]">Target Not Reached</h5>
-                  <p className="text-sm text-amber-700 dark:text-[var(--bh-text-weak)] mt-1 leading-relaxed">
-                    Current sequence covers <span className="font-bold">{displayDepth(currentSequenceCapacity)}{getUnitLabel(depthUnit)}</span> of the required {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}.
-                    You need <strong>{displayDepth(params.intervalToDrill - currentSequenceCapacity)}{getUnitLabel(depthUnit)}</strong> more.
-                  </p>
-                </div>
-              </div>
-            )}
+      {/* Portal for Zoom */}
+      {isScenarioZoomed && activeScenario && ReactDOM.createPortal(renderEditor(true), document.body)}
 
-            {/* Sequence Builder */}
-            <div className="mb-8">
-              <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-4">
-                <h4 className="text-sm font-bold text-slate-700 dark:text-[var(--bh-text)] flex items-center gap-2">
-                  Sequence Strategy
-                </h4>
-                <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
-                  <div className="flex flex-col items-start sm:items-end">
-                    <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold tracking-wider">Coverage</span>
-                    <span className="text-xs font-mono font-medium text-slate-600 dark:text-[var(--bh-text-weak)]">
-                      {displayDepth(currentSequenceCapacity)} / {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}
-                    </span>
-                  </div>
-                  <div className="w-32 sm:w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 dark:bg-[var(--bh-primary)] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex flex-wrap items-stretch">
-                {activeScenario.bitSequence.length === 0 && (
-                  <div className="w-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-2">No bits added yet. Click "Next Bit" to start.</div>
-                )}
+      {/* Content injected from parent (Charts) */}
+      {children}
 
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragStart={handleDragStart}
-                  onDragEnd={handleBitSequenceDragEnd}
-                >
-                  <SortableContext
-                    items={activeScenario.bitSequence.map((b, i) => `${b}::${i}`)}
-                    strategy={rectSortingStrategy}
-                  >
-                    {activeScenario.bitSequence.map((bitId, idx) => {
-                      const bit = bits.find(b => b.id === bitId);
-                      if (!bit) return null;
-                      const uniqueId = `${bitId}::${idx}`;
-
-                      return (
-                        <div key={uniqueId} className="w-full md:w-1/2 lg:w-1/3 mb-2 pr-1">
-                          <SortableItem
-                            id={uniqueId}
-                            trigger="handle"
-                          >
-                            {renderSequenceItem(bit, idx)}
-                          </SortableItem>
-                        </div>
-                      );
-                    })}
-                  </SortableContext>
-                  <DragOverlay dropAnimation={null}>
-                    {activeDragId && activeDragId.includes('::') ? (() => {
-                      const [bitId, idxStr] = activeDragId.split('::');
-                      const idx = parseInt(idxStr, 10);
-                      const bit = bits.find(b => b.id === bitId);
-                      if (!bit) return null;
-                      
-                      return (
-                        <div className="w-72 cursor-grabbing">
-                          <div className="w-full">
-                             {renderSequenceItem(bit, idx, true)}
-                          </div>
-                        </div>
-                      );
-                    })() : null}
-                  </DragOverlay>
-                </DndContext>
-
-                {/* Next/Complete Button - sits after the last bit, wraps if needed */}
-                <div className="flex items-center mb-2">
-                  {/* Small spacer if it lands on a new line? No, flex gap handles spacing generally, but we need consistency. 
-                      Since bits have 'w-full pr-1', the button should just plop in. 
-                  */}
-                  
-                  {isTargetReached ? (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-700 dark:text-[var(--bh-success)] rounded-lg border border-emerald-200 dark:border-[var(--bh-success)]/20 text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-left-2 h-[50px]">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Complete</span>
-                    </div>
-                  ) : (
-                    <div className="relative" ref={dropdownRef}>
-                      <button
-                        ref={buttonRef}
-                        onClick={(e) => { e.stopPropagation(); toggleDropdown(); }}
-                        className={clsx(
-                          "flex items-center gap-2 text-sm font-semibold px-4 py-3 rounded-xl transition-all border shadow-sm h-[50px]",
-                          isDropdownOpen
-                            ? "bg-blue-50 dark:bg-[var(--bh-surface-2)] text-blue-700 dark:text-[var(--bh-primary)] border-blue-200 dark:border-[var(--bh-primary)] ring-2 ring-blue-100 dark:ring-[var(--bh-primary)]/30"
-                            : "bg-white dark:bg-[var(--bh-surface-0)] text-slate-600 dark:text-[var(--bh-text-weak)] border-dashed border-slate-300 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)]"
-                        )}
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span>Next Bit</span>
-                      </button>
-
-                      {isDropdownOpen && (
-                        <div className={clsx(
-                          "absolute left-0 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-60 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
-                          dropdownPosition === 'top'
-                            ? "bottom-full mb-2"
-                            : "top-full mt-2"
-                        )}>
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Select Bit Type</div>
-                          <div className="max-h-60 overflow-y-auto space-y-0.5">
-                            {bits.map(bit => (
-                              <button
-                                key={bit.id}
-                                onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
-                                className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] hover:text-blue-700 dark:hover:text-[var(--bh-primary)] rounded-lg flex items-center gap-3 transition-colors group"
-                              >
-                                <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
-                                <div className="flex flex-col">
-                                  <span className="font-semibold">{bit.name}</span>
-                                  <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Metrics Footer */}
-            {activeResult && (
-              <div className="bg-slate-50 dark:bg-[var(--bh-surface-1)] rounded-xl p-5 border border-slate-200/60 dark:border-[var(--bh-border)]">
-                <h4 className="text-xs font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <BarChart3 className="w-3.5 h-3.5" />
-                  Performance Breakdown
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Bits Consumed</span>
-                    <div className="space-y-3">
-                      {activeResult.bitsUsed.length > 0 ? (
-                        activeResult.bitsUsed.map((b, i) => (
-                          <div key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-[var(--bh-text)]">
-                            <span>{b.name}</span>
-                            <span className="text-slate-400 dark:text-[var(--bh-text-mute)]">x{b.count}</span>
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic">None</span>
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Est. Total Time</span>
-                    {activeResult.steps.length > 1 ? (
-                      <>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">{(activeResult.totalTime / 24).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
-                          <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">days</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">{activeResult.totalTime.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} hours</div>
-                      </>
-                    ) : (
-                      <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Avg ROP (Gross)</span>
-                    {activeResult.steps.length > 1 ? (
-                      <>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">
-                            {(activeResult.totalTime > 0 ? convertDepth(((activeResult.steps[activeResult.steps.length - 1]?.depth - params.depthIn) / activeResult.totalTime), depthUnit).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0)}
-                          </span>
-                          <span className="text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">{getSpeedLabel(depthUnit)}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Includes tripping</div>
-                      </>
-                    ) : (
-                      <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="text-[11px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Est. Total Cost</span>
-                    {activeResult.steps.length > 1 ? (
-                      <>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on Operation Rate</div>
-                      </>
-                    ) : (
-                      <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Scenario Detail Zoom Modal */}
-      {isScenarioZoomed && activeScenario && ReactDOM.createPortal(
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={handleModalBackdropClick}
-        >
-          <div
-            ref={zoomModalRef}
-            className="bg-white dark:bg-[var(--bh-surface-0)] rounded-2xl shadow-2xl border border-slate-200 dark:border-[var(--bh-border)] w-full max-w-5xl max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col"
-            onClick={(e) => e.stopPropagation()}
+      {/* Custom Delete Confirmation Modal */}
+      {scenarioToDelete && ReactDOM.createPortal(
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setScenarioToDelete(null)}>
+          <div 
+             className="bg-white dark:bg-[var(--bh-surface-0)] rounded-2xl shadow-2xl border border-slate-200 dark:border-[var(--bh-border)] w-full max-w-md p-6 animate-in zoom-in-95 duration-200"
+             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-[var(--bh-border)] flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getScenarioColor(scenarios.findIndex(s => s.id === activeTab)) }}
-                />
-                <h2 className="text-xl font-bold text-slate-800 dark:text-[var(--bh-text)]">
-                  {activeScenario.name}
-                </h2>
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="p-3 bg-red-100 dark:bg-red-500/10 rounded-full text-red-600 dark:text-red-500">
+                <AlertTriangle className="w-8 h-8" />
               </div>
-              <button
-                onClick={closeZoomModal}
-                className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-[var(--bh-surface-2)] transition-colors text-slate-500 dark:text-[var(--bh-text-weak)] hover:text-slate-700 dark:hover:text-[var(--bh-text)]"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Modal Content - Scrollable */}
-            <div className="p-6 overflow-y-auto flex-1">
-              {/* Alerts */}
-              {activeResult?.status === 'incomplete' && activeResult.steps.length > 1 && (
-                <div className="mb-6 bg-amber-50 dark:bg-[var(--bh-warning)]/10 border border-amber-200 dark:border-[var(--bh-warning)]/20 rounded-lg p-4 flex items-start gap-4 shadow-sm">
-                  <div className="p-2 bg-amber-100 dark:bg-[var(--bh-warning)]/20 rounded-full shrink-0">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-[var(--bh-warning)]" />
-                  </div>
-                  <div>
-                    <h5 className="text-sm font-bold text-amber-900 dark:text-[var(--bh-warning)]">Target Not Reached</h5>
-                    <p className="text-sm text-amber-700 dark:text-[var(--bh-text-weak)] mt-1 leading-relaxed">
-                      Current sequence covers <span className="font-bold">{displayDepth(currentSequenceCapacity)}{getUnitLabel(depthUnit)}</span> of the required {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}.
-                      You need <strong>{displayDepth(params.intervalToDrill - currentSequenceCapacity)}{getUnitLabel(depthUnit)}</strong> more.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Sequence Builder */}
-              <div className="mb-8">
-                <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-4">
-                  <h4 className="text-sm font-bold text-slate-700 dark:text-[var(--bh-text)] flex items-center gap-2">
-                    Sequence Strategy
-                  </h4>
-                  <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
-                    <div className="flex flex-col items-start sm:items-end">
-                      <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold tracking-wider">Coverage</span>
-                      <span className="text-xs font-mono font-medium text-slate-600 dark:text-[var(--bh-text-weak)]">
-                        {displayDepth(currentSequenceCapacity)} / {displayDepth(params.intervalToDrill)}{getUnitLabel(depthUnit)}
-                      </span>
-                    </div>
-                    <div className="w-32 sm:w-24 h-1.5 bg-slate-100 dark:bg-[var(--bh-border)] rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 dark:bg-[var(--bh-primary)] rounded-full transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-                    </div>
-                  </div>
-                </div>
-
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {activeScenario.bitSequence.length === 0 && (
-                    <div className="col-span-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-2">No bits added yet.</div>
-                  )}
-
-                  {activeScenario.bitSequence.map((bitId, idx) => {
-                    const bit = bits.find(b => b.id === bitId);
-                    if (!bit) return null;
-
-                    return (
-                      <div key={`zoom-${bitId}-${idx}`} className="flex items-center">
-                        <div className={clsx(
-                          "relative group border hover:shadow-md transition-all rounded-lg p-3 flex items-center gap-2 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
-                          "border-slate-200 dark:border-[var(--bh-border)]"
-                        )}>
-                          <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: bit.color }}></div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
-                            <div className="text-xs font-medium text-slate-500 dark:text-[var(--bh-text-mute)] truncate">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
-                          </div>
-                          <span className={clsx(
-                            "absolute -top-2 -left-2 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-sm ring-2",
-                            "bg-emerald-600 dark:bg-[var(--bh-primary)] ring-white dark:ring-[var(--bh-bg)]"
-                          )}>
-                            {idx + 1}
-                          </span>
-                        </div>
-                        {idx < activeScenario.bitSequence.length - 1 && (
-                          <div className="flex-shrink-0 w-6 flex justify-center text-slate-300 dark:text-[var(--bh-text-mute)]">
-                            <ChevronRight className="w-4 h-4" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* Status indicator */}
-                  {isTargetReached && (
-                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-700 dark:text-[var(--bh-success)] rounded-lg border border-emerald-200 dark:border-[var(--bh-success)]/20 text-sm font-semibold shadow-sm">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Complete</span>
-                    </div>
-                  )}
-                </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">Delete Scenario?</h3>
+                <p className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)] mt-1">
+                  Are you sure you want to delete this scenario? This action can still be undone later.
+                </p>
               </div>
-
-              {/* Metrics Footer */}
-              {activeResult && (
-                <div className="bg-slate-50 dark:bg-[var(--bh-surface-1)] rounded-xl p-6 border border-slate-200/60 dark:border-[var(--bh-border)]">
-                  <h4 className="text-sm font-bold text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4" />
-                    Performance Breakdown
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                    <div>
-                      <span className="text-xs font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Bits Consumed</span>
-                      <div className="space-y-2">
-                        {activeResult.bitsUsed.length > 0 ? (
-                          activeResult.bitsUsed.map((b, i) => (
-                            <div key={i} className="flex items-center gap-2 text-base font-medium text-slate-700 dark:text-[var(--bh-text)]">
-                              <span>{b.name}</span>
-                              <span className="text-slate-400 dark:text-[var(--bh-text-mute)]">x{b.count}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <span className="text-base text-slate-400 dark:text-[var(--bh-text-mute)] italic">None</span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Est. Total Time</span>
-                      {activeResult.steps.length > 1 ? (
-                        <>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold text-slate-800 dark:text-[var(--bh-text)]">{(activeResult.totalTime / 24).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
-                            <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">days</span>
-                          </div>
-                          <div className="text-xs text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">{activeResult.totalTime.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} hours</div>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Avg ROP (Gross)</span>
-                      {activeResult.steps.length > 1 ? (
-                        <>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold text-slate-800 dark:text-[var(--bh-text)]">
-                              {(activeResult.totalTime > 0 ? convertDepth(((activeResult.steps[activeResult.steps.length - 1]?.depth - params.depthIn) / activeResult.totalTime), depthUnit).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 0)}
-                            </span>
-                            <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">{getSpeedLabel(depthUnit)}</span>
-                          </div>
-                          <div className="text-xs text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Includes tripping</div>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] block mb-3">Est. Total Cost</span>
-                      {activeResult.steps.length > 1 ? (
-                        <>
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-2xl font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k</span>
-                          </div>
-                          <div className="text-xs text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on Operation Rate</div>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold text-slate-300 dark:text-[var(--bh-text-weak)]">-</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <div className="flex w-full gap-3 mt-2">
+                 <button 
+                   onClick={() => setScenarioToDelete(null)}
+                   className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[var(--bh-border)] text-slate-600 dark:text-[var(--bh-text-weak)] font-semibold hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                 >
+                   Cancel
+                 </button>
+                 <button 
+                   onClick={(e) => {
+                     // Perform deletion
+                     const syntheticEvent = { stopPropagation: () => {} } as React.MouseEvent; // Hack to reusing existing signature if needed, or just call logic
+                     // Actually calling removeScenario requires the event for stopPropagation, which is fine.
+                     removeScenario(e, scenarioToDelete); 
+                     setScenarioToDelete(null);
+                     if (isScenarioZoomed) closeZoomModal();
+                   }}
+                   className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-200 dark:shadow-none transition-all"
+                 >
+                   Delete
+                 </button>
+              </div>
             </div>
           </div>
         </div>,
         document.body
       )}
-
-      {/* Content injected from parent (Charts) */}
-      {children}
 
       <UndoToast
         message={toast?.message || ''}
@@ -1411,5 +1330,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     </div>
   );
 };
+
+
+
 
 export default ScenarioManager;
