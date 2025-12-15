@@ -4,8 +4,9 @@
   "description": "A comprehensive drilling cost and time simulation tool.",
   "start_url": ".",
   "display": "standalone",
+  "orientation": "any",
   "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "theme_color": "#2563eb",
   "icons": [
     {
       "src": "img/android-chrome-192x192.png",

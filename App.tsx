@@ -323,7 +323,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
+    <div 
+      className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300"
+      style={{
+        minHeight: '100dvh',
+        paddingLeft: 'var(--safe-area-inset-left)',
+        paddingRight: 'var(--safe-area-inset-right)'
+      }}
+    >
       {theme === 'xmas' && <SnowEffect />}
       {/* Hidden File Input */}
       <input 
@@ -438,7 +445,7 @@ const App: React.FC = () => {
 
                   {/* Dropdown Menu */}
                   {isMenuOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-200 dark:border-[var(--bh-border)] backdrop-blur-md overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-left">
+                    <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-200 dark:border-[var(--bh-border)] backdrop-blur-md overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                       <div className="p-1 flex flex-col gap-0.5">
                         <button 
                           onClick={triggerFileUpload}
