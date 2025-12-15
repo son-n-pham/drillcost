@@ -48,7 +48,7 @@ export function SortableItem({ id, children, className, style: propStyle, trigge
                 style={style}
                 {...(trigger === 'item' ? { ...attributes, ...listeners } : {})}
                 className={twMerge(
-                    clsx('relative touch-none', isDragging && 'opacity-50'),
+                    clsx('relative', isDragging && 'opacity-50'),
                     className
                 )}
             >
@@ -73,7 +73,7 @@ export function DragHandle({ className, style }: { className?: string; style?: R
             {...listeners}
             style={style}
             className={twMerge(
-                'relative cursor-grab flex items-center justify-center p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 touch-none active:cursor-grabbing after:absolute after:-inset-4 after:content-[""]',
+                'relative cursor-grab flex items-center justify-center p-0 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 touch-none active:cursor-grabbing after:absolute after:-inset-6 after:content-[""]',
                 isDragging && 'cursor-grabbing text-blue-500',
                 className
             )}

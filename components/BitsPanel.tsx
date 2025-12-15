@@ -167,9 +167,11 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
           {/* Drag Handle */}
           <div className="flex shrink-0">
             {isOverlay ? (
-              <GripVertical className="w-4 h-4 text-white/80 cursor-grabbing" />
+              <div className="p-4 flex items-center justify-center">
+                <GripVertical className="w-4 h-4 text-white/80 cursor-grabbing" />
+              </div>
             ) : (
-              <DragHandle className="text-white/80 hover:text-white p-0" />
+              <DragHandle className="text-white/80 hover:text-white" />
             )}
           </div>
 

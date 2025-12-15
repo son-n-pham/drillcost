@@ -1,6 +1,6 @@
-# DrillCost Pro!
+# DrillCost!
 
-> **Professional drilling cost optimization and scenario analysis tool for drilling engineers**
+> **Professional drilling cost optimization and what-if scenarios tool for drilling engineers**
 
 [![React](https://img.shields.io/badge/React-19.0.0-61dafb?logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.2-3178c6?logo=typescript)](https://www.typescriptlang.org/)
@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-DrillCost Pro is a sophisticated web application designed for drilling engineers to compare different drill bit strategies and determine the most cost-effective approach for drilling well intervals. The tool performs comprehensive simulations that account for bit costs, drilling rates, trip times, and operational expenses to identify optimal drilling scenarios.
+DrillCost is a sophisticated web application designed for drilling engineers to compare different drill bit strategies and determine the most cost-effective approach for drilling well intervals. The tool performs comprehensive simulations that account for bit costs, drilling rates, trip times, and operational expenses to identify optimal drilling scenarios.
 
 ## 🎯 Purpose
 
@@ -20,7 +20,7 @@ When drilling oil and gas wells, engineers face a critical decision: **Should I 
 - Bit purchase costs
 - Interval length to be drilled
 
-DrillCost Pro automates this complex analysis, enabling data-driven decisions that can save significant costs on drilling operations.
+DrillCost automates this complex analysis, enabling data-driven decisions that can save significant costs on drilling operations.
 
 ## ✨ Key Features
 

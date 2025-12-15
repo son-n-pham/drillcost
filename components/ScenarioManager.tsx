@@ -399,10 +399,12 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             : `border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md ${touchBitSelection.isSelected(idx) ? "ring-2 ring-blue-400" : ""}`
         )}>
           {isOverlay ? (
-             <GripVertical className="mr-0 -ml-1 scale-90 flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
-          ) : (
-             <DragHandle className="mr-0 -ml-1 scale-90 flex-shrink-0" style={{ color: bit.color }} />
-          )}
+           <div className="p-4 flex items-center justify-center">
+             <GripVertical className="flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
+           </div>
+        ) : (
+           <DragHandle className="flex-shrink-0" style={{ color: bit.color }} />
+        )}
           
           <div className="min-w-0 flex-1">
             <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>

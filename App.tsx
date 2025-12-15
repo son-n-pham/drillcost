@@ -186,7 +186,7 @@ const App: React.FC = () => {
         
       } catch (error) {
         console.error('Failed to parse state file', error);
-        alert('Invalid file format. Please upload a valid DrillCost Pro JSON file.');
+        alert('Invalid file format. Please upload a valid DrillCost JSON file.');
       }
     };
     reader.readAsText(file);
@@ -255,12 +255,12 @@ const App: React.FC = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             <img 
               src={logoIcon}
-              alt="DrillCost Pro Logo" 
+              alt="DrillCost Logo" 
               className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg shadow-md shadow-blue-200 dark:shadow-none transition-all"
             />
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[var(--bh-text)] tracking-tight leading-none transition-all">DrillCost Pro</h1>
-              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wide mt-0.5 transition-all">Scenario Analysis</p>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-[var(--bh-text)] tracking-tight leading-none transition-all">DrillCost</h1>
+              <p className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] uppercase tracking-wide mt-0.5 transition-all">What-If?!</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
