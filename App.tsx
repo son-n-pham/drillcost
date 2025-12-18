@@ -276,7 +276,7 @@ const App: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `drillcost-pro-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `drillcost-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
