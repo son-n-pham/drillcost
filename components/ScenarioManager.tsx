@@ -60,8 +60,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownContentRef = useRef<HTMLDivElement>(null);
   // Use compareSelections from props instead of local state
   const selectedForComparison = compareSelections;
   const setSelectedForComparison = setCompareSelections;
@@ -217,9 +219,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
+      const target = event.target as Node;
+      if (
+        (dropdownRef.current && dropdownRef.current.contains(target)) ||
+        (dropdownContentRef.current && dropdownContentRef.current.contains(target))
+      ) {
+        return;
       }
+      setIsDropdownOpen(false);
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -273,18 +280,43 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     }
   };
 
-  const toggleDropdown = () => {
-    if (!isDropdownOpen && buttonRef.current) {
+  const updateDropdownPosition = useCallback(() => {
+    if (isDropdownOpen && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      const dropdownHeight = 280; // Approximate dropdown height (max-h-60 = 15rem = ~240px + padding)
+      const dropdownHeight = 320; // Approximate max height of dropdown
 
-      if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
-        setDropdownPosition('top');
-      } else {
-        setDropdownPosition('bottom');
-      }
+      const newPosition = (spaceBelow < dropdownHeight && rect.top > dropdownHeight) ? 'top' : 'bottom';
+      setDropdownPosition(newPosition);
+
+      // Width calculation: use button width if it's large, otherwise default to 256px
+      const width = Math.max(rect.width, 256);
+
+      setDropdownStyle({
+        position: 'fixed',
+        top: newPosition === 'top' ? rect.top - 8 : rect.bottom + 8,
+        left: rect.left,
+        width: `${width}px`,
+        transform: newPosition === 'top' ? 'translateY(-100%)' : 'none',
+        zIndex: 9999,
+      });
     }
+  }, [isDropdownOpen]);
+
+  useEffect(() => {
+    if (isDropdownOpen) {
+      updateDropdownPosition();
+      // Use capture phase for scroll to catch scrolls from the modal too
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+      return () => {
+        window.removeEventListener('scroll', updateDropdownPosition, true);
+        window.removeEventListener('resize', updateDropdownPosition);
+      };
+    }
+  }, [isDropdownOpen, updateDropdownPosition]);
+
+  const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -732,75 +764,81 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       <span>Next Bit</span>
                     </button>
 
-                    {isDropdownOpen && (() => {
-                      // Find used bits that have remaining capacity
-                      const usedBitsWithRemaining = activeScenario.bitSequence
-                        .map((entry, idx) => {
-                          const bit = bits.find(b => b.id === entry.bitId);
-                          if (!bit) return null;
-                          const remaining = bit.maxDistance - entry.actualDistance;
-                          if (remaining > 0) {
-                            return { entry, bit, idx, remaining };
-                          }
-                          return null;
-                        })
-                        .filter((item): item is { entry: BitSequenceEntry; bit: Bit; idx: number; remaining: number } => item !== null);
+                    {isDropdownOpen && ReactDOM.createPortal(
+                      (() => {
+                        // Find used bits that have remaining capacity
+                        const usedBitsWithRemaining = activeScenario.bitSequence
+                          .map((entry, idx) => {
+                            const bit = bits.find(b => b.id === entry.bitId);
+                            if (!bit) return null;
+                            const remaining = bit.maxDistance - entry.actualDistance;
+                            if (remaining > 0) {
+                              return { entry, bit, idx, remaining };
+                            }
+                            return null;
+                          })
+                          .filter((item): item is { entry: BitSequenceEntry; bit: Bit; idx: number; remaining: number } => item !== null);
 
-                      return (
-                        <div className={clsx(
-                          "absolute left-0 w-64 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-60 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
-                          dropdownPosition === 'top'
-                            ? "bottom-full mb-2"
-                            : "top-full mt-2"
-                        )}>
-                          {/* New Bits Section */}
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">New Bit</div>
-                          <div className="max-h-40 overflow-y-auto space-y-0.5">
-                            {bits.map(bit => (
-                              <button
-                                key={bit.id}
-                                onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
-                                className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] hover:text-blue-700 dark:hover:text-[var(--bh-primary)] rounded-lg flex items-center gap-3 transition-colors group"
-                              >
-                                <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
-                                <div className="flex flex-col">
-                                  <span className="font-semibold">{bit.name}</span>
-                                  <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                          
-                          {/* Used Bits Section - only show if there are bits with remaining capacity */}
-                          {usedBitsWithRemaining.length > 0 && (
-                            <>
-                              <div className="h-px bg-slate-100 dark:bg-[var(--bh-border)] my-1.5"></div>
-                              <div className="px-2 py-1.5 text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
-                                <span>Continue Used Bit</span>
-                              </div>
-                              <div className="max-h-40 overflow-y-auto space-y-0.5">
-                                {usedBitsWithRemaining.map(({ bit, idx, remaining }) => (
+                        return (
+                          <div
+                            ref={dropdownContentRef}
+                            style={dropdownStyle}
+                            className={clsx(
+                              "bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 animate-in fade-in zoom-in-95 duration-100 overflow-hidden"
+                            )}
+                          >
+                            <div className="max-h-64 overflow-y-auto w-full custom-scrollbar">
+                              {/* New Bits Section */}
+                              <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">New Bit</div>
+                              <div className="space-y-0.5">
+                                {bits.map(bit => (
                                   <button
-                                    key={`used-${idx}`}
+                                    key={bit.id}
                                     onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
-                                    className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 rounded-lg flex items-center gap-3 transition-colors group"
+                                    className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] hover:text-blue-700 dark:hover:text-[var(--bh-primary)] rounded-lg flex items-center gap-3 transition-colors group"
                                   >
-                                    <span className="w-2 h-2 rounded-full ring-2 ring-amber-200 dark:ring-amber-500/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
-                                    <div className="flex flex-col flex-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-semibold">{bit.name}</span>
-                                        <span className="text-[9px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded">#{idx + 1}</span>
-                                      </div>
-                                      <span className="text-[10px] text-amber-600 dark:text-amber-400">{displayDepth(remaining)}{getUnitLabel(depthUnit)} left</span>
+                                    <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
+                                    <div className="flex flex-col">
+                                      <span className="font-semibold">{bit.name}</span>
+                                      <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
                                     </div>
                                   </button>
                                 ))}
                               </div>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })()}
+
+                              {/* Used Bits Section - only show if there are bits with remaining capacity */}
+                              {usedBitsWithRemaining.length > 0 && (
+                                <>
+                                  <div className="h-px bg-slate-100 dark:bg-[var(--bh-border)] my-1.5"></div>
+                                  <div className="px-2 py-1.5 text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                    <span>Continue Used Bit</span>
+                                  </div>
+                                  <div className="space-y-0.5">
+                                    {usedBitsWithRemaining.map(({ bit, idx, remaining }) => (
+                                      <button
+                                        key={`used-${idx}`}
+                                        onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
+                                        className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 rounded-lg flex items-center gap-3 transition-colors group"
+                                      >
+                                        <span className="w-2 h-2 rounded-full ring-2 ring-amber-200 dark:ring-amber-500/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
+                                        <div className="flex flex-col flex-1">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="font-semibold">{bit.name}</span>
+                                            <span className="text-[9px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded">#{idx + 1}</span>
+                                          </div>
+                                          <span className="text-[10px] text-amber-600 dark:text-amber-400">{displayDepth(remaining)}{getUnitLabel(depthUnit)} left</span>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })(),
+                      document.body
+                    )}
                   </div>
                 )}
               </div>
