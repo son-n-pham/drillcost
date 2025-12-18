@@ -37,9 +37,15 @@ export interface ScenarioResult {
   status: 'complete' | 'incomplete';
 }
 
+export interface BitSequenceEntry {
+  bitId: string;
+  actualDistance: number; // Must be > 0 and <= maxDistance, defaults to maxDistance
+  comment?: string;       // Optional reason for the actual distance
+}
+
 export interface ScenarioConfig {
   id: string;
   name: string;
   // A sequence of bits to use. If the sequence runs out, the last bit is repeated.
-  bitSequence: string[]; // array of Bit IDs
+  bitSequence: BitSequenceEntry[];
 }

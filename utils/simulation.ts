@@ -38,7 +38,8 @@ export const runSimulation = (
       break;
     }
 
-    const bitId = scenario.bitSequence[sequenceIndex];
+    const entry = scenario.bitSequence[sequenceIndex];
+    const bitId = entry.bitId;
     const bit = bitMap.get(bitId);
 
     if (!bit) {
@@ -53,9 +54,10 @@ export const runSimulation = (
     // 2. Add Bit Cost (One-time purchase per run)
     currentCost += bit.cost;
     
-    // 3. Calculate drilling duration for this run
+    // 3. Calculate drilling duration for this run (use actualDistance from entry)
     const remainingDistance = targetDepth - currentDepth;
-    const distanceToDrill = Math.min(bit.maxDistance, remainingDistance);
+    const actualBitDistance = entry.actualDistance ?? bit.maxDistance;
+    const distanceToDrill = Math.min(actualBitDistance, remainingDistance);
     
     const drillTime = distanceToDrill / bit.rop;
     const drillCost = drillTime * hourlyRigCost;

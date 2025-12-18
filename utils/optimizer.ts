@@ -1,8 +1,8 @@
-import { Bit, GlobalParams, ScenarioConfig, ScenarioResult } from '../types';
+import { Bit, GlobalParams, ScenarioConfig, ScenarioResult, BitSequenceEntry } from '../types';
 import { runSimulation } from './simulation';
 
 export interface OptimizationResult {
-  bitSequence: string[];
+  bitSequence: BitSequenceEntry[];
   estimatedCost: number;
   estimatedTime: number;
   costPerMeter: number;
@@ -61,7 +61,7 @@ export function findOptimalBitStrategy(
   };
 
   // Build the optimal sequence greedily
-  const optimalSequence: string[] = [];
+  const optimalSequence: BitSequenceEntry[] = [];
   let currentDepth = params.depthIn;
   const targetDepth = params.depthIn + params.intervalToDrill;
 
@@ -82,8 +82,9 @@ export function findOptimalBitStrategy(
 
     if (!bestBit) break;
 
-    optimalSequence.push(bestBit.id);
-    currentDepth += Math.min(bestBit.maxDistance, remainingDistance);
+    const actualDist = Math.min(bestBit.maxDistance, remainingDistance);
+    optimalSequence.push({ bitId: bestBit.id, actualDistance: actualDist });
+    currentDepth += actualDist;
   }
 
   if (optimalSequence.length === 0) {
@@ -126,7 +127,7 @@ export function findOptimalBitStrategyExhaustive(
 
   // Generate candidate sequences using DFS with pruning
   const generateSequences = (
-    currentSequence: string[],
+    currentSequence: BitSequenceEntry[],
     currentCapacity: number
   ) => {
     // If we've covered the interval, evaluate this sequence
@@ -157,7 +158,7 @@ export function findOptimalBitStrategyExhaustive(
 
     // Try adding each bit
     for (const bit of bits) {
-      currentSequence.push(bit.id);
+      currentSequence.push({ bitId: bit.id, actualDistance: bit.maxDistance });
       generateSequences(currentSequence, currentCapacity + bit.maxDistance);
       currentSequence.pop();
     }

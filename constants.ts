@@ -35,13 +35,21 @@ export const DEFAULT_SCENARIOS: ScenarioConfig[] = [
     id: 'scenario-1',
     name: 'Scenario 1: Type B then A',
     // 3 Type B (450*3 > 1200) covers it
-    bitSequence: ['type-b', 'type-b', 'type-a'], 
+    bitSequence: [
+      { bitId: 'type-b', actualDistance: 450 },
+      { bitId: 'type-b', actualDistance: 450 },
+      { bitId: 'type-a', actualDistance: 150 }
+    ],
   },
   {
     id: 'scenario-2',
     name: 'Scenario 2: All Type A',
     // Start with a few, but leave it incomplete to demonstrate feature
-    bitSequence: ['type-a', 'type-a', 'type-a'],
+    bitSequence: [
+      { bitId: 'type-a', actualDistance: 150 },
+      { bitId: 'type-a', actualDistance: 150 },
+      { bitId: 'type-a', actualDistance: 150 }
+    ],
   },
 ];
 
@@ -80,16 +88,29 @@ export const INITIAL_SCENARIOS: ScenarioConfig[] = [
   {
     id: 'scenario-1',
     name: 'Scenario 1: Type B then A',
-    bitSequence: ['type-b', 'type-b', 'type-a'],
+    bitSequence: [
+      { bitId: 'type-b', actualDistance: 450 },
+      { bitId: 'type-b', actualDistance: 450 },
+      { bitId: 'type-a', actualDistance: 150 }
+    ],
   },
   {
     id: 'scenario-2',
     name: 'Scenario 2: All Type A',
-    bitSequence: ['type-a', 'type-a', 'type-a'],
+    bitSequence: [
+      { bitId: 'type-a', actualDistance: 150 },
+      { bitId: 'type-a', actualDistance: 150 },
+      { bitId: 'type-a', actualDistance: 150 }
+    ],
   },
   {
     id: 'scen-1764763934621',
     name: 'Scenario 3',
-    bitSequence: ['type-a', 'type-b', 'type-a', 'type-b'],
+    bitSequence: [
+      { bitId: 'type-a', actualDistance: 150 },
+      { bitId: 'type-b', actualDistance: 450 },
+      { bitId: 'type-a', actualDistance: 150 },
+      { bitId: 'type-b', actualDistance: 450 }
+    ],
   },
 ];

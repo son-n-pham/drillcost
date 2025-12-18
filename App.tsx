@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { GlobalParams, Bit, ScenarioConfig } from './types';
+import { GlobalParams, Bit, ScenarioConfig, BitSequenceEntry } from './types';
 import { INITIAL_GLOBAL_PARAMS, INITIAL_BITS, INITIAL_SCENARIOS } from './constants';
 import { runSimulation } from './utils/simulation';
 import SettingsPanel from './components/SettingsPanel';
@@ -47,11 +47,30 @@ const loadSavedState = () => {
   return null;
 };
 
+// Helper function to migrate legacy bitSequence (string[]) to new format (BitSequenceEntry[])
+const migrateScenarios = (scenarios: any[], bits: Bit[]): ScenarioConfig[] => {
+  return scenarios.map(scenario => ({
+    ...scenario,
+    bitSequence: (scenario.bitSequence || []).map((entry: string | BitSequenceEntry) => {
+      if (typeof entry === 'string') {
+        // Legacy format: just a bit ID string
+        const bit = bits.find(b => b.id === entry);
+        return {
+          bitId: entry,
+          actualDistance: bit?.maxDistance ?? 0,
+          comment: ''
+        };
+      }
+      return entry;
+    })
+  }));
+};
+
 // Helper function to sanitize scenarios by removing orphan bit IDs
 const sanitizeScenarios = (scenarios: ScenarioConfig[], validBitIds: Set<string>): ScenarioConfig[] => {
   return scenarios.map(scenario => ({
     ...scenario,
-    bitSequence: scenario.bitSequence.filter(id => validBitIds.has(id))
+    bitSequence: scenario.bitSequence.filter(entry => validBitIds.has(entry.bitId))
   }));
 };
 
@@ -61,9 +80,11 @@ const App: React.FC = () => {
   const [appData, setAppData, undo, redo, canUndo, canRedo] = useUndoRedo(() => {
     const saved = loadSavedState();
     const loadedBits = (saved?.bits ?? INITIAL_BITS) as Bit[];
-    const loadedScenarios = (saved?.scenarios ?? INITIAL_SCENARIOS) as ScenarioConfig[];
+    const rawScenarios = (saved?.scenarios ?? INITIAL_SCENARIOS);
+    // Migrate legacy scenarios if needed
+    const migratedScenarios = migrateScenarios(rawScenarios, loadedBits);
     const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
-    const sanitizedScenarios = sanitizeScenarios(loadedScenarios, validBitIds);
+    const sanitizedScenarios = sanitizeScenarios(migratedScenarios, validBitIds);
 
     return {
       params: (saved?.params ?? INITIAL_GLOBAL_PARAMS) as GlobalParams,
@@ -238,13 +259,16 @@ const App: React.FC = () => {
         const state = JSON.parse(content);
         
         if (state.params && state.bits && state.scenarios) {
-           const validBitIds = new Set((state.bits as Bit[]).map((b: Bit) => b.id));
-           const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
+           const loadedBits = state.bits as Bit[];
+           const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
+           // Migrate legacy scenarios if needed
+           const migratedScenarios = migrateScenarios(state.scenarios, loadedBits);
+           const sanitizedScenarios = sanitizeScenarios(migratedScenarios, validBitIds);
            
            setAppData(prev => ({
              ...prev,
              params: state.params,
-             bits: state.bits as Bit[],
+             bits: loadedBits,
              scenarios: sanitizedScenarios
            }));
         } else {
@@ -252,8 +276,10 @@ const App: React.FC = () => {
              if (state.params) setParams(state.params);
              if (state.bits) setBits(state.bits as Bit[]);
              if (state.scenarios) {
-                const validBitIds = new Set(((state.bits || bits) as Bit[]).map((b: Bit) => b.id));
-                const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
+                const bitsToUse = (state.bits || bits) as Bit[];
+                const validBitIds = new Set(bitsToUse.map((b: Bit) => b.id));
+                const migratedScenarios = migrateScenarios(state.scenarios, bitsToUse);
+                const sanitizedScenarios = sanitizeScenarios(migratedScenarios, validBitIds);
                 setScenarios(sanitizedScenarios);
              }
         }
@@ -317,7 +343,7 @@ const App: React.FC = () => {
        bits: prev.bits.filter(b => b.id !== bitId),
        scenarios: prev.scenarios.map(scen => ({
          ...scen,
-         bitSequence: scen.bitSequence.filter(id => id !== bitId)
+         bitSequence: scen.bitSequence.filter(entry => entry.bitId !== bitId)
        }))
     }));
   };

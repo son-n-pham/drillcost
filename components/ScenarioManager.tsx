@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import { Bit, ScenarioConfig, ScenarioResult, GlobalParams } from '../types';
-import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical } from 'lucide-react';
+import { Bit, ScenarioConfig, ScenarioResult, GlobalParams, BitSequenceEntry } from '../types';
+import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical, MessageSquare } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 import { getScenarioColor } from '../utils/scenarioColors';
@@ -260,8 +260,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   const addToSequence = (scenarioId: string, bitId: string) => {
     const s = scenarios.find(x => x.id === scenarioId);
-    if (s) {
-      updateScenario(scenarioId, { bitSequence: [...s.bitSequence, bitId] });
+    const bit = bits.find(b => b.id === bitId);
+    if (s && bit) {
+      const newEntry: BitSequenceEntry = {
+        bitId: bitId,
+        actualDistance: bit.maxDistance,
+        comment: ''
+      };
+      updateScenario(scenarioId, { bitSequence: [...s.bitSequence, newEntry] });
       setIsDropdownOpen(false);
     }
   };
@@ -298,6 +304,16 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     }
   };
 
+  // Handler for updating a sequence entry's actual distance or comment
+  const updateSequenceEntry = (scenarioId: string, index: number, updates: Partial<BitSequenceEntry>) => {
+    const s = scenarios.find(x => x.id === scenarioId);
+    if (s) {
+      const newSeq = [...s.bitSequence];
+      newSeq[index] = { ...newSeq[index], ...updates };
+      updateScenario(scenarioId, { bitSequence: newSeq });
+    }
+  };
+
   const activeResult = results.find(r => r.id === activeTab);
   const activeScenario = scenarios.find(s => s.id === activeTab);
 
@@ -315,9 +331,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   };
 
   const currentSequenceCapacity = activeScenario
-    ? activeScenario.bitSequence.reduce((acc, bitId) => {
-      const bit = bits.find(b => b.id === bitId);
-      return acc + (bit ? bit.maxDistance : 0);
+    ? activeScenario.bitSequence.reduce((acc, entry) => {
+      return acc + (entry.actualDistance ?? 0);
     }, 0)
     : 0;
 
@@ -411,7 +426,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       const newIndex = parseInt(newId.split('::').pop() || '-1');
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        const newSeq = arrayMove(activeScenario.bitSequence, oldIndex, newIndex) as string[];
+        const newSeq = arrayMove(activeScenario.bitSequence, oldIndex, newIndex) as BitSequenceEntry[];
         updateScenario(activeScenario.id, { bitSequence: newSeq });
       }
     }
@@ -422,27 +437,92 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     .map(id => results.find(r => r.id === id))
     .filter((r): r is ScenarioResult => !!r);
 
-  const renderSequenceItem = (bit: Bit, idx: number, isOverlay = false) => {
+  const renderSequenceItem = (bit: Bit, entry: BitSequenceEntry, idx: number, isOverlay = false) => {
+    const hasComment = entry.comment && entry.comment.trim().length > 0;
+    const isActualDistReduced = entry.actualDistance < bit.maxDistance;
+    
     return (
       <div className="w-full flex items-center">
         <div className={clsx(
-          "relative group border transition-all rounded-lg p-2 pr-7 flex items-center gap-2 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
+          "relative group border transition-all rounded-lg p-2 pr-7 flex flex-col gap-1 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
           isOverlay 
             ? "border-blue-500 shadow-2xl ring-2 ring-blue-500/20 cursor-grabbing opacity-90"
             : `border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md ${touchBitSelection.isSelected(idx) ? "ring-2 ring-blue-400" : ""}`
         )}>
-          {isOverlay ? (
-           <div className="p-4 flex items-center justify-center">
-             <GripVertical className="flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
-           </div>
-        ) : (
-           <DragHandle className="flex-shrink-0" style={{ color: bit.color }} />
-        )}
-          
-          <div className="min-w-0 flex-1">
-            <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
-            <div className="text-[10px] font-medium text-slate-500 dark:text-[var(--bh-text-mute)] truncate">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</div>
+          {/* Top row: drag handle + bit name */}
+          <div className="flex items-center gap-2">
+            {isOverlay ? (
+             <div className="p-4 flex items-center justify-center">
+               <GripVertical className="flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
+             </div>
+            ) : (
+              <DragHandle className="flex-shrink-0" style={{ color: bit.color }} />
+            )}
+            
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
+            </div>
+            
+            {/* Comment indicator */}
+            {hasComment && (
+              <div className="flex-shrink-0 text-amber-500 dark:text-amber-400" title={entry.comment}>
+                <MessageSquare className="w-3 h-3" />
+              </div>
+            )}
           </div>
+          
+          {/* Actual distance input row */}
+          {!isOverlay && (
+            <div className="flex items-center gap-2 pl-8">
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Actual:</span>
+                <input
+                  type="number"
+                  min="1"
+                  max={bit.maxDistance}
+                  value={Math.round(convertDepth(entry.actualDistance, depthUnit))}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    const inputVal = parseFloat(e.target.value);
+                    if (!isNaN(inputVal)) {
+                      // Convert back to meters and clamp
+                      const metersVal = depthUnit === 'ft' ? inputVal / METERS_TO_FEET : inputVal;
+                      const clampedVal = Math.max(1, Math.min(metersVal, bit.maxDistance));
+                      updateSequenceEntry(activeScenario!.id, idx, { actualDistance: clampedVal });
+                    }
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                  className={clsx(
+                    "w-14 text-[10px] font-semibold bg-transparent border rounded px-1 py-0.5 outline-none text-center transition-colors",
+                    isActualDistReduced 
+                      ? "border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10"
+                      : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
+                  )}
+                />
+                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">/</span>
+                <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">{displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Comment input - shown when actual distance is reduced */}
+          {!isOverlay && isActualDistReduced && (
+            <div className="pl-8">
+              <input
+                type="text"
+                value={entry.comment || ''}
+                placeholder="Reason for reduced distance..."
+                onChange={(e) => {
+                  e.stopPropagation();
+                  updateSequenceEntry(activeScenario!.id, idx, { comment: e.target.value });
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full text-[10px] bg-transparent border border-dashed border-amber-200 dark:border-amber-500/30 rounded px-1.5 py-0.5 outline-none text-slate-600 dark:text-[var(--bh-text-weak)] placeholder:text-slate-300 dark:placeholder:text-[var(--bh-text-mute)] focus:border-amber-400 dark:focus:border-amber-400"
+              />
+            </div>
+          )}
           
           <span 
             className="absolute -top-1.5 -left-1.5 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm ring-1 ring-white dark:ring-[var(--bh-bg)]"
@@ -456,8 +536,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               onPointerDown={(e) => e.stopPropagation()}
               onClick={(e) => { e.stopPropagation(); removeFromSequence(activeScenario!.id, idx); }}
               className={clsx(
-                "absolute right-1 top-1/2 -translate-y-1/2 p-1 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors"
-                // Hide on mobile touch unless selected? keeping simple for now
+                "absolute right-1 top-2 p-1 text-slate-300 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-danger)]/10 rounded-md transition-colors"
               )}
             >
               <Trash2 className="w-3 h-3" />
@@ -465,13 +544,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           )}
         </div>
 
-        {/* Connector Arrow - Hidden in overlay or if last item? In list it was separated. */}
-        {/* The overlay shouldn't carry the arrow usually, or maybe it should? */}
-        {/* Original overlay code didn't have the arrow. The list item wrapper did. */}
-        {/* Let's include the arrow container but leave it empty/invisible for overlay if we want structure match, */}
-        {/* or just exclude it. The overlay code used to wrap in `w-full flex items-center pr-1` but didn't put arrow. */}
-        {/* But we need the layout to be `flex` to push the box. */}
-        
         <div className="flex-shrink-0 w-8 flex justify-center text-slate-300 dark:text-[var(--bh-text-mute)]">
           {!isOverlay && <ChevronRight className="w-4 h-4" />}
         </div>
@@ -599,13 +671,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 modifiers={[restrictToWindowEdges]}
               >
                 <SortableContext
-                  items={activeScenario.bitSequence.map((b, i) => `${b}::${i}`)}
+                  items={activeScenario.bitSequence.map((entry, i) => `${entry.bitId}::${i}`)}
                   strategy={rectSortingStrategy}
                 >
-                  {activeScenario.bitSequence.map((bitId, idx) => {
-                    const bit = bits.find(b => b.id === bitId);
+                  {activeScenario.bitSequence.map((entry, idx) => {
+                    const bit = bits.find(b => b.id === entry.bitId);
                     if (!bit) return null;
-                    const uniqueId = `${bitId}::${idx}`;
+                    const uniqueId = `${entry.bitId}::${idx}`;
 
                     return (
                       <div key={uniqueId} className="w-full md:w-1/2 lg:w-1/3 mb-2 pr-1">
@@ -613,7 +685,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                           id={uniqueId}
                           trigger="handle"
                         >
-                          {renderSequenceItem(bit, idx)}
+                          {renderSequenceItem(bit, entry, idx)}
                         </SortableItem>
                       </div>
                     );
@@ -624,12 +696,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     const [bitId, idxStr] = activeDragId.split('::');
                     const idx = parseInt(idxStr, 10);
                     const bit = bits.find(b => b.id === bitId);
-                    if (!bit) return null;
+                    const entry = activeScenario?.bitSequence[idx];
+                    if (!bit || !entry) return null;
                     
                     return (
                       <div className="w-72 cursor-grabbing">
                         <div className="w-full">
-                           {renderSequenceItem(bit, idx, true)}
+                           {renderSequenceItem(bit, entry, idx, true)}
                         </div>
                       </div>
                     );
@@ -664,31 +737,75 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       <span>Next Bit</span>
                     </button>
 
-                    {isDropdownOpen && (
-                      <div className={clsx(
-                        "absolute left-0 w-56 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-60 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
-                        dropdownPosition === 'top'
-                          ? "bottom-full mb-2"
-                          : "top-full mt-2"
-                      )}>
-                        <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">Select Bit Type</div>
-                        <div className="max-h-60 overflow-y-auto space-y-0.5">
-                          {bits.map(bit => (
-                            <button
-                              key={bit.id}
-                              onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
-                              className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] hover:text-blue-700 dark:hover:text-[var(--bh-primary)] rounded-lg flex items-center gap-3 transition-colors group"
-                            >
-                              <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
-                              <div className="flex flex-col">
-                                <span className="font-semibold">{bit.name}</span>
-                                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
+                    {isDropdownOpen && (() => {
+                      // Find used bits that have remaining capacity
+                      const usedBitsWithRemaining = activeScenario.bitSequence
+                        .map((entry, idx) => {
+                          const bit = bits.find(b => b.id === entry.bitId);
+                          if (!bit) return null;
+                          const remaining = bit.maxDistance - entry.actualDistance;
+                          if (remaining > 0) {
+                            return { entry, bit, idx, remaining };
+                          }
+                          return null;
+                        })
+                        .filter((item): item is { entry: BitSequenceEntry; bit: Bit; idx: number; remaining: number } => item !== null);
+
+                      return (
+                        <div className={clsx(
+                          "absolute left-0 w-64 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-100 dark:border-[var(--bh-border)] p-1.5 z-60 animate-in fade-in zoom-in-95 duration-100 overflow-hidden",
+                          dropdownPosition === 'top'
+                            ? "bottom-full mb-2"
+                            : "top-full mt-2"
+                        )}>
+                          {/* New Bits Section */}
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase tracking-wider">New Bit</div>
+                          <div className="max-h-40 overflow-y-auto space-y-0.5">
+                            {bits.map(bit => (
+                              <button
+                                key={bit.id}
+                                onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
+                                className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] hover:text-blue-700 dark:hover:text-[var(--bh-primary)] rounded-lg flex items-center gap-3 transition-colors group"
+                              >
+                                <span className="w-2 h-2 rounded-full ring-2 ring-slate-100 dark:ring-[var(--bh-border)] group-hover:ring-blue-100 dark:group-hover:ring-[var(--bh-primary)]/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
+                                <div className="flex flex-col">
+                                  <span className="font-semibold">{bit.name}</span>
+                                  <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Max {displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                          
+                          {/* Used Bits Section - only show if there are bits with remaining capacity */}
+                          {usedBitsWithRemaining.length > 0 && (
+                            <>
+                              <div className="h-px bg-slate-100 dark:bg-[var(--bh-border)] my-1.5"></div>
+                              <div className="px-2 py-1.5 text-[10px] font-bold text-amber-500 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+                                <span>Continue Used Bit</span>
                               </div>
-                            </button>
-                          ))}
+                              <div className="max-h-40 overflow-y-auto space-y-0.5">
+                                {usedBitsWithRemaining.map(({ bit, idx, remaining }) => (
+                                  <button
+                                    key={`used-${idx}`}
+                                    onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
+                                    className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 rounded-lg flex items-center gap-3 transition-colors group"
+                                  >
+                                    <span className="w-2 h-2 rounded-full ring-2 ring-amber-200 dark:ring-amber-500/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
+                                    <div className="flex flex-col flex-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="font-semibold">{bit.name}</span>
+                                        <span className="text-[9px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded">#{idx + 1}</span>
+                                      </div>
+                                      <span className="text-[10px] text-amber-600 dark:text-amber-400">{displayDepth(remaining)}{getUnitLabel(depthUnit)} left</span>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
               </div>
