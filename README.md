@@ -44,8 +44,8 @@ DrillCost automates this complex analysis, enabling data-driven decisions that c
 
 ```bash
 # Clone the repository
-git clone https://github.com/son-n-pham/cost-per-meter.git
-cd cost-per-meter
+git clone https://github.com/son-n-pham/drillcost.git
+cd drillcost
 
 # Install dependencies
 npm install
@@ -344,7 +344,7 @@ For questions or support, please open an issue on GitHub.
 This is a personal, open‑source project. It is **not affiliated with, endorsed by, or representative of any employer or brand**.
 
 - License: MIT (see LICENSE)
-- Source: https://github.com/son-n-pham/cost-per-meter
+- Source: https://github.com/son-n-pham/drillcost
 - Contributions: Welcome via Issues and Pull Requests (see CONTRIBUTING)
 - Code of Conduct: See CODE_OF_CONDUCT
 
@@ -352,7 +352,7 @@ The software is provided **“as is”**, without warranty of any kind. See the 
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/son-n-pham/cost-per-meter/issues).
+Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/son-n-pham/drillcost/issues).
 
 
 ---

@@ -593,13 +593,13 @@ const App: React.FC = () => {
         <div className="font-semibold text-slate-800 dark:text-[var(--bh-text)]"><a href="https://youtu.be/a4ap0R_OQIE?si=HRt_-Y2UeGuxWlBd" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">Open Source</a> — All Contributions Welcome</div>
 
         <p className="mt-2 text-xs">
-          Start here: <a href="https://github.com/son-n-pham/cost-per-meter/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">open an issue</a>, fork the repo, or contact me via <a href="https://son-n-pham.github.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">my site</a>.
+          Start here: <a href="https://github.com/son-n-pham/drillcost/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">open an issue</a>, fork the repo, or contact me via <a href="https://son-n-pham.github.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">my site</a>.
         </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <a
-          href="https://github.com/son-n-pham/cost-per-meter"
+          href="https://github.com/son-n-pham/drillcost"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
@@ -609,7 +609,7 @@ const App: React.FC = () => {
         </a>
 
         <a
-          href="https://github.com/son-n-pham/cost-per-meter/blob/main/LICENSE"
+          href="https://github.com/son-n-pham/drillcost/blob/main/LICENSE"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors text-xs font-medium"
