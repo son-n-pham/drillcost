@@ -127,11 +127,47 @@ const App: React.FC = () => {
     }));
   };
 
-  const setBits = (newBits: Bit[] | ((prev: Bit[]) => Bit[])) => {
-    setAppData(prev => ({
-      ...prev,
-      bits: typeof newBits === 'function' ? newBits(prev.bits) : newBits
-    }));
+  const setBits = (newBitsOrFn: Bit[] | ((prev: Bit[]) => Bit[])) => {
+    setAppData(prev => {
+      const newBits = typeof newBitsOrFn === 'function' ? newBitsOrFn(prev.bits) : newBitsOrFn;
+      
+      // Identify bits that changed maxDistance
+      const changesMap = new Map<string, { oldMax: number, newMax: number }>();
+      newBits.forEach(newBit => {
+        const prevBit = prev.bits.find(b => b.id === newBit.id);
+        if (prevBit && prevBit.maxDistance !== newBit.maxDistance) {
+          changesMap.set(newBit.id, { oldMax: prevBit.maxDistance, newMax: newBit.maxDistance });
+        }
+      });
+
+      if (changesMap.size === 0) {
+        return { ...prev, bits: newBits };
+      }
+
+      const EPSILON = 1e-6;
+
+      // Update scenarios: adjust actualDistance strictly IF it was equal to old max
+      const updatedScenarios = prev.scenarios.map(scenario => ({
+        ...scenario,
+        bitSequence: scenario.bitSequence.map(entry => {
+          const change = changesMap.get(entry.bitId);
+          if (change) {
+            // Strictly update ONLY if it was equal to old max
+            // Use Math.abs for robust float comparison to handle unit conversions
+            if (Math.abs(entry.actualDistance - change.oldMax) < EPSILON) {
+              return { ...entry, actualDistance: change.newMax };
+            }
+          }
+          return entry;
+        })
+      }));
+
+      return {
+        ...prev,
+        bits: newBits,
+        scenarios: updatedScenarios
+      };
+    });
   };
 
   const setScenarios = (newScenarios: ScenarioConfig[] | ((prev: ScenarioConfig[]) => ScenarioConfig[])) => {
