@@ -32,6 +32,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { UndoToast } from './ui/UndoToast';
 import { SortableItem, DragHandle } from './ui/SortableItem';
+import NumericInput from './ui/NumericInput';
 
 const hexToRgba = (hex: string, alpha: number) => {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -476,23 +477,17 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             <div className="flex items-center gap-2 pl-8">
               <div className="flex items-center gap-1">
                 <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Actual:</span>
-                <input
+                <NumericInput
                   type="number"
-                  min="1"
+                  min={1}
                   max={bit.maxDistance}
                   value={Math.round(convertDepth(entry.actualDistance, depthUnit))}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    const inputVal = parseFloat(e.target.value);
-                    if (!isNaN(inputVal)) {
-                      // Convert back to meters and clamp
-                      const metersVal = depthUnit === 'ft' ? inputVal / METERS_TO_FEET : inputVal;
-                      const clampedVal = Math.max(1, Math.min(metersVal, bit.maxDistance));
-                      updateSequenceEntry(activeScenario!.id, idx, { actualDistance: clampedVal });
-                    }
+                  onChange={(val) => {
+                    // Convert back to meters and clamp
+                    const metersVal = depthUnit === 'ft' ? val / METERS_TO_FEET : val;
+                    const clampedVal = Math.max(1, Math.min(metersVal, bit.maxDistance));
+                    updateSequenceEntry(activeScenario!.id, idx, { actualDistance: clampedVal });
                   }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
                   className={clsx(
                     "w-14 text-[10px] font-semibold bg-transparent border rounded px-1 py-0.5 outline-none text-center transition-colors",
                     isActualDistReduced 

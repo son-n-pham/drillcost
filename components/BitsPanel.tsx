@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useMemo } from 'react';
 import { Bit } from '../types';
 import { Drill, Trash2, Plus, Edit, Check, GripVertical } from 'lucide-react';
 import { DepthUnit, convertDepth, convertDepthToMeters, getUnitLabel, getSpeedLabel } from '../utils/unitUtils';
@@ -25,6 +25,7 @@ import {
 } from '@dnd-kit/sortable';
 import { SortableItem, DragHandle } from './ui/SortableItem';
 import { UndoToast } from './ui/UndoToast';
+import NumericInput from './ui/NumericInput';
 
 interface BitsPanelProps {
   bits: Bit[];
@@ -79,28 +80,18 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
   };
 
   const removeBit = (id: string) => {
-    // if (bits.length <= 1) return; // Allow deleting all? Maybe better to keep one? User said "moved, activated, deleted seamlessly". Let's allow deleting all but maybe show empty state.
-    // Actually existing logic prevented deleting last one.
-    if (bits.length <= 1) {
-      // Maybe shake or show warning?
-      return;
-    }
+    if (bits.length <= 1) return;
 
     const bitToRemove = bits.find(b => b.id === id);
     if (bitToRemove) {
       setDeletedBit(bitToRemove);
-      onRemoveBit(id); // Use the callback to remove safely from all places
+      onRemoveBit(id);
       setUndoToastVisible(true);
     }
   };
 
   const undoDelete = () => {
     if (deletedBit) {
-      // Re-insert at original order or append? 
-      // Original order logic is tricky if others moved. 
-      // Simple approach: append or try to respect `order` if manageable. 
-      // For now, let's just append to end or start, or we need to track index.
-      // Re-adding it back:
       setBits([...bits, deletedBit]);
       setDeletedBit(null);
       setUndoToastVisible(false);
@@ -119,7 +110,6 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
 
-        // Update order field if we want to persist it cleanly (optional)
         const newItems = arrayMove(items, oldIndex, newIndex);
         return newItems.map((item, index) => ({ ...item, order: index }));
       });
@@ -127,30 +117,19 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
     setActiveId(null);
   };
 
-  const handleCostChange = (id: string, value: string) => {
-    const cleanValue = value.replace(/,/g, '');
-    if (cleanValue === '') {
-      updateBit(id, 'cost', 0);
-      return;
-    }
-    const numValue = parseFloat(cleanValue);
-    if (!isNaN(numValue)) {
-      updateBit(id, 'cost', numValue);
-    }
+  const handleDepthValueChange = (id: string, field: 'rop' | 'maxDistance', value: number) => {
+    const metersValue = convertDepthToMeters(value, depthUnit);
+    updateBit(id, field, metersValue);
   };
 
-  const handleDepthValueChange = (id: string, field: 'rop' | 'maxDistance', value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      const metersValue = convertDepthToMeters(numValue, depthUnit);
-      updateBit(id, field, metersValue);
-    }
-  };
+  const formatCost = (val: number) => val.toLocaleString();
+  const parseCost = (val: string) => parseFloat(val.replace(/,/g, ''));
 
-  const getDisplayValue = (val: number) => {
+  const formatDepthValue = (val: number) => {
     const converted = convertDepth(val, depthUnit);
-    return Number.isInteger(converted) ? converted : parseFloat(converted.toFixed(2));
+    return Number.isInteger(converted) ? converted.toString() : converted.toFixed(2);
   };
+  const parseDepthValue = (val: string) => parseFloat(val);
 
   // Render Item Component
   const renderBitRow = (bit: Bit, isOverlay = false) => {
@@ -207,30 +186,33 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
             {/* ROP */}
             <div>
               <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">ROP ({getSpeedLabel(depthUnit)})</label>
-              <input
-                type="number"
-                value={getDisplayValue(bit.rop)}
-                onChange={(e) => handleDepthValueChange(bit.id, 'rop', e.target.value)}
+              <NumericInput
+                value={convertDepth(bit.rop, depthUnit)}
+                onChange={(val) => handleDepthValueChange(bit.id, 'rop', val)}
+                formatDisplay={formatDepthValue}
+                parseInput={parseDepthValue}
                 className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
               />
             </div>
             {/* Max Dist */}
             <div>
               <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Dist ({getUnitLabel(depthUnit)})</label>
-              <input
-                type="number"
-                value={getDisplayValue(bit.maxDistance)}
-                onChange={(e) => handleDepthValueChange(bit.id, 'maxDistance', e.target.value)}
+              <NumericInput
+                value={convertDepth(bit.maxDistance, depthUnit)}
+                onChange={(val) => handleDepthValueChange(bit.id, 'maxDistance', val)}
+                formatDisplay={formatDepthValue}
+                parseInput={parseDepthValue}
                 className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
               />
             </div>
             {/* Cost */}
             <div className="col-span-2">
               <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Cost</label>
-              <input
-                type="text"
-                value={bit.cost.toLocaleString()}
-                onChange={(e) => handleCostChange(bit.id, e.target.value)}
+              <NumericInput
+                value={bit.cost}
+                onChange={(val) => updateBit(bit.id, 'cost', val)}
+                formatDisplay={formatCost}
+                parseInput={parseCost}
                 className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"
               />
             </div>
