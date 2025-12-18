@@ -52,7 +52,10 @@ export const runSimulation = (
     bitsUsedCounter[bit.name] = (bitsUsedCounter[bit.name] || 0) + 1;
 
     // 2. Add Bit Cost (One-time purchase per run)
-    currentCost += bit.cost;
+    // Only add cost if it's NOT a rerun
+    if (!entry.isRerun) {
+      currentCost += bit.cost;
+    }
     
     // 3. Calculate drilling duration for this run (use actualDistance from entry)
     const remainingDistance = targetDepth - currentDepth;

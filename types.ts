@@ -41,6 +41,8 @@ export interface BitSequenceEntry {
   bitId: string;
   actualDistance: number; // Must be > 0 and <= maxDistance, defaults to maxDistance
   comment?: string;       // Optional reason for the actual distance
+  isRerun?: boolean;
+  maxDistanceOverride?: number;
 }
 
 export interface ScenarioConfig {

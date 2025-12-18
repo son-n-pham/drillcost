@@ -266,19 +266,21 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     setScenarios(scenarios.map(s => s.id === id ? { ...s, ...updates } : s));
   };
 
-  const addToSequence = (scenarioId: string, bitId: string) => {
-    const s = scenarios.find(x => x.id === scenarioId);
-    const bit = bits.find(b => b.id === bitId);
-    if (s && bit) {
-      const newEntry: BitSequenceEntry = {
-        bitId: bitId,
-        actualDistance: bit.maxDistance,
-        comment: ''
-      };
-      updateScenario(scenarioId, { bitSequence: [...s.bitSequence, newEntry] });
-      setIsDropdownOpen(false);
-    }
-  };
+  const addToSequence = (scenarioId: string, bitId: string, isRerun?: boolean, maxOverride?: number) => {
+  const s = scenarios.find(x => x.id === scenarioId);
+  const bit = bits.find(b => b.id === bitId);
+  if (s && bit) {
+    const newEntry: BitSequenceEntry = {
+      bitId: bitId,
+      actualDistance: maxOverride ?? bit.maxDistance,
+      comment: '',
+      isRerun: isRerun,
+      maxDistanceOverride: maxOverride
+    };
+    updateScenario(scenarioId, { bitSequence: [...s.bitSequence, newEntry] });
+    setIsDropdownOpen(false);
+  }
+};
 
   const updateDropdownPosition = useCallback(() => {
     if (isDropdownOpen && buttonRef.current) {
@@ -474,6 +476,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     const hasComment = entry.comment && entry.comment.trim().length > 0;
     const isActualDistReduced = entry.actualDistance < bit.maxDistance;
     
+    const effectiveMaxDistance = entry.maxDistanceOverride ?? bit.maxDistance;
+    
     return (
       <div className="w-full flex items-center">
         <div className={clsx(
@@ -492,8 +496,11 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               <DragHandle className="flex-shrink-0" style={{ color: bit.color }} />
             )}
             
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 flex items-center gap-1.5">
               <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
+              {entry.isRerun && (
+                <span className="text-[8px] font-bold bg-amber-500 text-white px-1 py-0.5 rounded uppercase leading-none shrink-0">Rerun</span>
+              )}
             </div>
             
             {/* Comment indicator */}
@@ -512,12 +519,12 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 <NumericInput
                   type="number"
                   min={1}
-                  max={bit.maxDistance}
+                  max={Math.round(convertDepth(effectiveMaxDistance, depthUnit))}
                   value={Math.round(convertDepth(entry.actualDistance, depthUnit))}
                   onChange={(val) => {
                     // Convert back to meters and clamp
                     const metersVal = depthUnit === 'ft' ? val / METERS_TO_FEET : val;
-                    const clampedVal = Math.max(1, Math.min(metersVal, bit.maxDistance));
+                    const clampedVal = Math.max(1, Math.min(metersVal, effectiveMaxDistance));
                     updateSequenceEntry(activeScenario!.id, idx, { actualDistance: clampedVal });
                   }}
                   className={clsx(
@@ -528,7 +535,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   )}
                 />
                 <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">/</span>
-                <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">{displayDepth(bit.maxDistance)}{getUnitLabel(depthUnit)}</span>
+                <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">{displayDepth(effectiveMaxDistance)}{getUnitLabel(depthUnit)}</span>
               </div>
             </div>
           )}
@@ -817,7 +824,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                                     {usedBitsWithRemaining.map(({ bit, idx, remaining }) => (
                                       <button
                                         key={`used-${idx}`}
-                                        onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id); }}
+                                        onClick={(e) => { e.stopPropagation(); addToSequence(activeScenario.id, bit.id, true, remaining); }}
                                         className="w-full text-left px-3 py-2 text-sm text-slate-700 dark:text-[var(--bh-text)] hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 rounded-lg flex items-center gap-3 transition-colors group"
                                       >
                                         <span className="w-2 h-2 rounded-full ring-2 ring-amber-200 dark:ring-amber-500/30 transition-shadow" style={{ backgroundColor: bit.color }}></span>
@@ -825,6 +832,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                                           <div className="flex items-center gap-1.5">
                                             <span className="font-semibold">{bit.name}</span>
                                             <span className="text-[9px] font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1 py-0.5 rounded">#{idx + 1}</span>
+                                            <span className="text-[9px] font-bold bg-amber-500 text-white px-1 py-0.5 rounded uppercase leading-none">Rerun</span>
                                           </div>
                                           <span className="text-[10px] text-amber-600 dark:text-amber-400">{displayDepth(remaining)}{getUnitLabel(depthUnit)} left</span>
                                         </div>
