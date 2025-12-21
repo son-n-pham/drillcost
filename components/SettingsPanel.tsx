@@ -30,10 +30,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
   const parseDepth = (val: string) => parseFloat(val.replace(/,/g, ''));
 
   return (
-    <div className="card transition-colors duration-300">
-      <div className="px-3 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center gap-2">
+    <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-[var(--bh-border)] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md">
+      <div className="px-4 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center gap-2">
         <Settings className="w-4 h-4 text-slate-500 dark:text-[var(--bh-text-mute)]" />
-        <h2 className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wide">Input Parameters</h2>
+        <h2 className="font-bold text-[11px] text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wider">Input Parameters</h2>
       </div>
 
       <div className="px-3 py-5 space-y-5">

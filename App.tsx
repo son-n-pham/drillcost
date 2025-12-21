@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { GlobalParams, Bit, ScenarioConfig, BitSequenceEntry } from './types';
+import { GlobalParams, Bit, ScenarioConfig } from './types';
 import { INITIAL_GLOBAL_PARAMS, INITIAL_BITS, INITIAL_SCENARIOS } from './constants';
 import { runSimulation } from './utils/simulation';
 import SettingsPanel from './components/SettingsPanel';
@@ -7,7 +7,7 @@ import BitsPanel from './components/BitsPanel';
 import ScenarioManager from './components/ScenarioManager';
 import SimulationCharts from './components/SimulationCharts';
 import SnowEffect from './components/SnowEffect';
-import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown, Snowflake, Undo, Redo, MoreVertical } from 'lucide-react';
+import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown, Snowflake, Undo, Redo, MoreVertical, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import { SAMPLE_PARAMS, SAMPLE_BITS, SAMPLE_SCENARIOS } from './sampleData';
 import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
@@ -47,25 +47,6 @@ const loadSavedState = () => {
   return null;
 };
 
-// Helper function to migrate legacy bitSequence (string[]) to new format (BitSequenceEntry[])
-const migrateScenarios = (scenarios: any[], bits: Bit[]): ScenarioConfig[] => {
-  return scenarios.map(scenario => ({
-    ...scenario,
-    bitSequence: (scenario.bitSequence || []).map((entry: string | BitSequenceEntry) => {
-      if (typeof entry === 'string') {
-        // Legacy format: just a bit ID string
-        const bit = bits.find(b => b.id === entry);
-        return {
-          bitId: entry,
-          actualDistance: bit?.maxDistance ?? 0,
-          comment: ''
-        };
-      }
-      return entry;
-    })
-  }));
-};
-
 // Helper function to sanitize scenarios by removing orphan bit IDs
 const sanitizeScenarios = (scenarios: ScenarioConfig[], validBitIds: Set<string>): ScenarioConfig[] => {
   return scenarios.map(scenario => ({
@@ -80,11 +61,9 @@ const App: React.FC = () => {
   const [appData, setAppData, undo, redo, canUndo, canRedo] = useUndoRedo(() => {
     const saved = loadSavedState();
     const loadedBits = (saved?.bits ?? INITIAL_BITS) as Bit[];
-    const rawScenarios = (saved?.scenarios ?? INITIAL_SCENARIOS);
-    // Migrate legacy scenarios if needed
-    const migratedScenarios = migrateScenarios(rawScenarios, loadedBits);
+    const loadedScenarios = (saved?.scenarios ?? INITIAL_SCENARIOS) as ScenarioConfig[];
     const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
-    const sanitizedScenarios = sanitizeScenarios(migratedScenarios, validBitIds);
+    const sanitizedScenarios = sanitizeScenarios(loadedScenarios, validBitIds);
 
     return {
       params: (saved?.params ?? INITIAL_GLOBAL_PARAMS) as GlobalParams,
@@ -127,47 +106,11 @@ const App: React.FC = () => {
     }));
   };
 
-  const setBits = (newBitsOrFn: Bit[] | ((prev: Bit[]) => Bit[])) => {
-    setAppData(prev => {
-      const newBits = typeof newBitsOrFn === 'function' ? newBitsOrFn(prev.bits) : newBitsOrFn;
-      
-      // Identify bits that changed maxDistance
-      const changesMap = new Map<string, { oldMax: number, newMax: number }>();
-      newBits.forEach(newBit => {
-        const prevBit = prev.bits.find(b => b.id === newBit.id);
-        if (prevBit && prevBit.maxDistance !== newBit.maxDistance) {
-          changesMap.set(newBit.id, { oldMax: prevBit.maxDistance, newMax: newBit.maxDistance });
-        }
-      });
-
-      if (changesMap.size === 0) {
-        return { ...prev, bits: newBits };
-      }
-
-      const EPSILON = 1e-6;
-
-      // Update scenarios: adjust actualDistance strictly IF it was equal to old max
-      const updatedScenarios = prev.scenarios.map(scenario => ({
-        ...scenario,
-        bitSequence: scenario.bitSequence.map(entry => {
-          const change = changesMap.get(entry.bitId);
-          if (change) {
-            // Strictly update ONLY if it was equal to old max
-            // Use Math.abs for robust float comparison to handle unit conversions
-            if (Math.abs(entry.actualDistance - change.oldMax) < EPSILON) {
-              return { ...entry, actualDistance: change.newMax };
-            }
-          }
-          return entry;
-        })
-      }));
-
-      return {
-        ...prev,
-        bits: newBits,
-        scenarios: updatedScenarios
-      };
-    });
+  const setBits = (newBits: Bit[] | ((prev: Bit[]) => Bit[])) => {
+    setAppData(prev => ({
+      ...prev,
+      bits: typeof newBits === 'function' ? newBits(prev.bits) : newBits
+    }));
   };
 
   const setScenarios = (newScenarios: ScenarioConfig[] | ((prev: ScenarioConfig[]) => ScenarioConfig[])) => {
@@ -195,6 +138,7 @@ const App: React.FC = () => {
   
   const isScrolled = useScrolled();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -276,7 +220,7 @@ const App: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `drillcost-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`;
+    link.download = `drillcost-pro-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -295,16 +239,13 @@ const App: React.FC = () => {
         const state = JSON.parse(content);
         
         if (state.params && state.bits && state.scenarios) {
-           const loadedBits = state.bits as Bit[];
-           const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
-           // Migrate legacy scenarios if needed
-           const migratedScenarios = migrateScenarios(state.scenarios, loadedBits);
-           const sanitizedScenarios = sanitizeScenarios(migratedScenarios, validBitIds);
+           const validBitIds = new Set((state.bits as Bit[]).map((b: Bit) => b.id));
+           const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
            
            setAppData(prev => ({
              ...prev,
              params: state.params,
-             bits: loadedBits,
+             bits: state.bits as Bit[],
              scenarios: sanitizedScenarios
            }));
         } else {
@@ -312,10 +253,8 @@ const App: React.FC = () => {
              if (state.params) setParams(state.params);
              if (state.bits) setBits(state.bits as Bit[]);
              if (state.scenarios) {
-                const bitsToUse = (state.bits || bits) as Bit[];
-                const validBitIds = new Set(bitsToUse.map((b: Bit) => b.id));
-                const migratedScenarios = migrateScenarios(state.scenarios, bitsToUse);
-                const sanitizedScenarios = sanitizeScenarios(migratedScenarios, validBitIds);
+                const validBitIds = new Set(((state.bits || bits) as Bit[]).map((b: Bit) => b.id));
+                const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
                 setScenarios(sanitizedScenarios);
              }
         }
@@ -379,7 +318,7 @@ const App: React.FC = () => {
        bits: prev.bits.filter(b => b.id !== bitId),
        scenarios: prev.scenarios.map(scen => ({
          ...scen,
-         bitSequence: scen.bitSequence.filter(entry => entry.bitId !== bitId)
+         bitSequence: scen.bitSequence.filter(id => id !== bitId)
        }))
     }));
   };
@@ -601,17 +540,59 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 md:pt-8 pb-8 flex-grow">
+        <div className="flex flex-col md:flex-row relative items-start">
           
-          {/* Left Sidebar: Controls */}
-          <div className="md:col-span-4 lg:col-span-3 flex flex-col gap-6">
-            <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} />
-            <BitsPanel bits={bits} setBits={setBits} onRemoveBit={handleRemoveBit} depthUnit={depthUnit} />
-          </div>
+          {/* Unified Sidebar Container */}
+          <aside 
+            className={clsx(
+              "flex flex-col gap-6 overflow-hidden flex-shrink-0",
+              // Mobile (<850px): Full width, static position (scrolls with page)
+              // Desktop (>=850px): Sidebar behavior (sticky top-24)
+              "max-[849px]:w-full",
+              isSidebarOpen 
+                ? "min-[850px]:sticky min-[850px]:top-24 min-[850px]:w-[320px] min-[850px]:mr-8 opacity-100" 
+                : "min-[850px]:w-0 min-[850px]:mr-0 min-[850px]:opacity-0 min-[850px]:pointer-events-none"
+            )}
+            style={{ 
+              // Only apply max-height/scroll on desktop. Mobile should grow naturally.
+              maxHeight: 'var(--sidebar-height)', 
+              overflowY: 'var(--sidebar-overflow)',
+              transition: 'all 400ms cubic-bezier(0.2, 0, 0, 1)',
+              willChange: 'width, margin-right, opacity',
+              ['--sidebar-height' as string]: window.innerWidth >= 850 ? 'calc(100vh - 8rem)' : 'none',
+              ['--sidebar-overflow' as string]: window.innerWidth >= 850 ? 'auto' : 'visible'
+            }}
+          >
+            {/* Wrap inner content to prevent layout jumps during width transition */}
+            <div className="w-full min-[850px]:w-[310px] min-[850px]:min-w-[310px] h-full flex flex-col">
+              {/* Sticky Sidebar Header - Sticky to window on mobile (below nav), sticky to container on desktop */}
+              <div className="sticky top-16 min-[850px]:top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-1 py-2 min-[850px]:py-4 mb-2 flex items-center justify-between border-b border-white/20 dark:border-slate-800/20">
+
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <h2 className="font-bold text-sm text-slate-800 dark:text-white uppercase tracking-wider">Configuration</h2>
+                </div>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="hidden min-[850px]:block p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-all"
+                  title="Collapse Sidebar"
+                >
+                  <PanelLeftClose className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6 custom-scrollbar pr-1 pb-4 flex-1">
+                <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} />
+                <BitsPanel bits={bits} setBits={setBits} onRemoveBit={handleRemoveBit} depthUnit={depthUnit} />
+              </div>
+            </div>
+          </aside>
 
           {/* Main Content: Results & Charts */}
-          <div className="md:col-span-8 lg:col-span-9 space-y-8">
+          <div className="flex-1 space-y-8 min-w-0 w-full">
             
             {/* Scenarios & KPIs & Visualizations */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -627,6 +608,8 @@ const App: React.FC = () => {
                 isCompareMode={isCompareMode}
                 setIsCompareMode={setIsCompareMode}
                 isScrolled={isScrolled}
+                isSidebarOpen={isSidebarOpen}
+                setIsSidebarOpen={setIsSidebarOpen}
               >
                 {/* Visualizations (injected as children) */}
                 <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">

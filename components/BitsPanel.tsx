@@ -106,12 +106,12 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setBits((items) => {
+      setBits((items: Bit[]) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over.id);
 
         const newItems = arrayMove(items, oldIndex, newIndex);
-        return newItems.map((item, index) => ({ ...item, order: index }));
+        return newItems.map((item: Bit, index: number) => ({ ...item, order: index }));
       });
     }
     setActiveId(null);
@@ -223,11 +223,11 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
   };
 
   return (
-    <div className="card h-full flex flex-col">
-      <div className="px-2 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center justify-between">
+    <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-[var(--bh-border)] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md flex flex-col h-full">
+      <div className="px-3 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Drill className="w-4 h-4 text-slate-500 dark:text-[var(--bh-text-mute)]" />
-          <h2 className="font-bold text-sm text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wide">Bit Options</h2>
+          <h2 className="font-bold text-[11px] text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wider">Bit Options</h2>
         </div>
 
         <div className="flex items-center gap-2">
@@ -257,7 +257,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
           >
             <div className="space-y-2">
               {bits.map((bit) => (
-                <SortableItem key={bit.id} id={bit.id}>
+                <SortableItem key={`bit-${bit.id}`} id={bit.id}>
                   {renderBitRow(bit)}
                 </SortableItem>
               ))}

@@ -62,7 +62,8 @@ export const runSimulation = (
     const actualBitDistance = entry.actualDistance ?? bit.maxDistance;
     const distanceToDrill = Math.min(actualBitDistance, remainingDistance);
     
-    const drillTime = distanceToDrill / bit.rop;
+    const actualROP = entry.actualROP ?? bit.rop;
+    const drillTime = distanceToDrill / actualROP;
     const drillCost = drillTime * hourlyRigCost;
 
     // Advance Drilling

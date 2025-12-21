@@ -40,6 +40,7 @@ export interface ScenarioResult {
 export interface BitSequenceEntry {
   bitId: string;
   actualDistance: number; // Must be > 0 and <= maxDistance, defaults to maxDistance
+  actualROP?: number;     // Optional override for the bit's default ROP
   comment?: string;       // Optional reason for the actual distance
   isRerun?: boolean;
   maxDistanceOverride?: number;

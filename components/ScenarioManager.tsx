@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams, BitSequenceEntry } from '../types';
-import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical, MessageSquare } from 'lucide-react';
+import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical, MessageSquare, PanelLeftOpen } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 import { getScenarioColor } from '../utils/scenarioColors';
@@ -54,9 +54,11 @@ interface ScenarioManagerProps {
   setIsCompareMode: (isCompareMode: boolean) => void;
   children?: React.ReactNode;
   isScrolled?: boolean;
+  isSidebarOpen?: boolean;
+  setIsSidebarOpen?: (open: boolean) => void;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children, isScrolled = false }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children, isScrolled = false, isSidebarOpen = true, setIsSidebarOpen }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
@@ -475,6 +477,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const renderSequenceItem = (bit: Bit, entry: BitSequenceEntry, idx: number, isOverlay = false) => {
     const hasComment = entry.comment && entry.comment.trim().length > 0;
     const isActualDistReduced = entry.actualDistance < bit.maxDistance;
+    const isActualROPMonitored = entry.actualROP !== undefined && entry.actualROP !== bit.rop;
     
     const effectiveMaxDistance = entry.maxDistanceOverride ?? bit.maxDistance;
     
@@ -537,7 +540,27 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">/</span>
                 <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">{displayDepth(effectiveMaxDistance)}{getUnitLabel(depthUnit)}</span>
               </div>
+
+            <div className="flex items-center gap-1 ml-auto">
+              <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">ROP:</span>
+              <NumericInput
+                type="number"
+                min={0.1}
+                max={1000}
+                value={entry.actualROP ?? bit.rop}
+                onChange={(val) => {
+                  updateSequenceEntry(activeScenario!.id, idx, { actualROP: val });
+                }}
+                className={clsx(
+                  "w-14 text-[10px] font-semibold bg-transparent border rounded px-1 py-0.5 outline-none text-center transition-colors",
+                  isActualROPMonitored
+                    ? "border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10"
+                    : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
+                )}
+              />
+              <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">m/h</span>
             </div>
+          </div>
           )}
           
           {/* Comment input - shown when actual distance is reduced */}
@@ -964,12 +987,20 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
   return (
     <div className="space-y-6">
-      {/* Sticky Container for Header + Cards (large screens only) */}
-      <div ref={stickyHeaderRef} className="md:sticky md:top-16 md:z-40 md:bg-slate-50 md:dark:bg-[var(--bh-bg)] md:py-4 space-y-4 transition-[height] duration-300">
-        {/* Header Row: Title + Stats + Compare Controls */}
+      {/* Sticky Container for Header + Stats */}
+      <div ref={stickyHeaderRef} className="min-[850px]:sticky top-16 md:top-20 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md pb-4 pt-4 border-b border-transparent mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Left: Title & Count */}
           <div className="flex items-center gap-3">
+            {!isSidebarOpen && setIsSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="hidden min-[850px]:block p-1.5 bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-blue-600 dark:text-[var(--bh-primary)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] transition-all shrink-0 animate-in fade-in slide-in-from-left-2 duration-300"
+                title="Expand Configuration"
+              >
+                <PanelLeftOpen className="w-5 h-5" />
+              </button>
+            )}
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-slate-100 dark:bg-[var(--bh-surface-2)] rounded-md text-slate-600 dark:text-[var(--bh-text-mute)]">
                 <Layers className="w-4 h-4" />
@@ -1030,9 +1061,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             )}
           </div>
         </div>
+      </div>
 
+      {/* Results Summary Cards */}
         {/* Results Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={clsx(
+          "grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300 ease-in-out",
+          isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"
+        )}>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -1188,7 +1224,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             <span className="font-semibold text-xs">New Scenario</span>
           </button>
         </div>
-      </div>
 
       {/* Comparison Panel */}
       {isCompareMode && comparisonResults.length === 2 && (
