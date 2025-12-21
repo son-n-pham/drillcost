@@ -1014,8 +1014,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
         className={clsx(
           "min-[850px]:sticky top-16 min-[850px]:top-20 z-40 transition-all duration-300 mb-6",
           isScrolled 
-            ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pb-6 pt-4 border-b border-slate-200 dark:border-[var(--bh-border)] shadow-lg rounded-b-2xl px-1" 
-            : "bg-white/40 dark:bg-slate-900/40 pb-4 pt-4 border-b border-transparent"
+            ? "bg-white/95 dark:bg-[var(--bh-surface-1)]/95 backdrop-blur-md pb-6 pt-4 border-b border-slate-200 dark:border-[var(--bh-border)] shadow-lg rounded-b-2xl px-1" 
+            : "bg-white/40 dark:bg-[var(--bh-surface-0)]/40 pb-4 pt-4 border-b border-transparent"
         )}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

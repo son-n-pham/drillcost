@@ -567,7 +567,7 @@ const App: React.FC = () => {
             {/* Wrap inner content to prevent layout jumps during width transition */}
             <div className="w-full min-[850px]:w-[310px] min-[850px]:min-w-[310px] h-full flex flex-col">
               {/* Sticky Sidebar Header - Sticky to window on mobile (below nav), sticky to container on desktop */}
-              <div className="sticky top-16 min-[850px]:top-0 z-10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-1 py-2 min-[850px]:py-4 mb-2 flex items-center justify-between border-b border-white/20 dark:border-slate-800/20">
+              <div className="sticky top-16 min-[850px]:top-0 z-10 bg-white/80 dark:bg-[var(--bh-surface-1)]/80 backdrop-blur-md px-1 py-2 min-[850px]:py-4 mb-2 flex items-center justify-between border-b border-white/20 dark:border-slate-800/20">
 
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400">

@@ -223,7 +223,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
   };
 
   return (
-    <div className="bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-[var(--bh-border)] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md flex flex-col h-full">
+    <div className="bg-white/40 dark:bg-[var(--bh-surface-0)]/40 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-[var(--bh-border)] overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md flex flex-col h-full">
       <div className="px-3 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Drill className="w-4 h-4 text-slate-500 dark:text-[var(--bh-text-mute)]" />
