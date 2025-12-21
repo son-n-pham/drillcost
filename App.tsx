@@ -540,7 +540,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 min-[850px]:pt-8 pb-8 flex-grow">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 min-[850px]:pt-2 pb-2 flex-grow">
         <div className="flex flex-col min-[850px]:flex-row relative items-start">
           
           {/* Unified Sidebar Container */}
@@ -551,7 +551,7 @@ const App: React.FC = () => {
               // Desktop (>=850px): Sidebar behavior (sticky top-24)
               "max-[849px]:w-full",
               isSidebarOpen 
-                ? "min-[850px]:sticky min-[850px]:top-24 min-[850px]:w-[320px] min-[850px]:mr-8 opacity-100" 
+                ? "min-[850px]:sticky min-[850px]:top-[64px] min-[850px]:w-[320px] min-[850px]:mr-8 opacity-100" 
                 : "min-[850px]:w-0 min-[850px]:mr-0 min-[850px]:opacity-0 min-[850px]:pointer-events-none"
             )}
             style={{ 
@@ -626,44 +626,33 @@ const App: React.FC = () => {
                 </div>
               </ScenarioManager>
             </section>
+            
+            {/* Footer moved inside flex-1 to extend sticky track */}
+            <footer className="w-full border-t border-slate-200 dark:border-[var(--bh-border)] py-6 mt-12 mb-8">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">
+                <div className="max-w-xl">
+                  <div className="font-semibold text-slate-800 dark:text-[var(--bh-text)]">
+                    <a href="https://youtu.be/a4ap0R_OQIE?si=HRt_-Y2UeGuxWlBd" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">Open Source</a> — All Contributions Welcome
+                  </div>
+                  <p className="mt-1 opacity-70">
+                    Start here: <a href="https://github.com/son-n-pham/drillcost/issues" target="_blank" rel="noopener noreferrer" className="hover:underline">open an issue</a>, fork the repo, or contact me via <a href="https://son-n-pham.github.io/" target="_blank" rel="noopener noreferrer" className="hover:underline">my site</a>.
+                  </p>
+                </div>
 
+                <div className="flex items-center gap-4">
+                  <a href="https://github.com/son-n-pham/drillcost" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-1.5 font-medium">
+                    <FileText className="w-3.5 h-3.5" /> Source
+                  </a>
+                  <a href="https://github.com/son-n-pham/drillcost/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors font-medium">
+                    MIT License
+                  </a>
+                </div>
+              </div>
+            </footer>
           </div>
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-slate-200 dark:border-[var(--bh-border)] py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-sm text-slate-600 dark:text-[var(--bh-text-mute)]">
-          <div className="max-w-xl">
-        <div className="font-semibold text-slate-800 dark:text-[var(--bh-text)]"><a href="https://youtu.be/a4ap0R_OQIE?si=HRt_-Y2UeGuxWlBd" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">Open Source</a> — All Contributions Welcome</div>
-
-        <p className="mt-2 text-xs">
-          Start here: <a href="https://github.com/son-n-pham/drillcost/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">open an issue</a>, fork the repo, or contact me via <a href="https://son-n-pham.github.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-[var(--bh-primary)] hover:underline">my site</a>.
-        </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <a
-          href="https://github.com/son-n-pham/drillcost"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors flex items-center gap-2"
-        >
-          <FileText className="w-4 h-4" />
-          <span className="text-xs font-medium">Source on GitHub</span>
-        </a>
-
-        <a
-          href="https://github.com/son-n-pham/drillcost/blob/main/LICENSE"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-blue-600 dark:hover:text-[var(--bh-primary)] transition-colors text-xs font-medium"
-        >
-          MIT License
-        </a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };

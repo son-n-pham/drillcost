@@ -1012,10 +1012,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       <div 
         ref={stickyHeaderRef} 
         className={clsx(
-          "min-[850px]:sticky top-16 min-[850px]:top-20 z-40 transition-all duration-300 mb-6",
+          "min-[850px]:sticky top-16 min-[850px]:top-[64px] z-40 transition-all duration-300 mb-2",
           isScrolled 
-            ? "bg-white/95 dark:bg-[var(--bh-surface-1)]/95 backdrop-blur-md pb-6 pt-4 border-b border-slate-200 dark:border-[var(--bh-border)] shadow-lg rounded-b-2xl px-1" 
-            : "bg-white/40 dark:bg-[var(--bh-surface-0)]/40 pb-4 pt-4 border-b border-transparent"
+            ? "bg-white/95 dark:bg-[var(--bh-bg)]/90 backdrop-blur-xl pb-4 pt-3 border-b border-slate-200/50 dark:border-[var(--bh-border)]/50 shadow-xl px-2" 
+            : "bg-transparent pb-3 pt-4 border-b border-transparent"
         )}
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
