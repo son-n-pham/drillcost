@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import { Bit, ScenarioConfig, ScenarioResult, GlobalParams, BitSequenceEntry } from '../types';
-import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical, MessageSquare, PanelLeftOpen } from 'lucide-react';
+import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, ChevronDown, ChevronUp, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical, MessageSquare, PanelLeftOpen } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
 import { getScenarioColor } from '../utils/scenarioColors';
@@ -13,6 +13,7 @@ import {
   KeyboardSensor,
   PointerSensor,
   useSensor,
+
   useSensors,
   DragEndEvent,
   DragOverlay,
@@ -1006,19 +1007,59 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   };
 
 
+  // Sticky Collapse State
+  const [isStuck, setIsStuck] = useState(false);
+  const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Trigger generic sticky state when sentinel hits the top offset (64px)
+        if (window.matchMedia('(min-width: 850px)').matches) {
+          const stuck = entry.boundingClientRect.top < 65;
+          setIsStuck(stuck);
+          if (!stuck) setIsManuallyExpanded(false); // Reset expansion when scrolling to top
+        } else {
+          setIsStuck(false);
+          setIsManuallyExpanded(false);
+        }
+      },
+      { threshold: [0, 1], rootMargin: '-65px 0px 0px 0px' }
+    );
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
+    
+    const handleResize = () => {
+      if (!window.matchMedia('(min-width: 850px)').matches) {
+        setIsStuck(false);
+        setIsManuallyExpanded(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      <div ref={sentinelRef} className="absolute top-0 left-0 w-full h-px pointer-events-none opacity-0" />
       {/* Sticky Container for Header + Stats */}
       <div 
         ref={stickyHeaderRef} 
         className={clsx(
-          "min-[850px]:sticky top-16 min-[850px]:top-[64px] z-40 transition-all duration-300 mb-2",
-          isScrolled 
-            ? "bg-white/95 dark:bg-[var(--bh-bg)]/90 backdrop-blur-xl pb-4 pt-3 border-b border-slate-200/50 dark:border-[var(--bh-border)]/50 shadow-xl px-2" 
-            : "bg-transparent pb-3 pt-4 border-b border-transparent"
+          "min-[850px]:sticky top-16 min-[850px]:top-[64px] z-40 transition-all duration-500 ease-in-out mb-2",
+          (isScrolled || isStuck)
+            ? "bg-white/95 dark:bg-[var(--bh-bg)]/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-[var(--bh-border)]/50 shadow-xl px-2" 
+            : "bg-transparent border-b border-transparent",
+           isStuck ? "py-2" : "pb-3 pt-4"
         )}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className={clsx("grid transition-all duration-500 ease-in-out", (isStuck && !isManuallyExpanded) ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100")}>
+          <div className="overflow-hidden min-h-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Left: Title & Count */}
           <div className="flex items-center gap-3">
             {!isSidebarOpen && setIsSidebarOpen && (
@@ -1089,11 +1130,39 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               </>
             )}
           </div>
+            </div>
+          </div>
         </div>
+
+        {/* Expand/Collapse Toggle Button (Only when sticky) */}
+        {isStuck && (
+          <div className="flex justify-center -mt-2 -mb-2 relative z-10">
+             <button
+               onClick={() => setIsManuallyExpanded(!isManuallyExpanded)}
+               className={clsx(
+                 "flex items-center gap-1.5 px-3 py-0.5 rounded-b-lg text-[10px] font-bold uppercase tracking-wider border-x border-b shadow-sm transition-all",
+                 "bg-white dark:bg-[var(--bh-surface-1)] border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-200 dark:hover:border-[var(--bh-primary)]/30"
+               )}
+             >
+               {isManuallyExpanded ? (
+                 <>
+                   <span>Collapse</span>
+                   <ChevronUp className="w-3 h-3" />
+                 </>
+               ) : (
+                 <>
+                   <span>Expand</span>
+                   <ChevronDown className="w-3 h-3" />
+                 </>
+               )}
+             </button>
+          </div>
+        )}
 
         {/* Results Summary Cards Grid relocated inside sticky container */}
         <div className={clsx(
-          "grid gap-4 transition-all duration-300 ease-in-out mt-6",
+          "grid gap-4 transition-all duration-300 ease-in-out",
+          isStuck ? "mt-0" : "mt-6",
           "grid-cols-1 md:grid-cols-2",
           isSidebarOpen ? "min-[850px]:!grid-cols-3" : "min-[850px]:!grid-cols-4"
         )}>
