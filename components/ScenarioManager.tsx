@@ -514,53 +514,67 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             )}
           </div>
           
-          {/* Actual distance input row */}
+          {/* Actual distance & ROP inputs - wrap to two lines if container is narrow */}
           {!isOverlay && (
-            <div className="flex items-center gap-2 pl-8">
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">Actual:</span>
-                <NumericInput
-                  type="number"
-                  min={1}
-                  max={Math.round(convertDepth(effectiveMaxDistance, depthUnit))}
-                  value={Math.round(convertDepth(entry.actualDistance, depthUnit))}
-                  onChange={(val) => {
-                    // Convert back to meters and clamp
-                    const metersVal = depthUnit === 'ft' ? val / METERS_TO_FEET : val;
-                    const clampedVal = Math.max(1, Math.min(metersVal, effectiveMaxDistance));
-                    updateSequenceEntry(activeScenario!.id, idx, { actualDistance: clampedVal });
-                  }}
-                  className={clsx(
-                    "w-14 text-[10px] font-semibold bg-transparent border rounded px-1 py-0.5 outline-none text-center transition-colors",
-                    isActualDistReduced 
-                      ? "border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10"
-                      : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
-                  )}
-                />
-                <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">/</span>
-                <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">{displayDepth(effectiveMaxDistance)}{getUnitLabel(depthUnit)}</span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pl-8 mt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-405 dark:text-[var(--bh-text-mute)] font-medium">Dist:</span>
+                <div className="flex items-center">
+                  <NumericInput
+                    type="number"
+                    min={1}
+                    max={Math.round(convertDepth(effectiveMaxDistance, depthUnit))}
+                    value={Math.round(convertDepth(entry.actualDistance, depthUnit))}
+                    onChange={(val) => {
+                      const metersVal = depthUnit === 'ft' ? val / METERS_TO_FEET : val;
+                      const clampedVal = Math.max(1, Math.min(metersVal, effectiveMaxDistance));
+                      updateSequenceEntry(activeScenario!.id, idx, { actualDistance: clampedVal });
+                    }}
+                    className={clsx(
+                      "w-12 text-[10px] font-bold bg-white dark:bg-slate-800 border-y border-l rounded-l px-1 py-0.5 outline-none text-center transition-colors",
+                      isActualDistReduced 
+                        ? "border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-400"
+                        : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
+                    )}
+                  />
+                  <div className={clsx(
+                    "flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-bold border rounded-r bg-slate-50 dark:bg-slate-900/50",
+                    isActualDistReduced ? "border-amber-300 dark:border-amber-500/50 text-amber-600" : "border-slate-200 dark:border-[var(--bh-border)] text-slate-400"
+                  )}>
+                    <span className="opacity-50">/</span>
+                    <span>{displayDepth(effectiveMaxDistance)}</span>
+                    <span className="text-[8px] font-normal opacity-70 uppercase tracking-tighter">{getUnitLabel(depthUnit)}</span>
+                  </div>
+                </div>
               </div>
 
-            <div className="flex items-center gap-1 ml-auto">
-              <span className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]">ROP:</span>
-              <NumericInput
-                type="number"
-                min={0.1}
-                max={1000}
-                value={entry.actualROP ?? bit.rop}
-                onChange={(val) => {
-                  updateSequenceEntry(activeScenario!.id, idx, { actualROP: val });
-                }}
-                className={clsx(
-                  "w-14 text-[10px] font-semibold bg-transparent border rounded px-1 py-0.5 outline-none text-center transition-colors",
-                  isActualROPMonitored
-                    ? "border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10"
-                    : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
-                )}
-              />
-              <span className="text-[10px] text-slate-500 dark:text-[var(--bh-text-mute)]">m/h</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-405 dark:text-[var(--bh-text-mute)] font-medium">ROP:</span>
+                <div className="flex items-center">
+                  <NumericInput
+                    type="number"
+                    min={0.1}
+                    max={1000}
+                    value={entry.actualROP ?? bit.rop}
+                    onChange={(val) => {
+                      updateSequenceEntry(activeScenario!.id, idx, { actualROP: val });
+                    }}
+                    className={clsx(
+                      "w-12 text-[10px] font-bold bg-white dark:bg-slate-800 border-y border-l rounded-l px-1 py-0.5 outline-none text-center transition-colors",
+                      isActualROPMonitored
+                        ? "border-blue-300 dark:border-blue-500/50 text-blue-700 dark:text-blue-400"
+                        : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
+                    )}
+                  />
+                  <div className={clsx(
+                    "px-1.5 py-0.5 text-[10px] font-bold border rounded-r bg-slate-50 dark:bg-slate-900/50",
+                    isActualROPMonitored ? "border-blue-300 dark:border-blue-500/50 text-blue-600" : "border-slate-200 dark:border-[var(--bh-border)] text-slate-400"
+                  )}>
+                    <span className="text-[8px] font-normal opacity-70 uppercase tracking-tighter">{getSpeedLabel(depthUnit)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
           )}
           
           {/* Comment input - shown when actual distance is reduced */}
@@ -737,7 +751,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     const uniqueId = `${entry.bitId}::${idx}`;
 
                     return (
-                      <div key={uniqueId} className="w-full md:w-1/2 lg:w-1/3 mb-2 pr-1">
+                      <div 
+                        key={uniqueId} 
+                        className={clsx(
+                          "mb-2 pr-1",
+                          // Only go to 4 per row on XL screens when sidebar is collapsed
+                          isSidebarOpen ? "w-full md:w-1/2 lg:w-1/3" : "w-full md:w-1/2 lg:w-1/3 xl:w-1/4"
+                        )}
+                      >
                         <SortableItem
                           id={uniqueId}
                           trigger="handle"
@@ -988,7 +1009,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   return (
     <div className="space-y-6">
       {/* Sticky Container for Header + Stats */}
-      <div ref={stickyHeaderRef} className="min-[850px]:sticky top-16 md:top-20 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md pb-4 pt-4 border-b border-transparent mb-6">
+      <div ref={stickyHeaderRef} className="min-[850px]:sticky top-16 min-[850px]:top-20 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md pb-4 pt-4 border-b border-transparent mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Left: Title & Count */}
           <div className="flex items-center gap-3">
@@ -1066,8 +1087,9 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       {/* Results Summary Cards */}
         {/* Results Summary Cards */}
         <div className={clsx(
-          "grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300 ease-in-out",
-          isSidebarOpen ? "lg:grid-cols-3" : "lg:grid-cols-4"
+          "grid gap-4 transition-all duration-300 ease-in-out",
+          "grid-cols-1 md:grid-cols-2",
+          isSidebarOpen ? "min-[850px]:!grid-cols-3" : "min-[850px]:!grid-cols-4"
         )}>
           <DndContext
             sensors={sensors}

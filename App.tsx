@@ -540,8 +540,8 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 md:pt-8 pb-8 flex-grow">
-        <div className="flex flex-col md:flex-row relative items-start">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2 min-[850px]:pt-8 pb-8 flex-grow">
+        <div className="flex flex-col min-[850px]:flex-row relative items-start">
           
           {/* Unified Sidebar Container */}
           <aside 
