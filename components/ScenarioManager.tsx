@@ -1009,7 +1009,15 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   return (
     <div className="space-y-6">
       {/* Sticky Container for Header + Stats */}
-      <div ref={stickyHeaderRef} className="min-[850px]:sticky top-16 min-[850px]:top-20 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md pb-4 pt-4 border-b border-transparent mb-6">
+      <div 
+        ref={stickyHeaderRef} 
+        className={clsx(
+          "min-[850px]:sticky top-16 min-[850px]:top-20 z-40 transition-all duration-300 mb-6",
+          isScrolled 
+            ? "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pb-6 pt-4 border-b border-slate-200 dark:border-[var(--bh-border)] shadow-lg rounded-b-2xl px-1" 
+            : "bg-white/40 dark:bg-slate-900/40 pb-4 pt-4 border-b border-transparent"
+        )}
+      >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           {/* Left: Title & Count */}
           <div className="flex items-center gap-3">
@@ -1082,12 +1090,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             )}
           </div>
         </div>
-      </div>
 
-      {/* Results Summary Cards */}
-        {/* Results Summary Cards */}
+        {/* Results Summary Cards Grid relocated inside sticky container */}
         <div className={clsx(
-          "grid gap-4 transition-all duration-300 ease-in-out",
+          "grid gap-4 transition-all duration-300 ease-in-out mt-6",
           "grid-cols-1 md:grid-cols-2",
           isSidebarOpen ? "min-[850px]:!grid-cols-3" : "min-[850px]:!grid-cols-4"
         )}>
@@ -1246,6 +1252,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
             <span className="font-semibold text-xs">New Scenario</span>
           </button>
         </div>
+      </div>
 
       {/* Comparison Panel */}
       {isCompareMode && comparisonResults.length === 2 && (
