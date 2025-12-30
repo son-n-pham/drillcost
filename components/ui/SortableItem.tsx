@@ -6,8 +6,8 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 interface SortableItemContextProps {
-    attributes: any;
-    listeners: any;
+    attributes: Record<string, any> | undefined;
+    listeners: Record<string, any> | undefined;
     isDragging: boolean;
     setActivatorNodeRef: (element: HTMLElement | null) => void;
 }
@@ -46,7 +46,7 @@ export function SortableItem({ id, children, className, style: propStyle, trigge
             <div
                 ref={setNodeRef}
                 style={style}
-                {...(trigger === 'item' ? { ...attributes, ...listeners } : {})}
+                {...(trigger === 'item' ? { ...(attributes || {}), ...(listeners || {}) } : {})}
                 className={twMerge(
                     clsx('relative', isDragging && 'opacity-50'),
                     className
@@ -69,8 +69,8 @@ export function DragHandle({ className, style }: { className?: string; style?: R
     return (
         <div
             ref={setActivatorNodeRef}
-            {...attributes}
-            {...listeners}
+            {...(attributes || {})}
+            {...(listeners || {})}
             style={style}
             className={twMerge(
                 'relative cursor-grab flex items-center justify-center p-0 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 touch-none active:cursor-grabbing after:absolute after:-inset-6 after:content-[""]',

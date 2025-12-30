@@ -1221,18 +1221,16 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             : hexToRgba(getScenarioColor(idx), 0.1)
                         }}
                       >
-                        {/* Left: Drag or Checkbox */}
-                        <div className="flex-shrink-0 w-6 flex justify-center">
+                        {/* Left: Drag or Checkbox - no wrapper div to avoid pointer event interference */}
                           {isCompareMode ? (
                              isSelectedForCompare ? (
-                               <CheckSquare className="w-4 h-4 text-blue-500 dark:text-[var(--bh-primary)]" />
+                               <CheckSquare className="flex-shrink-0 w-4 h-4 text-blue-500 dark:text-[var(--bh-primary)]" />
                              ) : (
-                               <Square className="w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                               <Square className="flex-shrink-0 w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
                              )
                           ) : (
-                             <DragHandle className={clsx("p-1 rounded w-5 h-5", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
+                             <DragHandle className={clsx("flex-shrink-0 p-1 rounded", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
                           )}
-                        </div>
 
                         {/* Middle: Name & Indicators */}
                         <div className="flex-1 px-1 min-w-0 text-center flex items-center justify-center gap-1.5">

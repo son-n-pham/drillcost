@@ -15,8 +15,10 @@ import {
   TouchSensor,
   MouseSensor,
   DropAnimation,
-  defaultDropAnimationSideEffects
+  defaultDropAnimationSideEffects,
+  MeasuringStrategy
 } from '@dnd-kit/core';
+import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
 import {
   arrayMove,
   SortableContext,
@@ -44,12 +46,12 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 10,
+        distance: 3,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
+        delay: 200,
         tolerance: 5,
       },
     }),
@@ -98,24 +100,25 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
     }
   };
 
-  const handleDragStart = (event: any) => {
-    setActiveId(event.active.id);
-  };
+  const handleDragStart = useCallback((event: { active: { id: string | number } }) => {
+    setActiveId(String(event.active.id));
+  }, []);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setBits((items: Bit[]) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
+      const oldIndex = bits.findIndex((item) => item.id === String(active.id));
+      const newIndex = bits.findIndex((item) => item.id === String(over.id));
 
-        const newItems = arrayMove(items, oldIndex, newIndex);
-        return newItems.map((item: Bit, index: number) => ({ ...item, order: index }));
-      });
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(bits, oldIndex, newIndex);
+        const updatedItems = newItems.map((item, index) => ({ ...item as any, order: index }));
+        setBits(updatedItems);
+      }
     }
     setActiveId(null);
-  };
+  }, [bits, setBits]);
 
   const handleDepthValueChange = (id: string, field: 'rop' | 'maxDistance', value: number) => {
     const metersValue = convertDepthToMeters(value, depthUnit);
@@ -135,24 +138,22 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
   const renderBitRow = (bit: Bit, isOverlay = false) => {
     return (
       <div className={clsx(
-        "border border-slate-200 dark:border-[var(--bh-border)] rounded-lg bg-white dark:bg-[var(--bh-surface-0)] shadow-sm transition-all overflow-hidden",
+        "border border-slate-200 dark:border-[var(--bh-border)] rounded-lg bg-white dark:bg-[var(--bh-surface-0)] shadow-sm transition-all",
         isOverlay && "border-blue-500 ring-2 ring-blue-500/20"
       )}>
         {/* Header with drag handle, bit name, and delete - bit color background */}
         <div 
-          className="flex items-center gap-2 px-2 py-2"
-          style={{ backgroundColor: bit.color, opacity: 0.7 }}
+          className="flex items-center gap-2 px-2 py-2 rounded-t-lg"
+          style={{ backgroundColor: `${bit.color}B3` }} // B3 = ~70% opacity in hex
         >
-          {/* Drag Handle */}
-          <div className="flex shrink-0">
-            {isOverlay ? (
-              <div className="p-4 flex items-center justify-center">
-                <GripVertical className="w-4 h-4 text-white/80 cursor-grabbing" />
-              </div>
-            ) : (
-              <DragHandle className="text-white/80 hover:text-white" />
-            )}
-          </div>
+          {/* Drag Handle - no wrapper div to avoid pointer event interference */}
+          {isOverlay ? (
+            <div className="shrink-0 p-1 flex items-center justify-center">
+              <GripVertical className="w-5 h-5 text-white/80 cursor-grabbing" />
+            </div>
+          ) : (
+            <DragHandle className="shrink-0 text-white/80 hover:text-white z-10 relative" />
+          )}
 
           {/* Bit Name - centered both horizontally and vertically */}
           <div className="flex-1 min-w-0 flex items-center justify-center">
@@ -175,6 +176,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
           <button
             onClick={() => removeBit(bit.id)}
             className="p-1 text-white/70 hover:text-white hover:bg-white/20 rounded transition-colors shrink-0"
+            title="Remove Bit"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -244,30 +246,42 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
         </div>
       </div>
 
-      <div className="px-2 py-3 flex-1 overflow-y-auto">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        measuring={{
+          droppable: {
+            strategy: MeasuringStrategy.Always,
+          },
+        }}
+        modifiers={[restrictToWindowEdges]}
+      >
+        <div className="px-2 py-3 flex-1 overflow-y-auto">
           <SortableContext
             items={bits.map(b => b.id)}
             strategy={verticalListSortingStrategy}
           >
             <div className="space-y-2">
               {bits.map((bit) => (
-                <SortableItem key={`bit-${bit.id}`} id={bit.id}>
-                  {renderBitRow(bit)}
-                </SortableItem>
+                <div key={`bit-${bit.id}`}>
+                  <SortableItem id={bit.id} trigger="handle">
+                    {renderBitRow(bit)}
+                  </SortableItem>
+                </div>
               ))}
             </div>
           </SortableContext>
-          <DragOverlay dropAnimation={null}>
-            {activeId ? renderBitRow(bits.find(b => b.id === activeId)!, true) : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
+        </div>
+        <DragOverlay dropAnimation={null}>
+          {activeId ? (
+            <div className="w-[280px] cursor-grabbing">
+              {renderBitRow(bits.find(b => b.id === activeId)!, true)}
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       <UndoToast
         isVisible={undoToastVisible}
