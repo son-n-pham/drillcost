@@ -141,19 +141,15 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
         "border border-slate-200 dark:border-[var(--bh-border)] rounded-lg bg-white dark:bg-[var(--bh-surface-0)] shadow-sm transition-all",
         isOverlay && "border-blue-500 ring-2 ring-blue-500/20"
       )}>
-        {/* Header with drag handle, bit name, and delete - bit color background */}
+        {/* Header with hidden drag handle, bit name, and delete - bit color background */}
         <div 
           className="flex items-center gap-2 px-2 py-2 rounded-t-lg"
           style={{ backgroundColor: `${bit.color}B3` }} // B3 = ~70% opacity in hex
         >
-          {/* Drag Handle - no wrapper div to avoid pointer event interference */}
-          {isOverlay ? (
-            <div className="shrink-0 p-1 flex items-center justify-center">
-              <GripVertical className="w-5 h-5 text-white/80 cursor-grabbing" />
-            </div>
-          ) : (
-            <DragHandle className="shrink-0 text-white/80 hover:text-white z-10 relative" />
-          )}
+            {/* Drag Handle - hidden */}
+            {!isOverlay && (
+            <DragHandle className="shrink-0 text-white/80 hover:text-white z-10 relative hidden" />
+            )}
 
           {/* Bit Name - centered both horizontally and vertically */}
           <div className="flex-1 min-w-0 flex items-center justify-center">
