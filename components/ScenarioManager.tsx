@@ -1079,9 +1079,14 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               </div>
               <h2 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">Scenarios</h2>
             </div>
-            <span className="text-xs font-semibold text-slate-500 dark:text-[var(--bh-text-mute)] bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] px-2.5 py-1 rounded-full shadow-sm">
-              {scenarios.length} Active
-            </span>
+            <button
+              onClick={addScenario}
+              className="w-7 h-7 rounded-full bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] text-slate-500 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] transition-all flex items-center justify-center shadow-sm"
+              title="New Scenario"
+              aria-label="New Scenario"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Right: Auto-Optimize & Compare Controls */}
@@ -1308,18 +1313,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               })() : null}
             </DragOverlay>
           </DndContext>
-          <button
-            onClick={addScenario}
-            className={clsx(
-              "flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:bg-blue-50/50 dark:hover:bg-[var(--bh-surface-2)] transition-all gap-1 group",
-              "p-2 min-h-[85px] w-full"
-            )}
-          >
-            <div className={clsx("rounded-full bg-slate-100 dark:bg-[var(--bh-surface-1)] group-hover:bg-blue-100 dark:group-hover:bg-[var(--bh-surface-2)] flex items-center justify-center transition-colors", "w-8 h-8")}>
-              <Plus className={clsx("w-4 h-4")} />
-            </div>
-            <span className="font-semibold text-xs">New Scenario</span>
-          </button>
         </div>
       </div>
 
