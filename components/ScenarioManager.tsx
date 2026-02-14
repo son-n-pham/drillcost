@@ -487,13 +487,13 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     return (
       <div className="w-full flex items-center">
         <div className={clsx(
-          "relative group border transition-all rounded-lg p-2 pr-7 flex flex-col gap-1 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
+          "relative group border transition-all rounded-lg p-1.5 pr-6 flex flex-col gap-0.5 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
           isOverlay 
             ? "border-blue-500 shadow-2xl ring-2 ring-blue-500/20 cursor-grabbing opacity-90"
             : `border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md ${touchBitSelection.isSelected(idx) ? "ring-2 ring-blue-400" : ""}`
         )}>
           {/* Top row: drag handle + bit name */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {isOverlay ? (
              <div className="p-4 flex items-center justify-center">
                <GripVertical className="flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
@@ -519,8 +519,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           
           {/* Actual distance & ROP inputs - wrap to two lines if container is narrow */}
           {!isOverlay && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pl-8 mt-0.5">
-              <div className="flex items-center gap-1.5">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-7 mt-0.5">
+              <div className="flex items-center gap-1">
                 <span className="text-[10px] text-slate-405 dark:text-[var(--bh-text-mute)] font-medium">Dist:</span>
                 <div className="flex items-center">
                   <NumericInput
@@ -551,7 +551,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1">
                 <span className="text-[10px] text-slate-405 dark:text-[var(--bh-text-mute)] font-medium">ROP:</span>
                 <div className="flex items-center">
                   <NumericInput
@@ -582,7 +582,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           
           {/* Comment input - shown when actual distance is reduced */}
           {!isOverlay && isActualDistReduced && (
-            <div className="pl-8">
+            <div className="pl-7">
               <input
                 type="text"
                 value={entry.comment || ''}
@@ -650,7 +650,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           style={{ backgroundColor: getScenarioColor(scenarios.findIndex(s => s.id === activeTab)) }}
         ></div>
         {/* Scenario Header */}
-        <div className={clsx("px-6 py-5 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]", isZoomed && "sticky top-0 z-30 backdrop-blur-sm bg-white/80 dark:bg-[var(--bh-surface-0)]/80")}>
+        <div className={clsx("px-5 py-4 border-b border-slate-100 dark:border-[var(--bh-border)] flex justify-between items-center bg-slate-50/30 dark:bg-[var(--bh-surface-1)]", isZoomed && "sticky top-0 z-30 backdrop-blur-sm bg-white/80 dark:bg-[var(--bh-surface-0)]/80")}>
           <div className="flex items-center gap-3 w-full max-w-md">
             <div className="p-2 bg-white dark:bg-[var(--bh-surface-0)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-slate-400 dark:text-[var(--bh-text-mute)]">
               <BookOpen className="w-5 h-5" />
@@ -691,7 +691,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-5">
           {/* Alerts */}
           {activeResult?.status === 'incomplete' && activeResult.steps.length > 1 && (
             <div className="mb-6 bg-amber-50 dark:bg-[var(--bh-warning)]/10 border border-amber-200 dark:border-[var(--bh-warning)]/20 rounded-lg p-4 flex items-start gap-4 shadow-sm">
@@ -709,8 +709,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           )}
 
           {/* Sequence Builder */}
-          <div className="mb-8">
-            <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-4">
+          <div className="mb-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-end gap-3 sm:gap-0 mb-3">
               <h4 className="text-sm font-bold text-slate-700 dark:text-[var(--bh-text)] flex items-center gap-2">
                 Sequence Strategy
               </h4>
@@ -729,7 +729,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
             <div className="flex flex-wrap items-stretch">
               {activeScenario.bitSequence.length === 0 && (
-                <div className="w-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-2">No bits added yet. Click "Next Bit" to start.</div>
+                <div className="w-full text-sm text-slate-400 dark:text-[var(--bh-text-mute)] italic px-2 mb-1">No bits added yet. Click "Next Bit" to start.</div>
               )}
 
               <DndContext
@@ -757,7 +757,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       <div 
                         key={uniqueId} 
                         className={clsx(
-                          "mb-2 pr-1",
+                          "mb-1.5 pr-1",
                           // Only go to 4 per row on XL screens when sidebar is collapsed
                           isSidebarOpen ? "w-full md:w-1/2 lg:w-1/3" : "w-full md:w-1/2 lg:w-1/3 xl:w-1/4"
                         )}
@@ -792,7 +792,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               </DndContext>
 
               {/* Next/Complete Button - sits after the last bit, wraps if needed */}
-              <div className="flex items-center mb-2">
+              <div className="flex items-center mb-1.5">
                 {/* Small spacer if it lands on a new line? No, flex gap handles spacing generally, but we need consistency. 
                     Since bits have 'w-full pr-1', the button should just plop in. 
                 */}
@@ -1000,7 +1000,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     return (
       <div
         ref={detailsRef}
-        className="relative overflow-hidden card cursor-pointer hover:shadow-lg rounded-xl border border-slate-200 dark:border-[var(--bh-border)] bg-white dark:bg-[var(--bh-surface-0)] animate-in fade-in duration-300 transition-all duration-300 group"
+        className="relative overflow-hidden cursor-pointer rounded-xl border border-slate-200 dark:border-[var(--bh-border)] bg-white dark:bg-[var(--bh-surface-0)] shadow-sm hover:shadow-lg animate-in fade-in duration-300 transition-all duration-300 group"
         onClick={() => setIsScenarioZoomed(true)}
       >
         {renderEditorContent(false)}
@@ -1168,7 +1168,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
 
         {/* Results Summary Cards Grid relocated inside sticky container */}
         <div className={clsx(
-          "grid gap-4 transition-all duration-300 ease-in-out",
+          "grid gap-3 transition-all duration-300 ease-in-out",
           isStuck ? "mt-0" : "mt-6",
           "grid-cols-1 md:grid-cols-2",
           isSidebarOpen ? "min-[850px]:!grid-cols-3" : "min-[850px]:!grid-cols-4"
@@ -1221,7 +1221,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     >
                       {/* Header */}
                       <div
-                        className="flex items-center justify-between px-2 py-1.5 transition-colors duration-200"
+                        className="flex items-center justify-between px-2 py-1 transition-colors duration-200"
                         style={{
                           backgroundColor: (isActive && !isCompareMode) || (isCompareMode && isSelectedForCompare)
                             ? hexToRgba(getScenarioColor(idx), 0.7)
@@ -1282,7 +1282,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       </div>
 
                       {/* Body */}
-                      <div className="flex-1 flex flex-col items-center justify-center p-1.5 min-h-[50px]">
+                       <div className="flex-1 flex flex-col items-center justify-center p-1 min-h-[44px]">
                          <span className="text-[10px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
                          {isBlank ? (
                             <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
