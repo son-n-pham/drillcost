@@ -121,16 +121,14 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
   }, [bits, setBits]);
 
   const handleDepthValueChange = (id: string, field: 'rop' | 'maxDistance', value: number) => {
-    const metersValue = convertDepthToMeters(value, depthUnit);
-    updateBit(id, field, metersValue);
+    updateBit(id, field, value);
   };
 
   const formatCost = (val: number) => val.toLocaleString();
   const parseCost = (val: string) => parseFloat(val.replace(/,/g, ''));
 
   const formatDepthValue = (val: number) => {
-    const converted = convertDepth(val, depthUnit);
-    return Number.isInteger(converted) ? converted.toString() : converted.toFixed(2);
+    return Number.isInteger(val) ? val.toString() : val.toFixed(2);
   };
   const parseDepthValue = (val: string) => parseFloat(val);
 
@@ -185,7 +183,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
             <div>
               <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">ROP ({getSpeedLabel(depthUnit)})</label>
               <NumericInput
-                value={convertDepth(bit.rop, depthUnit)}
+                value={bit.rop}
                 onChange={(val) => handleDepthValueChange(bit.id, 'rop', val)}
                 formatDisplay={formatDepthValue}
                 parseInput={parseDepthValue}
@@ -196,7 +194,7 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
             <div>
               <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Dist ({getUnitLabel(depthUnit)})</label>
               <NumericInput
-                value={convertDepth(bit.maxDistance, depthUnit)}
+                value={bit.maxDistance}
                 onChange={(val) => handleDepthValueChange(bit.id, 'maxDistance', val)}
                 formatDisplay={formatDepthValue}
                 parseInput={parseDepthValue}

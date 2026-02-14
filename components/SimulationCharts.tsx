@@ -110,13 +110,13 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
       ...res,
       steps: res.steps.map(step => ({
         ...step,
-        depth: convertDepth(step.depth, depthUnit)
+        depth: step.depth // Already in selected unit
       }))
     }));
-  }, [results, depthUnit]);
+  }, [results]);
 
   // Dynamic Y-axis width calculation based on max depth
-  const maxDepth = Math.max(...chartResults.flatMap(r => r.steps.map(s => s.depth)), convertDepth(targetDepth, depthUnit));
+  const maxDepth = Math.max(...chartResults.flatMap(r => r.steps.map(s => s.depth)), targetDepth);
 
   // Estimate width: ~8px per digit + ~15px for " m" + ~15px padding for label
   const depthDigits = Math.floor(maxDepth).toString().length;

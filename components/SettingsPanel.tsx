@@ -16,14 +16,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
   };
 
   const handleDepthParamChange = (key: keyof GlobalParams, value: number) => {
-    setParams({ ...params, [key]: convertDepthToMeters(value, depthUnit) });
+    setParams({ ...params, [key]: value });
   };
 
   // Format functions for display
   const formatCurrency = (val: number) => val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const formatDepth = (val: number) => {
-    const converted = convertDepth(val, depthUnit);
-    const rounded = Number.isInteger(converted) ? converted : parseFloat(converted.toFixed(2));
+    const rounded = Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
     return rounded.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
   };
   const parseCurrency = (val: string) => parseFloat(val.replace(/,/g, ''));
@@ -78,7 +77,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
             </label>
             <div className="relative">
               <NumericInput
-                value={convertDepth(params.standLength, depthUnit)}
+                value={params.standLength}
                 onChange={(val) => handleDepthParamChange('standLength', val)}
                 formatDisplay={formatDepth}
                 parseInput={parseDepth}
@@ -99,7 +98,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
             </label>
             <div className="relative">
               <NumericInput
-                value={convertDepth(params.depthIn, depthUnit)}
+                value={params.depthIn}
                 onChange={(val) => handleDepthParamChange('depthIn', val)}
                 formatDisplay={formatDepth}
                 parseInput={parseDepth}
@@ -115,7 +114,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
             </label>
             <div className="relative">
               <NumericInput
-                value={convertDepth(params.intervalToDrill, depthUnit)}
+                value={params.intervalToDrill}
                 onChange={(val) => handleDepthParamChange('intervalToDrill', val)}
                 formatDisplay={formatDepth}
                 parseInput={parseDepth}

@@ -273,6 +273,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const s = scenarios.find(x => x.id === scenarioId);
   const bit = bits.find(b => b.id === bitId);
   if (s && bit) {
+    // No conversion needed as bit.maxDistance is already in the current unit
     const newEntry: BitSequenceEntry = {
       bitId: bitId,
       actualDistance: maxOverride ?? bit.maxDistance,
@@ -347,6 +348,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     const s = scenarios.find(x => x.id === scenarioId);
     if (s) {
       const newSeq = [...s.bitSequence];
+      // Note: No conversion here as internal values are now kept in the currently selected unit
       newSeq[index] = { ...newSeq[index], ...updates };
       updateScenario(scenarioId, { bitSequence: newSeq });
     }
@@ -378,10 +380,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   const progressPercent = Math.min((currentSequenceCapacity / params.intervalToDrill) * 100, 100);
 
   // Helper for display values
-  const displayDepth = (val: number) => convertDepth(val, depthUnit).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const displayDepth = (val: number) => val.toLocaleString(undefined, { maximumFractionDigits: 0 });
   const displayCostPerUnit = (costPerMeter: number) => {
-    const val = depthUnit === 'm' ? costPerMeter : costPerMeter / METERS_TO_FEET;
-    return val;
+    // costPerMeter is actually costPerUnit now because the simulation uses internal values which are in the current unit
+    return costPerMeter;
   };
 
   const exitCompareMode = () => {

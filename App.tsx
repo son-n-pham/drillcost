@@ -309,7 +309,37 @@ const App: React.FC = () => {
   };
 
   const toggleUnit = () => {
-    setDepthUnit(prev => prev === 'm' ? 'ft' : 'm');
+    const nextUnit = depthUnit === 'm' ? 'ft' : 'm';
+    const factor = nextUnit === 'ft' ? 3.28084 : 1 / 3.28084;
+
+    // Root cause identified: The app previously kept all internal data in meters
+    // and converted purely for display. However, users expected "no extra conversion"
+    // for new input after switching.
+    // Fix: Internal state now tracks values in the currently selected unit.
+    // This requires scaling all existing state values once during the unit toggle.
+    setAppData(prev => ({
+      ...prev,
+      params: {
+        ...prev.params,
+        standLength: prev.params.standLength * factor,
+        depthIn: prev.params.depthIn * factor,
+        intervalToDrill: prev.params.intervalToDrill * factor,
+      },
+      bits: prev.bits.map(b => ({
+        ...b,
+        rop: b.rop * factor,
+        maxDistance: b.maxDistance * factor,
+      })),
+      scenarios: prev.scenarios.map(s => ({
+        ...s,
+        bitSequence: s.bitSequence.map(e => ({
+          ...e,
+          actualDistance: e.actualDistance * factor,
+          actualROP: e.actualROP ? e.actualROP * factor : undefined,
+        }))
+      }))
+    }));
+    setDepthUnit(nextUnit);
   };
 
   const handleRemoveBit = (bitId: string) => {
@@ -488,7 +518,7 @@ const App: React.FC = () => {
                 </span>
                 <div className="flex items-baseline gap-2">
                   <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
-                    {convertDepth(params.depthIn + params.intervalToDrill, depthUnit).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-sm text-slate-400">{getUnitLabel(depthUnit)}</span>
+                    {(params.depthIn + params.intervalToDrill).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-sm text-slate-400">{getUnitLabel(depthUnit)}</span>
                   </span>
                   
                   {/* Unit Selector */}
@@ -524,7 +554,7 @@ const App: React.FC = () => {
            </span>
            <div className="flex items-baseline gap-2">
              <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-base">
-               {convertDepth(params.depthIn + params.intervalToDrill, depthUnit).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-xs text-slate-400">{getUnitLabel(depthUnit)}</span>
+               {(params.depthIn + params.intervalToDrill).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-xs text-slate-400">{getUnitLabel(depthUnit)}</span>
              </span>
              
              {/* Unit Selector */}
