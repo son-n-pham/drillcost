@@ -113,7 +113,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       }
     };
     document.addEventListener('keydown', handleEscKey);
-    
+
     // Lock body scroll when zoomed
     if (isScenarioZoomed) {
       document.body.style.overflow = 'hidden';
@@ -146,7 +146,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       if (isScenarioZoomed && zoomModalRef.current) {
         const scrollTop = zoomModalRef.current.scrollTop;
         const scrollLeft = zoomModalRef.current.scrollLeft;
-        
+
         return {
           ...transform,
           x: transform.x - scrollLeft,
@@ -272,21 +272,21 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   };
 
   const addToSequence = (scenarioId: string, bitId: string, isRerun?: boolean, maxOverride?: number) => {
-  const s = scenarios.find(x => x.id === scenarioId);
-  const bit = bits.find(b => b.id === bitId);
-  if (s && bit) {
-    // No conversion needed as bit.maxDistance is already in the current unit
-    const newEntry: BitSequenceEntry = {
-      bitId: bitId,
-      actualDistance: maxOverride ?? bit.maxDistance,
-      comment: '',
-      isRerun: isRerun,
-      maxDistanceOverride: maxOverride
-    };
-    updateScenario(scenarioId, { bitSequence: [...s.bitSequence, newEntry] });
-    setIsDropdownOpen(false);
-  }
-};
+    const s = scenarios.find(x => x.id === scenarioId);
+    const bit = bits.find(b => b.id === bitId);
+    if (s && bit) {
+      // No conversion needed as bit.maxDistance is already in the current unit
+      const newEntry: BitSequenceEntry = {
+        bitId: bitId,
+        actualDistance: maxOverride ?? bit.maxDistance,
+        comment: '',
+        isRerun: isRerun,
+        maxDistanceOverride: maxOverride
+      };
+      updateScenario(scenarioId, { bitSequence: [...s.bitSequence, newEntry] });
+      setIsDropdownOpen(false);
+    }
+  };
 
   const updateDropdownPosition = useCallback(() => {
     if (isDropdownOpen && buttonRef.current) {
@@ -482,34 +482,34 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     const hasComment = entry.comment && entry.comment.trim().length > 0;
     const isActualDistReduced = entry.actualDistance < bit.maxDistance;
     const isActualROPMonitored = entry.actualROP !== undefined && entry.actualROP !== bit.rop;
-    
+
     const effectiveMaxDistance = entry.maxDistanceOverride ?? bit.maxDistance;
-    
+
     return (
       <div className="w-full flex items-center">
         <div className={clsx(
           "relative group border transition-all rounded-lg p-1.5 pr-6 flex flex-col gap-0.5 flex-1 min-w-0 bg-white dark:bg-[var(--bh-surface-0)]",
-          isOverlay 
+          isOverlay
             ? "border-blue-500 shadow-2xl ring-2 ring-blue-500/20 cursor-grabbing opacity-90"
             : `border-slate-200 dark:border-[var(--bh-border)] hover:border-emerald-400 dark:hover:border-[var(--bh-primary)] hover:shadow-md ${touchBitSelection.isSelected(idx) ? "ring-2 ring-blue-400" : ""}`
         )}>
           {/* Top row: drag handle + bit name */}
           <div className="flex items-center gap-1.5">
             {isOverlay ? (
-             <div className="p-4 flex items-center justify-center">
-               <GripVertical className="flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
-             </div>
+              <div className="p-4 flex items-center justify-center">
+                <GripVertical className="flex-shrink-0 w-5 h-5" style={{ color: bit.color }} />
+              </div>
             ) : (
               <DragHandle className="flex-shrink-0" style={{ color: bit.color }} />
             )}
-            
+
             <div className="min-w-0 flex-1 flex items-center gap-1.5">
               <div className="font-bold text-xs text-slate-800 dark:text-[var(--bh-text)] truncate" title={bit.name}>{bit.name}</div>
               {entry.isRerun && (
                 <span className="text-[8px] font-bold bg-amber-500 text-white px-1 py-0.5 rounded uppercase leading-none shrink-0">Rerun</span>
               )}
             </div>
-            
+
             {/* Comment indicator */}
             {hasComment && (
               <div className="flex-shrink-0 text-amber-500 dark:text-amber-400" title={entry.comment}>
@@ -517,7 +517,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               </div>
             )}
           </div>
-          
+
           {/* Actual distance & ROP inputs - wrap to two lines if container is narrow */}
           {!isOverlay && (
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-7 mt-0.5">
@@ -536,7 +536,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     }}
                     className={clsx(
                       "w-12 text-[10px] font-bold bg-white dark:bg-slate-800 border-y border-l rounded-l px-1 py-0.5 outline-none text-center transition-colors",
-                      isActualDistReduced 
+                      isActualDistReduced
                         ? "border-amber-300 dark:border-amber-500/50 text-amber-700 dark:text-amber-400"
                         : "border-slate-200 dark:border-[var(--bh-border)] text-slate-700 dark:text-[var(--bh-text)]"
                     )}
@@ -580,7 +580,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               </div>
             </div>
           )}
-          
+
           {/* Comment input - shown when actual distance is reduced */}
           {!isOverlay && isActualDistReduced && (
             <div className="pl-7">
@@ -598,8 +598,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
               />
             </div>
           )}
-          
-          <span 
+
+          <span
             className="absolute -top-1.5 -left-1.5 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm ring-1 ring-white dark:ring-[var(--bh-bg)]"
             style={{ backgroundColor: bit.color }}
           >
@@ -667,16 +667,16 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={(e) => { 
-                 e.stopPropagation(); 
-                 setScenarioToDelete(activeScenario.id);
+              onClick={(e) => {
+                e.stopPropagation();
+                setScenarioToDelete(activeScenario.id);
               }}
               className="text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-red-500 dark:hover:text-[var(--bh-danger)] hover:bg-red-50 dark:hover:bg-[var(--bh-surface-2)] p-2 rounded-lg transition-colors group"
               title="Delete Scenario"
             >
               <Trash2 className="w-4 h-4 group-hover:stroke-red-500" />
             </button>
-            
+
             {isZoomed && (
               <>
                 <div className="w-px h-6 bg-slate-200 dark:bg-[var(--bh-border)] mx-2" />
@@ -755,8 +755,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     const uniqueId = `${entry.bitId}::${idx}`;
 
                     return (
-                      <div 
-                        key={uniqueId} 
+                      <div
+                        key={uniqueId}
                         className={clsx(
                           "mb-1.5 pr-1",
                           // Only go to 4 per row on XL screens when sidebar is collapsed
@@ -780,11 +780,11 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                     const bit = bits.find(b => b.id === bitId);
                     const entry = activeScenario?.bitSequence[idx];
                     if (!bit || !entry) return null;
-                    
+
                     return (
                       <div className="w-72 cursor-grabbing">
                         <div className="w-full">
-                           {renderSequenceItem(bit, entry, idx, true)}
+                          {renderSequenceItem(bit, entry, idx, true)}
                         </div>
                       </div>
                     );
@@ -797,7 +797,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 {/* Small spacer if it lands on a new line? No, flex gap handles spacing generally, but we need consistency. 
                     Since bits have 'w-full pr-1', the button should just plop in. 
                 */}
-                
+
                 {isTargetReached ? (
                   <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-[var(--bh-success)]/10 text-emerald-700 dark:text-[var(--bh-success)] rounded-lg border border-emerald-200 dark:border-[var(--bh-success)]/20 text-sm font-semibold shadow-sm animate-in fade-in slide-in-from-left-2 h-[50px]">
                     <CheckCircle2 className="w-4 h-4" />
@@ -982,7 +982,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     if (isZoomed) {
       // Zoomed view: Use flexbox centering on backdrop to avoid CSS transforms that break dnd-kit positioning
       return (
-        <div 
+        <div
           className="fixed inset-0 z-[9998] bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300 flex items-center justify-center p-4"
           onClick={closeZoomModal}
         >
@@ -1031,7 +1031,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       { threshold: [0, 1], rootMargin: '-65px 0px 0px 0px' }
     );
     if (sentinelRef.current) observer.observe(sentinelRef.current);
-    
+
     const handleResize = () => {
       if (!window.matchMedia('(min-width: 850px)').matches) {
         setIsStuck(false);
@@ -1050,94 +1050,94 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
     <div className="space-y-6 relative">
       <div ref={sentinelRef} className="absolute top-0 left-0 w-full h-px pointer-events-none opacity-0" />
       {/* Sticky Container for Header + Stats */}
-      <div 
-        ref={stickyHeaderRef} 
+      <div
+        ref={stickyHeaderRef}
         className={clsx(
           "min-[850px]:sticky top-16 min-[850px]:top-[64px] z-40 transition-all duration-500 ease-in-out mb-2",
           (isScrolled || isStuck)
-            ? "bg-white/95 dark:bg-[var(--bh-bg)]/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-[var(--bh-border)]/50 shadow-xl px-2" 
+            ? "bg-white/95 dark:bg-[var(--bh-bg)]/90 backdrop-blur-xl border-b border-slate-200/50 dark:border-[var(--bh-border)]/50 shadow-xl px-2"
             : "bg-transparent border-b border-transparent",
-           isStuck ? "py-2" : "pb-3 pt-4"
+          isStuck ? "py-2" : "pb-3 pt-4"
         )}
       >
         <div className={clsx("grid transition-all duration-500 ease-in-out", (isStuck && !isManuallyExpanded) ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100")}>
           <div className="overflow-hidden min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Left: Title & Count */}
-          <div className="flex items-center gap-3">
-            {!isSidebarOpen && setIsSidebarOpen && (
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="hidden min-[850px]:block p-1.5 bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-blue-600 dark:text-[var(--bh-primary)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] transition-all shrink-0 animate-in fade-in slide-in-from-left-2 duration-300"
-                title="Expand Configuration"
-              >
-                <PanelLeftOpen className="w-5 h-5" />
-              </button>
-            )}
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-slate-100 dark:bg-[var(--bh-surface-2)] rounded-md text-slate-600 dark:text-[var(--bh-text-mute)]">
-                <Layers className="w-4 h-4" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">Scenarios</h2>
-            </div>
-            <button
-              onClick={addScenario}
-              className="w-7 h-7 rounded-full bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] text-slate-500 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] transition-all flex items-center justify-center shadow-sm"
-              title="New Scenario"
-              aria-label="New Scenario"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Right: Auto-Optimize & Compare Controls */}
-          <div className="flex items-center gap-3 self-end sm:self-auto">
-            {/* Auto-Optimize Button */}
-            {bits.length > 0 && !isCompareMode && (
-              <button
-                onClick={handleAutoOptimize}
-                disabled={isOptimizing}
-                className={clsx(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
-                  isOptimizing
-                    ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 cursor-wait"
-                    : "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-md hover:shadow-amber-100 dark:hover:shadow-amber-900/20"
+              {/* Left: Title & Count */}
+              <div className="flex items-center gap-3">
+                {!isSidebarOpen && setIsSidebarOpen && (
+                  <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="hidden min-[850px]:block p-1.5 bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] rounded-lg shadow-sm text-blue-600 dark:text-[var(--bh-primary)] hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] transition-all shrink-0 animate-in fade-in slide-in-from-left-2 duration-300"
+                    title="Expand Configuration"
+                  >
+                    <PanelLeftOpen className="w-5 h-5" />
+                  </button>
                 )}
-                title="Automatically find the lowest cost bit strategy"
-              >
-                <Sparkles className={clsx("w-4 h-4", isOptimizing && "animate-pulse")} />
-                {isOptimizing ? 'Optimizing...' : 'Auto-Optimize'}
-              </button>
-            )}
-
-            {/* Compare Controls */}
-            {scenarios.length >= 2 && (
-              <>
-                {isCompareMode && selectedForComparison.length === 2 && (
-                  <span className="text-sm font-medium text-emerald-600 dark:text-[var(--bh-success)] animate-in fade-in">
-                    2 scenarios selected
-                  </span>
-                )}
-                {isCompareMode && selectedForComparison.length < 2 && (
-                  <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">
-                    Select {2 - selectedForComparison.length} more scenario{selectedForComparison.length === 1 ? '' : 's'}
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-slate-100 dark:bg-[var(--bh-surface-2)] rounded-md text-slate-600 dark:text-[var(--bh-text-mute)]">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">Scenarios</h2>
+                </div>
                 <button
-                  onClick={() => isCompareMode ? exitCompareMode() : setIsCompareMode(true)}
-                  className={clsx(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
-                    isCompareMode
-                      ? "bg-blue-500 dark:bg-[var(--bh-primary)] text-white shadow-md"
-                      : "bg-white dark:bg-[var(--bh-surface-1)] text-slate-600 dark:text-[var(--bh-text-weak)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)]"
-                  )}
+                  onClick={addScenario}
+                  className="w-7 h-7 rounded-full bg-white dark:bg-[var(--bh-surface-1)] border border-slate-200 dark:border-[var(--bh-border)] text-slate-500 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] transition-all flex items-center justify-center shadow-sm"
+                  title="New Scenario"
+                  aria-label="New Scenario"
                 >
-                  <GitCompareArrows className="w-4 h-4" />
-                  {isCompareMode ? 'Exit Compare' : 'Compare'}
+                  <Plus className="w-4 h-4" />
                 </button>
-              </>
-            )}
-          </div>
+              </div>
+
+              {/* Right: Auto-Optimize & Compare Controls */}
+              <div className="flex items-center gap-3 self-end sm:self-auto">
+                {/* Auto-Optimize Button */}
+                {bits.length > 0 && !isCompareMode && (
+                  <button
+                    onClick={handleAutoOptimize}
+                    disabled={isOptimizing}
+                    className={clsx(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
+                      isOptimizing
+                        ? "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 cursor-wait"
+                        : "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/10 dark:to-orange-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-400 hover:shadow-md hover:shadow-amber-100 dark:hover:shadow-amber-900/20"
+                    )}
+                    title="Automatically find the lowest cost bit strategy"
+                  >
+                    <Sparkles className={clsx("w-4 h-4", isOptimizing && "animate-pulse")} />
+                    {isOptimizing ? 'Optimizing...' : 'Auto-Optimize'}
+                  </button>
+                )}
+
+                {/* Compare Controls */}
+                {scenarios.length >= 2 && (
+                  <>
+                    {isCompareMode && selectedForComparison.length === 2 && (
+                      <span className="text-sm font-medium text-emerald-600 dark:text-[var(--bh-success)] animate-in fade-in">
+                        2 scenarios selected
+                      </span>
+                    )}
+                    {isCompareMode && selectedForComparison.length < 2 && (
+                      <span className="text-sm text-slate-500 dark:text-[var(--bh-text-mute)]">
+                        Select {2 - selectedForComparison.length} more scenario{selectedForComparison.length === 1 ? '' : 's'}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => isCompareMode ? exitCompareMode() : setIsCompareMode(true)}
+                      className={clsx(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-all",
+                        isCompareMode
+                          ? "bg-blue-500 dark:bg-[var(--bh-primary)] text-white shadow-md"
+                          : "bg-white dark:bg-[var(--bh-surface-1)] text-slate-600 dark:text-[var(--bh-text-weak)] border border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-primary)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)]"
+                      )}
+                    >
+                      <GitCompareArrows className="w-4 h-4" />
+                      {isCompareMode ? 'Exit Compare' : 'Compare'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -1145,25 +1145,25 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
         {/* Expand/Collapse Toggle Button (Only when sticky) */}
         {isStuck && (
           <div className="flex justify-center -mt-2 -mb-2 relative z-10">
-             <button
-               onClick={() => setIsManuallyExpanded(!isManuallyExpanded)}
-               className={clsx(
-                 "flex items-center gap-1.5 px-3 py-0.5 rounded-b-lg text-[10px] font-bold uppercase tracking-wider border-x border-b shadow-sm transition-all",
-                 "bg-white dark:bg-[var(--bh-surface-1)] border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-200 dark:hover:border-[var(--bh-primary)]/30"
-               )}
-             >
-               {isManuallyExpanded ? (
-                 <>
-                   <span>Collapse</span>
-                   <ChevronUp className="w-3 h-3" />
-                 </>
-               ) : (
-                 <>
-                   <span>Expand</span>
-                   <ChevronDown className="w-3 h-3" />
-                 </>
-               )}
-             </button>
+            <button
+              onClick={() => setIsManuallyExpanded(!isManuallyExpanded)}
+              className={clsx(
+                "flex items-center gap-1.5 px-3 py-0.5 rounded-b-lg text-[10px] font-bold uppercase tracking-wider border-x border-b shadow-sm transition-all",
+                "bg-white dark:bg-[var(--bh-surface-1)] border-slate-200 dark:border-[var(--bh-border)] text-slate-400 dark:text-[var(--bh-text-mute)] hover:text-blue-600 dark:hover:text-[var(--bh-primary)] hover:border-blue-200 dark:hover:border-[var(--bh-primary)]/30"
+              )}
+            >
+              {isManuallyExpanded ? (
+                <>
+                  <span>Collapse</span>
+                  <ChevronUp className="w-3 h-3" />
+                </>
+              ) : (
+                <>
+                  <span>Expand</span>
+                  <ChevronDown className="w-3 h-3" />
+                </>
+              )}
+            </button>
           </div>
         )}
 
@@ -1230,30 +1230,30 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         }}
                       >
                         {/* Left: Drag or Checkbox - no wrapper div to avoid pointer event interference */}
-                          {isCompareMode ? (
-                             isSelectedForCompare ? (
-                               <CheckSquare className="flex-shrink-0 w-4 h-4 text-blue-500 dark:text-[var(--bh-primary)]" />
-                             ) : (
-                               <Square className="flex-shrink-0 w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
-                             )
+                        {isCompareMode ? (
+                          isSelectedForCompare ? (
+                            <CheckSquare className="flex-shrink-0 w-4 h-4 text-blue-500 dark:text-[var(--bh-primary)]" />
                           ) : (
-                             <DragHandle className={clsx("flex-shrink-0 p-1 rounded", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
-                          )}
+                            <Square className="flex-shrink-0 w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                          )
+                        ) : (
+                          <DragHandle className={clsx("flex-shrink-0 p-1 rounded", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />
+                        )}
 
                         {/* Middle: Name & Indicators */}
                         <div className="flex-1 px-1 min-w-0 text-center flex items-center justify-center gap-1.5">
-                           {/* Status Icons */}
-                           {res.status === 'incomplete' && (
+                          {/* Status Icons */}
+                          {res.status === 'incomplete' && (
                             <div className="relative group/tooltip">
                               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0" />
                             </div>
-                           )}
-                           {isBestCost && (
+                          )}
+                          {isBestCost && (
                             <div className="relative group/tooltip">
                               <Sparkles className="w-4 h-4 text-yellow-500 dark:text-yellow-400 shrink-0 fill-yellow-500/20 dark:fill-yellow-400/20 animate-pulse drop-shadow-sm" />
                             </div>
-                           )}
-                           
+                          )}
+
                           <h3 className={clsx(
                             "font-bold text-xs truncate leading-snug",
                             isActive ? "text-slate-900" : "text-slate-600 dark:text-[var(--bh-text-mute)]"
@@ -1283,15 +1283,15 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       </div>
 
                       {/* Body */}
-                       <div className="flex-1 flex flex-col items-center justify-center p-1 min-h-[44px]">
-                         <span className="text-[10px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
-                         {isBlank ? (
-                            <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
-                         ) : (
-                            <span className={clsx("font-bold tracking-tight text-xl", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
-                              {formatMoney(costPerUnit, currency.currency, currency.rate, { maximumFractionDigits: 0 })}
-                            </span>
-                         )}
+                      <div className="flex-1 flex flex-col items-center justify-center p-1 min-h-[44px]">
+                        <span className="text-[10px] font-semibold text-slate-400 dark:text-[var(--bh-text-mute)] uppercase">Cost/{getUnitLabel(depthUnit)}</span>
+                        {isBlank ? (
+                          <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
+                        ) : (
+                          <span className={clsx("font-bold tracking-tight text-xl", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
+                            {formatMoney(costPerUnit, currency.currency, currency.rate, { maximumFractionDigits: 0 })}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </SortableItem>
@@ -1615,9 +1615,9 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
       {/* Custom Delete Confirmation Modal */}
       {scenarioToDelete && ReactDOM.createPortal(
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setScenarioToDelete(null)}>
-          <div 
-             className="bg-white dark:bg-[var(--bh-surface-0)] rounded-2xl shadow-2xl border border-slate-200 dark:border-[var(--bh-border)] w-full max-w-md p-6 animate-in zoom-in-95 duration-200"
-             onClick={(e) => e.stopPropagation()}
+          <div
+            className="bg-white dark:bg-[var(--bh-surface-0)] rounded-2xl shadow-2xl border border-slate-200 dark:border-[var(--bh-border)] w-full max-w-md p-6 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center text-center gap-4">
               <div className="p-3 bg-red-100 dark:bg-red-500/10 rounded-full text-red-600 dark:text-red-500">
@@ -1630,25 +1630,25 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                 </p>
               </div>
               <div className="flex w-full gap-3 mt-2">
-                 <button 
-                   onClick={() => setScenarioToDelete(null)}
-                   className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[var(--bh-border)] text-slate-600 dark:text-[var(--bh-text-weak)] font-semibold hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] transition-colors"
-                 >
-                   Cancel
-                 </button>
-                 <button 
-                   onClick={(e) => {
-                     // Perform deletion
-                     const syntheticEvent = { stopPropagation: () => {} } as React.MouseEvent; // Hack to reusing existing signature if needed, or just call logic
-                     // Actually calling removeScenario requires the event for stopPropagation, which is fine.
-                     removeScenario(e, scenarioToDelete); 
-                     setScenarioToDelete(null);
-                     if (isScenarioZoomed) closeZoomModal();
-                   }}
-                   className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-200 dark:shadow-none transition-all"
-                 >
-                   Delete
-                 </button>
+                <button
+                  onClick={() => setScenarioToDelete(null)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-[var(--bh-border)] text-slate-600 dark:text-[var(--bh-text-weak)] font-semibold hover:bg-slate-50 dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={(e) => {
+                    // Perform deletion
+                    const syntheticEvent = { stopPropagation: () => { } } as React.MouseEvent; // Hack to reusing existing signature if needed, or just call logic
+                    // Actually calling removeScenario requires the event for stopPropagation, which is fine.
+                    removeScenario(e, scenarioToDelete);
+                    setScenarioToDelete(null);
+                    if (isScenarioZoomed) closeZoomModal();
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 shadow-md shadow-red-200 dark:shadow-none transition-all"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

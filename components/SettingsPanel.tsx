@@ -41,7 +41,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
       </div>
 
       <div className="px-3 py-5 space-y-5">
-        
+
         {/* Operation Cost */}
         <div className="group">
           <label className="text-[11px] font-bold text-slate-500 dark:text-[var(--bh-text-weak)] uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
@@ -55,7 +55,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
               parseInput={parseCurrency}
               className="input font-semibold text-sm w-full"
             />
-              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-slate-500 text-xs font-medium pointer-events-none">{currency.currency === 'PHP' ? '₱/day' : '$/day'}</span>
+            <span className="absolute right-3 top-2.5 text-slate-400 dark:text-slate-500 text-xs font-medium pointer-events-none">{currency.currency === 'PHP' ? '₱/day' : '$/day'}</span>
           </div>
         </div>
 
@@ -78,7 +78,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
           </div>
           <div className="group">
             <label className="text-[11px] font-bold text-slate-500 dark:text-[var(--bh-text-weak)] uppercase tracking-wider mb-1.5 block">
-               Stand Len
+              Stand Len
             </label>
             <div className="relative">
               <NumericInput

@@ -27,7 +27,7 @@ const useScrolled = (threshold: number = 20): boolean => {
 
     // Check initial state
     handleScroll();
-    
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [threshold]);
@@ -148,14 +148,14 @@ const App: React.FC = () => {
     fetchedAt,
     rateDate,
   };
-  
+
   const isScrolled = useScrolled();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -169,7 +169,7 @@ const App: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
+
   // Auto-save state to localStorage whenever it changes
   // Auto-save state to localStorage whenever it changes
   useEffect(() => {
@@ -256,32 +256,32 @@ const App: React.FC = () => {
       try {
         const content = e.target?.result as string;
         const state = JSON.parse(content);
-        
+
         if (state.params && state.bits && state.scenarios) {
-           const validBitIds = new Set((state.bits as Bit[]).map((b: Bit) => b.id));
-           const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
-           
-           setAppData(prev => ({
-             ...prev,
-             params: state.params,
-             bits: state.bits as Bit[],
-             scenarios: sanitizedScenarios
-           }));
+          const validBitIds = new Set((state.bits as Bit[]).map((b: Bit) => b.id));
+          const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
+
+          setAppData(prev => ({
+            ...prev,
+            params: state.params,
+            bits: state.bits as Bit[],
+            scenarios: sanitizedScenarios
+          }));
         } else {
-             // Fallback partial updates if strictly needed, but for now assuming valid full file
-             if (state.params) setParams(state.params);
-             if (state.bits) setBits(state.bits as Bit[]);
-             if (state.scenarios) {
-                const validBitIds = new Set(((state.bits || bits) as Bit[]).map((b: Bit) => b.id));
-                const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
-                setScenarios(sanitizedScenarios);
-             }
+          // Fallback partial updates if strictly needed, but for now assuming valid full file
+          if (state.params) setParams(state.params);
+          if (state.bits) setBits(state.bits as Bit[]);
+          if (state.scenarios) {
+            const validBitIds = new Set(((state.bits || bits) as Bit[]).map((b: Bit) => b.id));
+            const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
+            setScenarios(sanitizedScenarios);
+          }
         }
         if (state.depthUnit) setDepthUnit(state.depthUnit);
         if (state.compareSelections) setCompareSelections(state.compareSelections);
         if (state.isCompareMode !== undefined) setIsCompareMode(state.isCompareMode);
         if (state.displayCurrency === 'USD' || state.displayCurrency === 'PHP') setCurrency(state.displayCurrency as CurrencyCode);
-        
+
       } catch (error) {
         console.error('Failed to parse state file', error);
         alert('Invalid file format. Please upload a valid DrillCost JSON file.');
@@ -364,17 +364,17 @@ const App: React.FC = () => {
 
   const handleRemoveBit = (bitId: string) => {
     setAppData(prev => ({
-       ...prev,
-       bits: prev.bits.filter(b => b.id !== bitId),
-       scenarios: prev.scenarios.map(scen => ({
-         ...scen,
-         bitSequence: scen.bitSequence.filter(id => id !== bitId)
-       }))
+      ...prev,
+      bits: prev.bits.filter(b => b.id !== bitId),
+      scenarios: prev.scenarios.map(scen => ({
+        ...scen,
+        bitSequence: scen.bitSequence.filter(id => id !== bitId)
+      }))
     }));
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300"
       style={{
         minHeight: '100dvh',
@@ -384,26 +384,26 @@ const App: React.FC = () => {
     >
       {theme === 'xmas' && <SnowEffect />}
       {/* Hidden File Input */}
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        onChange={handleLoadState} 
-        accept=".json" 
-        className="hidden" 
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleLoadState}
+        accept=".json"
+        className="hidden"
       />
 
       {/* Header */}
       <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          
+
           {/* Left Side: Identity + Action Toolbar */}
           <div className="flex items-center gap-3 sm:gap-6 flex-1 min-w-0 pr-2">
-            
+
             {/* Identity */}
             <div className="flex items-center gap-3 flex-shrink-0">
-              <img 
+              <img
                 src={logoIcon}
-                alt="DrillCost Logo" 
+                alt="DrillCost Logo"
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl shadow-lg shadow-blue-500/20 dark:shadow-none transition-all hover:scale-105"
               />
               <div className="flex flex-col">
@@ -420,161 +420,161 @@ const App: React.FC = () => {
 
             {/* Actions Toolbar */}
             <div className="flex items-center gap-1 flex-shrink-0">
-               {/* History Group - Always Visible */}
-               <div className="flex items-center gap-0.5 bg-slate-50 dark:bg-[var(--bh-surface-2)] p-1 rounded-lg border border-slate-100 dark:border-[var(--bh-border)]">
-                 <button 
-                   onClick={undo}
-                   disabled={!canUndo}
-                   className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-white dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] dark:hover:bg-[var(--bh-surface-1)] disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm hover:shadow"
-                   title="Undo (Ctrl+Z)"
-                 >
-                   <Undo className="w-4 h-4" />
-                 </button>
-                 <button 
-                   onClick={redo}
-                   disabled={!canRedo}
-                   className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-white dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] dark:hover:bg-[var(--bh-surface-1)] disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm hover:shadow"
-                   title="Redo (Ctrl+Y)"
-                 >
-                   <Redo className="w-4 h-4" />
-                 </button>
-               </div>
+              {/* History Group - Always Visible */}
+              <div className="flex items-center gap-0.5 bg-slate-50 dark:bg-[var(--bh-surface-2)] p-1 rounded-lg border border-slate-100 dark:border-[var(--bh-border)]">
+                <button
+                  onClick={undo}
+                  disabled={!canUndo}
+                  className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-white dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] dark:hover:bg-[var(--bh-surface-1)] disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm hover:shadow"
+                  title="Undo (Ctrl+Z)"
+                >
+                  <Undo className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={redo}
+                  disabled={!canRedo}
+                  className="p-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-white dark:text-[var(--bh-text-weak)] dark:hover:text-[var(--bh-primary)] dark:hover:bg-[var(--bh-surface-1)] disabled:opacity-30 disabled:hover:bg-transparent transition-all shadow-sm hover:shadow"
+                  title="Redo (Ctrl+Y)"
+                >
+                  <Redo className="w-4 h-4" />
+                </button>
+              </div>
 
-               <div className="w-2"></div>
+              <div className="w-2"></div>
 
-               {/* Desktop: Full Toolbar */}
-               <div className="hidden md:flex items-center gap-1">
-                  {/* File Group */}
-                  <div className="flex items-center gap-1">
-                    <button 
-                      onClick={triggerFileUpload}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
-                      title="Load Scenarios"
-                    >
-                      <Upload className="w-4 h-4" />
-                      <span className="hidden xl:inline">Load</span>
-                    </button>
-                    <button 
-                      onClick={handleSaveState}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
-                      title="Save Scenarios"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span className="hidden xl:inline">Save</span>
-                    </button>
-                  </div>
-
-                  <div className="h-4 w-px bg-slate-200 dark:bg-[var(--bh-border)] mx-1"></div>
-
-                  {/* Utility Group */}
-                  <button 
-                    onClick={handleLoadSampleData}
+              {/* Desktop: Full Toolbar */}
+              <div className="hidden md:flex items-center gap-1">
+                {/* File Group */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={triggerFileUpload}
                     className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
-                    title="Load Sample Data"
+                    title="Load Scenarios"
                   >
-                    <FileText className="w-4 h-4" />
-                    <span className="hidden xl:inline">Sample</span>
+                    <Upload className="w-4 h-4" />
+                    <span className="hidden xl:inline">Load</span>
                   </button>
-                  <button 
-                    onClick={handleClearState}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 dark:text-[var(--bh-text-mute)] dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
-                    title="Clear All Scenarios"
+                  <button
+                    onClick={handleSaveState}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                    title="Save Scenarios"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="hidden xl:inline">Clear</span>
+                    <Download className="w-4 h-4" />
+                    <span className="hidden xl:inline">Save</span>
                   </button>
-               </div>
+                </div>
 
-               {/* Mobile: More Dropdown */}
-               <div className="md:hidden relative" ref={menuRef}>
-                  <button 
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
+                <div className="h-4 w-px bg-slate-200 dark:bg-[var(--bh-border)] mx-1"></div>
 
-                  {/* Dropdown Menu */}
-                  {isMenuOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-200 dark:border-[var(--bh-border)] backdrop-blur-md overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                      <div className="p-1 flex flex-col gap-0.5">
-                        <button 
-                          onClick={triggerFileUpload}
-                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
-                        >
-                          <Upload className="w-4 h-4" /> Load
-                        </button>
-                        <button 
-                          onClick={handleSaveState}
-                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
-                        >
-                          <Download className="w-4 h-4" /> Save
-                        </button>
-                        <div className="h-px bg-slate-100 dark:bg-[var(--bh-border)] my-1"></div>
-                        <button 
-                          onClick={handleLoadSampleData}
-                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
-                        >
-                          <FileText className="w-4 h-4" /> Sample Data
-                        </button>
-                        <button 
-                          onClick={handleClearState}
-                          className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" /> Clear All
-                        </button>
-                      </div>
+                {/* Utility Group */}
+                <button
+                  onClick={handleLoadSampleData}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                  title="Load Sample Data"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden xl:inline">Sample</span>
+                </button>
+                <button
+                  onClick={handleClearState}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-600 hover:text-red-600 hover:bg-red-50 dark:text-[var(--bh-text-mute)] dark:hover:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                  title="Clear All Scenarios"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden xl:inline">Clear</span>
+                </button>
+              </div>
+
+              {/* Mobile: More Dropdown */}
+              <div className="md:hidden relative" ref={menuRef}>
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-[var(--bh-surface-1)] rounded-xl shadow-xl border border-slate-200 dark:border-[var(--bh-border)] backdrop-blur-md overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    <div className="p-1 flex flex-col gap-0.5">
+                      <button
+                        onClick={triggerFileUpload}
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
+                      >
+                        <Upload className="w-4 h-4" /> Load
+                      </button>
+                      <button
+                        onClick={handleSaveState}
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
+                      >
+                        <Download className="w-4 h-4" /> Save
+                      </button>
+                      <div className="h-px bg-slate-100 dark:bg-[var(--bh-border)] my-1"></div>
+                      <button
+                        onClick={handleLoadSampleData}
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-[var(--bh-text-mute)] dark:hover:text-[var(--bh-text)] dark:hover:bg-[var(--bh-surface-2)] transition-colors flex items-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" /> Sample Data
+                      </button>
+                      <button
+                        onClick={handleClearState}
+                        className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" /> Clear All
+                      </button>
                     </div>
-                  )}
-               </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Right Side: Target & Theme */}
           <div className="flex items-center gap-3 flex-shrink-0">
-             <div className="hidden lg:flex flex-col items-end border-r border-slate-200 dark:border-[var(--bh-border)] pr-4">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
-                  <Target className="w-3 h-3" /> Target Depth
+            <div className="hidden lg:flex flex-col items-end border-r border-slate-200 dark:border-[var(--bh-border)] pr-4">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                <Target className="w-3 h-3" /> Target Depth
+              </span>
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
+                  {(params.depthIn + params.intervalToDrill).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-sm text-slate-400">{getUnitLabel(depthUnit)}</span>
                 </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
-                    {(params.depthIn + params.intervalToDrill).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-sm text-slate-400">{getUnitLabel(depthUnit)}</span>
-                  </span>
-                  
-                  {/* Unit Selector */}
-                  <button 
-                    onClick={toggleUnit}
-                    className="flex items-center gap-0.5 text-[10px] font-bold bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)] px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[var(--bh-border)] transition-colors"
-                    title="Toggle Unit (m/ft)"
-                  >
-                    {depthUnit.toUpperCase()}
-                    <ChevronDown className="w-2.5 h-2.5" />
-                  </button>
-                </div>
-             </div>
 
-              <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-[var(--bh-border)] bg-slate-50 dark:bg-[var(--bh-surface-2)] p-1" title={rateError ?? 'Exchange rates update once daily via European Central Bank data.'}>
-                {(['USD', 'PHP'] as CurrencyCode[]).map(option => (
-                  <button
-                    key={option}
-                    onClick={() => setCurrency(option)}
-                    className={clsx('px-2 py-1 rounded-md text-[10px] font-bold transition-colors', currency === option ? 'bg-white dark:bg-[var(--bh-surface-1)] text-blue-600 dark:text-[var(--bh-primary)] shadow-sm' : 'text-slate-500 dark:text-[var(--bh-text-mute)]')}
-                    aria-pressed={currency === option}
-                  >
-                    {option}
-                  </button>
-                ))}
+                {/* Unit Selector */}
+                <button
+                  onClick={toggleUnit}
+                  className="flex items-center gap-0.5 text-[10px] font-bold bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)] px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[var(--bh-border)] transition-colors"
+                  title="Toggle Unit (m/ft)"
+                >
+                  {depthUnit.toUpperCase()}
+                  <ChevronDown className="w-2.5 h-2.5" />
+                </button>
               </div>
+            </div>
 
-              <button 
-                onClick={toggleTheme}
-                className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-all hover:scale-105 active:scale-95"
-                title={`Current Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`}
-              >
-                {theme === 'light' && <Sun className="w-5 h-5" />}
-                {theme === 'dark' && <Moon className="w-5 h-5" />}
-                {theme === 'xmas' && <Snowflake className="w-5 h-5 text-red-500" />}
-              </button>
+            <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-[var(--bh-border)] bg-slate-50 dark:bg-[var(--bh-surface-2)] p-1" title={rateError ?? 'Exchange rates update once daily via European Central Bank data.'}>
+              {(['USD', 'PHP'] as CurrencyCode[]).map(option => (
+                <button
+                  key={option}
+                  onClick={() => setCurrency(option)}
+                  className={clsx('px-2 py-1 rounded-md text-[10px] font-bold transition-colors', currency === option ? 'bg-white dark:bg-[var(--bh-surface-1)] text-blue-600 dark:text-[var(--bh-primary)] shadow-sm' : 'text-slate-500 dark:text-[var(--bh-text-mute)]')}
+                  aria-pressed={currency === option}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:text-[var(--bh-text-weak)] dark:hover:bg-[var(--bh-surface-2)] dark:hover:text-[var(--bh-primary)] transition-all hover:scale-105 active:scale-95"
+              title={`Current Theme: ${theme.charAt(0).toUpperCase() + theme.slice(1)}`}
+            >
+              {theme === 'light' && <Sun className="w-5 h-5" />}
+              {theme === 'dark' && <Moon className="w-5 h-5" />}
+              {theme === 'xmas' && <Snowflake className="w-5 h-5 text-red-500" />}
+            </button>
           </div>
         </div>
       </header>
@@ -582,44 +582,44 @@ const App: React.FC = () => {
       {/* Mobile Target Depth Section */}
       <div className="lg:hidden bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] py-2 px-4 shadow-sm transition-colors duration-300">
         <div className="flex items-center justify-between">
-           <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
-             <Target className="w-3 h-3" /> Target Depth
-           </span>
-           <div className="flex items-baseline gap-2">
-             <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-base">
-               {(params.depthIn + params.intervalToDrill).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-xs text-slate-400">{getUnitLabel(depthUnit)}</span>
-             </span>
-             
-             {/* Unit Selector */}
-             <button 
-               onClick={toggleUnit}
-               className="flex items-center gap-0.5 text-[10px] font-bold bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)] px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[var(--bh-border)] transition-colors"
-               title="Toggle Unit (m/ft)"
-             >
-               {depthUnit.toUpperCase()}
-               <ChevronDown className="w-2.5 h-2.5" />
-             </button>
-           </div>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+            <Target className="w-3 h-3" /> Target Depth
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-base">
+              {(params.depthIn + params.intervalToDrill).toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-xs text-slate-400">{getUnitLabel(depthUnit)}</span>
+            </span>
+
+            {/* Unit Selector */}
+            <button
+              onClick={toggleUnit}
+              className="flex items-center gap-0.5 text-[10px] font-bold bg-slate-100 dark:bg-[var(--bh-surface-2)] text-slate-600 dark:text-[var(--bh-text-weak)] px-1.5 py-0.5 rounded hover:bg-slate-200 dark:hover:bg-[var(--bh-border)] transition-colors"
+              title="Toggle Unit (m/ft)"
+            >
+              {depthUnit.toUpperCase()}
+              <ChevronDown className="w-2.5 h-2.5" />
+            </button>
+          </div>
         </div>
       </div>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 min-[850px]:pt-2 pb-2 flex-grow">
         <div className="flex flex-col min-[850px]:flex-row relative items-start">
-          
+
           {/* Unified Sidebar Container */}
-          <aside 
+          <aside
             className={clsx(
               "flex flex-col gap-6 overflow-hidden flex-shrink-0",
               // Mobile (<850px): Full width, static position (scrolls with page)
               // Desktop (>=850px): Sidebar behavior (sticky top-24)
               "max-[849px]:w-full",
-              isSidebarOpen 
-                ? "min-[850px]:sticky min-[850px]:top-[64px] min-[850px]:w-[320px] min-[850px]:mr-8 opacity-100" 
+              isSidebarOpen
+                ? "min-[850px]:sticky min-[850px]:top-[64px] min-[850px]:w-[320px] min-[850px]:mr-8 opacity-100"
                 : "min-[850px]:w-0 min-[850px]:mr-0 min-[850px]:opacity-0 min-[850px]:pointer-events-none"
             )}
-            style={{ 
+            style={{
               // Only apply max-height/scroll on desktop. Mobile should grow naturally.
-              maxHeight: 'var(--sidebar-height)', 
+              maxHeight: 'var(--sidebar-height)',
               overflowY: 'var(--sidebar-overflow)',
               transition: 'all 400ms cubic-bezier(0.2, 0, 0, 1)',
               willChange: 'width, margin-right, opacity',
@@ -656,13 +656,13 @@ const App: React.FC = () => {
 
           {/* Main Content: Results & Charts */}
           <div className="flex-1 space-y-8 min-w-0 w-full">
-            
+
             {/* Scenarios & KPIs & Visualizations */}
             <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <ScenarioManager 
-                bits={bits} 
-                scenarios={scenarios} 
-                setScenarios={setScenarios} 
+              <ScenarioManager
+                bits={bits}
+                scenarios={scenarios}
+                setScenarios={setScenarios}
                 results={results}
                 params={params}
                 depthUnit={depthUnit}
@@ -677,9 +677,9 @@ const App: React.FC = () => {
               >
                 {/* Visualizations (injected as children) */}
                 <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-                  <SimulationCharts 
-                    results={results} 
-                    targetDepth={params.depthIn + params.intervalToDrill} 
+                  <SimulationCharts
+                    results={results}
+                    targetDepth={params.depthIn + params.intervalToDrill}
                     isDark={theme === 'dark' || theme === 'xmas'}
                     bits={bits}
                     params={params}
@@ -691,7 +691,7 @@ const App: React.FC = () => {
                 </div>
               </ScenarioManager>
             </section>
-            
+
             {/* Footer moved inside flex-1 to extend sticky track */}
             <footer className="w-full border-t border-slate-200 dark:border-[var(--bh-border)] py-6 mt-12 mb-8">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs text-slate-500 dark:text-[var(--bh-text-mute)]">
