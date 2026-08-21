@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback, useMemo } from 'react';
-import { Bit } from '../types';
+import { Bit, CurrencyPresentation } from '../types';
+import { toBaseAmount, toDisplayAmount } from '../utils/currency';
 import { Drill, Trash2, Plus, Edit, Check, GripVertical } from 'lucide-react';
 import { DepthUnit, convertDepth, convertDepthToMeters, getUnitLabel, getSpeedLabel } from '../utils/unitUtils';
 import clsx from 'clsx';
@@ -34,9 +35,10 @@ interface BitsPanelProps {
   setBits: (bits: Bit[]) => void;
   onRemoveBit: (id: string) => void;
   depthUnit: DepthUnit;
+  currency: CurrencyPresentation;
 }
 
-const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depthUnit }) => {
+const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depthUnit, currency }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [deletedBit, setDeletedBit] = useState<Bit | null>(null);
@@ -124,8 +126,8 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
     updateBit(id, field, value);
   };
 
-  const formatCost = (val: number) => val.toLocaleString();
-  const parseCost = (val: string) => parseFloat(val.replace(/,/g, ''));
+  const formatCost = (val: number) => val.toLocaleString(currency.currency === 'PHP' ? 'en-PH' : 'en-US');
+  const parseCost = (val: string) => toBaseAmount(parseFloat(val.replace(/,/g, '')), currency.currency, currency.rate);
 
   const formatDepthValue = (val: number) => {
     return Number.isInteger(val) ? val.toString() : val.toFixed(2);
@@ -203,10 +205,10 @@ const BitsPanel: React.FC<BitsPanelProps> = ({ bits, setBits, onRemoveBit, depth
             </div>
             {/* Cost */}
             <div className="col-span-2">
-              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Cost</label>
+              <label className="text-[9px] text-slate-400 dark:text-[var(--bh-text-mute)] uppercase font-bold block mb-0.5">Cost ({currency.currency})</label>
               <NumericInput
-                value={bit.cost}
-                onChange={(val) => updateBit(bit.id, 'cost', val)}
+                value={toDisplayAmount(bit.cost, currency.currency, currency.rate)}
+                onChange={(val) => updateBit(bit.id, 'cost', toBaseAmount(val, currency.currency, currency.rate))}
                 formatDisplay={formatCost}
                 parseInput={parseCost}
                 className="w-full text-xs font-semibold bg-transparent outline-none text-slate-700 dark:text-[var(--bh-text)]"

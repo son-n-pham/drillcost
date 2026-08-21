@@ -13,9 +13,10 @@ import {
   Bar,
   Cell
 } from 'recharts';
-import { ScenarioResult, Bit, GlobalParams } from '../types';
+import { ScenarioResult, Bit, GlobalParams, CurrencyPresentation } from '../types';
 import { DepthUnit, convertDepth, getUnitLabel } from '../utils/unitUtils';
 import { SCENARIO_COLORS, BAR_CHART_COLORS, getScenarioColor } from '../utils/scenarioColors';
+import { formatMoney, toDisplayAmount } from '../utils/currency';
 
 // Chart types for zoom modal
 type ChartType = 'depthVsTime' | 'depthVsCost' | 'timeBreakdown' | 'costBreakdown' | null;
@@ -29,6 +30,7 @@ interface SimulationChartsProps {
   depthUnit: DepthUnit;
   selectedForComparison?: string[];
   isCompareMode?: boolean;
+  currency: CurrencyPresentation;
 }
 
 const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: any) => {
@@ -50,7 +52,7 @@ const CustomTooltip = ({ active, payload, label, xLabel, isDark, depthUnit }: an
   return null;
 };
 
-const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params, depthUnit, selectedForComparison = [], isCompareMode = false }) => {
+const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDepth, isDark = false, bits = [], params, depthUnit, selectedForComparison = [], isCompareMode = false, currency }) => {
   // Track if component is mounted to prevent Recharts rendering before container dimensions are calculated
   const [isMounted, setIsMounted] = useState(false);
   // Track which chart is currently zoomed
@@ -360,8 +362,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                     dataKey="cost"
                     name="Cost"
                     domain={['dataMin', 'auto']}
-                    tickFormatter={(value) => (value / 1000).toLocaleString()}
-                    label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                    tickFormatter={(value) => (toDisplayAmount(value, currency.currency, currency.rate) / 1000).toLocaleString()}
+                    label={{ value: `Cumulative Cost (k${currency.currency === 'PHP' ? '₱' : '$'})`, position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                     tick={{ fill: axisColor, fontSize: 11 }}
                   />
                   <YAxis
@@ -375,7 +377,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                     tick={{ fill: axisColor, fontSize: 11 }}
                     tickFormatter={(value) => value.toLocaleString()}
                   />
-                  <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} depthUnit={depthUnit} />} />
+                  <Tooltip content={<CustomTooltip xLabel={`Cost (${currency.currency === 'PHP' ? '₱' : '$'})`} isDark={isDark} depthUnit={depthUnit} />} />
                   {chartResults.map((res, index) => {
                     if (res.steps.length <= 1) return null;
                     const highlighted = isHighlighted(res.id);
@@ -544,8 +546,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                   />
                   <YAxis
                     tick={{ fill: axisColor, fontSize: 11 }}
-                    tickFormatter={(value) => `${(value / 1000).toLocaleString()}k`}
-                    label={{ value: 'Cost ($)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
+                    tickFormatter={(value) => `${(toDisplayAmount(value, currency.currency, currency.rate) / 1000).toLocaleString()}k`}
+                    label={{ value: `Cost (${currency.currency === 'PHP' ? '₱' : '$'})`, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: axisColor, fontSize: 12, fontWeight: 500 } }}
                   />
                   <Tooltip
                     contentStyle={{
@@ -561,7 +563,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                         'drillingCost': 'Drilling Cost',
                         'flatTimeCost': 'Flat Time Cost'
                       };
-                      return [`$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, labels[name] || name];
+                      return [formatMoney(value, currency.currency, currency.rate), labels[name] || name];
                     }}
                   />
                   <Bar
@@ -726,8 +728,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                           dataKey="cost"
                           name="Cost"
                           domain={['dataMin', 'auto']}
-                          tickFormatter={(value) => (value / 1000).toLocaleString()}
-                          label={{ value: 'Cumulative Cost (k$)', position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 14, fontWeight: 500 } }}
+                          tickFormatter={(value) => (toDisplayAmount(value, currency.currency, currency.rate) / 1000).toLocaleString()}
+                          label={{ value: `Cumulative Cost (k${currency.currency === 'PHP' ? '₱' : '$'})`, position: 'insideBottom', offset: -5, style: { fill: axisColor, fontSize: 14, fontWeight: 500 } }}
                           tick={{ fill: axisColor, fontSize: 12 }}
                         />
                         <YAxis
@@ -741,7 +743,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                           tick={{ fill: axisColor, fontSize: 12 }}
                           tickFormatter={(value) => value.toLocaleString()}
                         />
-                        <Tooltip content={<CustomTooltip xLabel="Cost ($)" isDark={isDark} depthUnit={depthUnit} />} />
+                        <Tooltip content={<CustomTooltip xLabel={`Cost (${currency.currency === 'PHP' ? '₱' : '$'})`} isDark={isDark} depthUnit={depthUnit} />} />
                         {chartResults.map((res, index) => {
                           if (res.steps.length <= 1) return null;
                           const highlighted = isHighlighted(res.id);
@@ -841,8 +843,8 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                         />
                         <YAxis
                           tick={{ fill: axisColor, fontSize: 12 }}
-                          tickFormatter={(value) => `${(value / 1000).toLocaleString()}k`}
-                          label={{ value: 'Cost ($)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: axisColor, fontSize: 14, fontWeight: 500 } }}
+                          tickFormatter={(value) => `${(toDisplayAmount(value, currency.currency, currency.rate) / 1000).toLocaleString()}k`}
+                          label={{ value: `Cost (${currency.currency === 'PHP' ? '₱' : '$'})`, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: axisColor, fontSize: 14, fontWeight: 500 } }}
                         />
                         <Tooltip
                           contentStyle={{
@@ -858,7 +860,7 @@ const SimulationCharts: React.FC<SimulationChartsProps> = ({ results, targetDept
                               'drillingCost': 'Drilling Cost',
                               'flatTimeCost': 'Flat Time Cost'
                             };
-                            return [`$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, labels[name] || name];
+                            return [formatMoney(value, currency.currency, currency.rate), labels[name] || name];
                           }}
                         />
                         <Bar dataKey="bitCost" stackId="cost" fill={barColors.bitCost} name="bitCost" radius={[0, 0, 0, 0]}>

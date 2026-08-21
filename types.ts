@@ -52,3 +52,22 @@ export interface ScenarioConfig {
   // A sequence of bits to use. If the sequence runs out, the last bit is repeated.
   bitSequence: BitSequenceEntry[];
 }
+
+export type CurrencyCode = 'USD' | 'PHP';
+
+export interface ExchangeRateCache {
+  rate: number;
+  fetchedAt: number;
+  rateDate: string;
+  source: 'api' | 'stale-cache' | 'fallback';
+}
+
+export interface CurrencyPresentation {
+  currency: CurrencyCode;
+  rate: number;
+  isRateLoading: boolean;
+  rateError: string | null;
+  rateSource: ExchangeRateCache['source'];
+  fetchedAt: number | null;
+  rateDate: string | null;
+}

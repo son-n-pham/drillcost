@@ -1,5 +1,6 @@
 import React from 'react';
-import { GlobalParams } from '../types';
+import { CurrencyPresentation, GlobalParams } from '../types';
+import { formatMoney, toBaseAmount, toDisplayAmount } from '../utils/currency';
 import { Settings, DollarSign, Clock, ArrowDownToLine, MoveVertical, RefreshCw } from 'lucide-react';
 import { DepthUnit, convertDepth, convertDepthToMeters, getUnitLabel } from '../utils/unitUtils';
 import NumericInput from './ui/NumericInput';
@@ -8,9 +9,10 @@ interface SettingsPanelProps {
   params: GlobalParams;
   setParams: (p: GlobalParams) => void;
   depthUnit: DepthUnit;
+  currency: CurrencyPresentation;
 }
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthUnit }) => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthUnit, currency }) => {
   const handleParamChange = (key: keyof GlobalParams, value: number) => {
     setParams({ ...params, [key]: value });
   };
@@ -20,7 +22,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
   };
 
   // Format functions for display
-  const formatCurrency = (val: number) => val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const formatCurrency = (val: number) => val.toLocaleString(currency.currency === 'PHP' ? 'en-PH' : 'en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
   const formatDepth = (val: number) => {
     const rounded = Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
     return rounded.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -33,6 +35,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
       <div className="px-4 py-3 border-b border-slate-100 dark:border-[var(--bh-border)] bg-slate-50/50 dark:bg-[var(--bh-surface-1)] flex items-center gap-2">
         <Settings className="w-4 h-4 text-slate-500 dark:text-[var(--bh-text-mute)]" />
         <h2 className="font-bold text-[11px] text-slate-800 dark:text-[var(--bh-text)] uppercase tracking-wider">Input Parameters</h2>
+        <span className="ml-auto text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)]" title="Exchange rates update once daily via European Central Bank data.">
+          {currency.currency === 'PHP' ? `1 USD = ${formatMoney(1, 'PHP', currency.rate)}${currency.rateSource !== 'api' ? ` (${currency.rateSource === 'fallback' ? 'offline fallback' : 'stale'})` : ''}` : 'USD base'}
+        </span>
       </div>
 
       <div className="px-3 py-5 space-y-5">
@@ -44,13 +49,13 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ params, setParams, depthU
           </label>
           <div className="relative">
             <NumericInput
-              value={params.operationCostPerDay}
-              onChange={(val) => handleParamChange('operationCostPerDay', val)}
+              value={toDisplayAmount(params.operationCostPerDay, currency.currency, currency.rate)}
+              onChange={(val) => handleParamChange('operationCostPerDay', toBaseAmount(val, currency.currency, currency.rate))}
               formatDisplay={formatCurrency}
               parseInput={parseCurrency}
               className="input font-semibold text-sm w-full"
             />
-            <span className="absolute right-3 top-2.5 text-slate-400 dark:text-slate-500 text-xs font-medium pointer-events-none">$/day</span>
+              <span className="absolute right-3 top-2.5 text-slate-400 dark:text-slate-500 text-xs font-medium pointer-events-none">{currency.currency === 'PHP' ? '₱/day' : '$/day'}</span>
           </div>
         </div>
 

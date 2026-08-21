@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
-import { Bit, ScenarioConfig, ScenarioResult, GlobalParams, BitSequenceEntry } from '../types';
+import { Bit, ScenarioConfig, ScenarioResult, GlobalParams, BitSequenceEntry, CurrencyPresentation } from '../types';
 import { Plus, Trash2, BarChart3, BookOpen, CheckCircle2, AlertTriangle, ChevronRight, ChevronDown, ChevronUp, X, GitCompareArrows, Square, CheckSquare, Layers, Sparkles, GripVertical, MessageSquare, PanelLeftOpen } from 'lucide-react';
 import clsx from 'clsx';
 import { DepthUnit, convertDepth, getUnitLabel, getSpeedLabel, METERS_TO_FEET } from '../utils/unitUtils';
@@ -34,6 +34,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { UndoToast } from './ui/UndoToast';
 import { SortableItem, DragHandle } from './ui/SortableItem';
 import NumericInput from './ui/NumericInput';
+import { formatCompactMoney, formatMoney } from '../utils/currency';
 
 const hexToRgba = (hex: string, alpha: number) => {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -57,9 +58,10 @@ interface ScenarioManagerProps {
   isScrolled?: boolean;
   isSidebarOpen?: boolean;
   setIsSidebarOpen?: (open: boolean) => void;
+  currency: CurrencyPresentation;
 }
 
-const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children, isScrolled = false, isSidebarOpen = true, setIsSidebarOpen }) => {
+const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setScenarios, results, params, depthUnit, compareSelections, setCompareSelections, isCompareMode, setIsCompareMode, children, isScrolled = false, isSidebarOpen = true, setIsSidebarOpen, currency }) => {
   const [activeTab, setActiveTab] = useState<string>(scenarios[0]?.id || '');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom');
@@ -382,7 +384,6 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
   // Helper for display values
   const displayDepth = (val: number) => val.toLocaleString(undefined, { maximumFractionDigits: 0 });
   const displayCostPerUnit = (costPerMeter: number) => {
-    // costPerMeter is actually costPerUnit now because the simulation uses internal values which are in the current unit
     return costPerMeter;
   };
 
@@ -958,7 +959,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   {activeResult.steps.length > 1 ? (
                     <>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">${(activeResult.totalCost / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k</span>
+                        <span className="text-lg font-bold text-slate-800 dark:text-[var(--bh-text)]">{formatCompactMoney(activeResult.totalCost, currency.currency, currency.rate)}</span>
                       </div>
                       <div className="text-[10px] text-slate-400 dark:text-[var(--bh-text-mute)] mt-1">Based on Operation Rate</div>
                     </>
@@ -1288,7 +1289,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             <span className="text-lg font-bold text-slate-300 dark:text-[var(--bh-text-mute)]">N/A</span>
                          ) : (
                             <span className={clsx("font-bold tracking-tight text-xl", isActive ? "text-slate-900 dark:text-[var(--bh-text)]" : "text-slate-700 dark:text-[var(--bh-text-weak)]")}>
-                              ${costPerUnit.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                              {formatMoney(costPerUnit, currency.currency, currency.rate, { maximumFractionDigits: 0 })}
                             </span>
                          )}
                       </div>
@@ -1378,10 +1379,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
                     <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Cost per {getUnitLabel(depthUnit)}</td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
-                      ${displayCostPerUnit(comparisonResults[0].costPerMeter).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      {formatMoney(comparisonResults[0].costPerMeter, currency.currency, currency.rate, { maximumFractionDigits: 2 })}
                     </td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
-                      ${displayCostPerUnit(comparisonResults[1].costPerMeter).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      {formatMoney(comparisonResults[1].costPerMeter, currency.currency, currency.rate, { maximumFractionDigits: 2 })}
                     </td>
                     <td className="py-4 px-4 text-center">
                       {(() => {
@@ -1395,7 +1396,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             {diff > 0 ? '+' : ''}
                             {diffType === 'percentage'
                               ? `${percent.toFixed(1)}%`
-                              : `$${diff.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                              : formatMoney(diff, currency.currency, currency.rate, { maximumFractionDigits: 0 })}
                           </span>
                         );
                       })()}
@@ -1405,10 +1406,10 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                   <tr className="group hover:bg-slate-50/50 dark:hover:bg-[var(--bh-surface-2)]">
                     <td className="sticky left-0 z-10 bg-white dark:bg-[var(--bh-surface-0)] group-hover:bg-slate-50/50 dark:group-hover:bg-[var(--bh-surface-2)] shadow-[1px_0_0_0_#e2e8f0] dark:shadow-[1px_0_0_0_var(--bh-border)] py-4 px-4 text-sm font-semibold text-slate-700 dark:text-[var(--bh-text)]">Total Cost</td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
-                      ${(comparisonResults[0].totalCost / 1000).toFixed(1)}k
+                      {formatCompactMoney(comparisonResults[0].totalCost, currency.currency, currency.rate)}
                     </td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
-                      ${(comparisonResults[1].totalCost / 1000).toFixed(1)}k
+                      {formatCompactMoney(comparisonResults[1].totalCost, currency.currency, currency.rate)}
                     </td>
                     <td className="py-4 px-4 text-center">
                       {(() => {
@@ -1422,7 +1423,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             {diff > 0 ? '+' : ''}
                             {diffType === 'percentage'
                               ? `${percent.toFixed(1)}%`
-                              : `$${(diff / 1000).toFixed(1)}k`}
+                              : formatCompactMoney(diff, currency.currency, currency.rate)}
                           </span>
                         );
                       })()}
@@ -1492,7 +1493,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                           const bit = bits.find(b => b.name === u.name);
                           return acc + (bit ? bit.cost * u.count : 0);
                         }, 0);
-                        return `$${(cost1 / 1000).toFixed(1)}k`;
+                        return formatCompactMoney(cost1, currency.currency, currency.rate);
                       })()}
                     </td>
                     <td className="py-4 px-4 text-center font-mono text-lg font-bold text-slate-900 dark:text-[var(--bh-text)]">
@@ -1501,7 +1502,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                           const bit = bits.find(b => b.name === u.name);
                           return acc + (bit ? bit.cost * u.count : 0);
                         }, 0);
-                        return `$${(cost2 / 1000).toFixed(1)}k`;
+                        return formatCompactMoney(cost2, currency.currency, currency.rate);
                       })()}
                     </td>
                     <td className="py-4 px-4 text-center">
@@ -1524,7 +1525,7 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                             {diff > 0 ? '+' : ''}
                             {diffType === 'percentage'
                               ? `${percent.toFixed(1)}%`
-                              : `$${(diff / 1000).toFixed(1)}k`}
+                              : formatCompactMoney(diff, currency.currency, currency.rate)}
                           </span>
                         );
                       })()}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { GlobalParams, Bit, ScenarioConfig } from './types';
+import { GlobalParams, Bit, ScenarioConfig, CurrencyCode, CurrencyPresentation } from './types';
 import { INITIAL_GLOBAL_PARAMS, INITIAL_BITS, INITIAL_SCENARIOS } from './constants';
 import { runSimulation } from './utils/simulation';
 import SettingsPanel from './components/SettingsPanel';
@@ -13,6 +13,7 @@ import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
 import { DepthUnit, convertDepth, getUnitLabel } from './utils/unitUtils';
 import { useUndoRedo } from './hooks/useUndoRedo';
+import { useCurrency } from './hooks/useCurrency';
 
 const STORAGE_KEY = 'drillcost-pro-state';
 
@@ -135,6 +136,18 @@ const App: React.FC = () => {
     const saved = loadSavedState();
     return saved?.isCompareMode ?? false;
   });
+  const savedState = loadSavedState();
+  const currencyState = useCurrency(savedState?.displayCurrency);
+  const { currency, setCurrency, rate, isRateLoading, rateError, rateSource, fetchedAt, rateDate } = currencyState;
+  const currencyPresentation: CurrencyPresentation = {
+    currency,
+    rate,
+    isRateLoading,
+    rateError,
+    rateSource,
+    fetchedAt,
+    rateDate,
+  };
   
   const isScrolled = useScrolled();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -169,14 +182,15 @@ const App: React.FC = () => {
         depthUnit,
         compareSelections,
         isCompareMode,
-        version: '1.0',
+        displayCurrency: currency,
+        version: '1.1',
         lastSaved: new Date().toISOString()
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
     } catch (e) {
       console.warn('Failed to save state to localStorage', e);
     }
-  }, [params, bits, scenarios, theme, depthUnit, compareSelections, isCompareMode]);
+  }, [params, bits, scenarios, theme, depthUnit, compareSelections, isCompareMode, currency]);
 
   // Apply theme class to html element
   useEffect(() => {
@@ -213,7 +227,12 @@ const App: React.FC = () => {
       depthUnit,
       compareSelections,
       isCompareMode,
-      version: '1.0',
+      baseCurrency: 'USD',
+      displayCurrency: currency,
+      exchangeRate: currencyState.rate,
+      exchangeRateDate: currencyState.rateDate,
+      exchangeRateFetchedAt: currencyState.fetchedAt,
+      version: '1.1',
       timestamp: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -261,6 +280,7 @@ const App: React.FC = () => {
         if (state.depthUnit) setDepthUnit(state.depthUnit);
         if (state.compareSelections) setCompareSelections(state.compareSelections);
         if (state.isCompareMode !== undefined) setIsCompareMode(state.isCompareMode);
+        if (state.displayCurrency === 'USD' || state.displayCurrency === 'PHP') setCurrency(state.displayCurrency as CurrencyCode);
         
       } catch (error) {
         console.error('Failed to parse state file', error);
@@ -511,7 +531,7 @@ const App: React.FC = () => {
           </div>
 
           {/* Right Side: Target & Theme */}
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
              <div className="hidden lg:flex flex-col items-end border-r border-slate-200 dark:border-[var(--bh-border)] pr-4">
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                   <Target className="w-3 h-3" /> Target Depth
@@ -532,6 +552,19 @@ const App: React.FC = () => {
                   </button>
                 </div>
              </div>
+
+              <div className="flex items-center gap-1 rounded-lg border border-slate-200 dark:border-[var(--bh-border)] bg-slate-50 dark:bg-[var(--bh-surface-2)] p-1" title={rateError ?? 'Exchange rates update once daily via European Central Bank data.'}>
+                {(['USD', 'PHP'] as CurrencyCode[]).map(option => (
+                  <button
+                    key={option}
+                    onClick={() => setCurrency(option)}
+                    className={clsx('px-2 py-1 rounded-md text-[10px] font-bold transition-colors', currency === option ? 'bg-white dark:bg-[var(--bh-surface-1)] text-blue-600 dark:text-[var(--bh-primary)] shadow-sm' : 'text-slate-500 dark:text-[var(--bh-text-mute)]')}
+                    aria-pressed={currency === option}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
 
               <button 
                 onClick={toggleTheme}
@@ -615,8 +648,8 @@ const App: React.FC = () => {
               </div>
 
               <div className="space-y-6 custom-scrollbar pr-1 pb-4 flex-1">
-                <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} />
-                <BitsPanel bits={bits} setBits={setBits} onRemoveBit={handleRemoveBit} depthUnit={depthUnit} />
+                <SettingsPanel params={params} setParams={setParams} depthUnit={depthUnit} currency={currencyPresentation} />
+                <BitsPanel bits={bits} setBits={setBits} onRemoveBit={handleRemoveBit} depthUnit={depthUnit} currency={currencyPresentation} />
               </div>
             </div>
           </aside>
@@ -640,6 +673,7 @@ const App: React.FC = () => {
                 isScrolled={isScrolled}
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={setIsSidebarOpen}
+                currency={currencyPresentation}
               >
                 {/* Visualizations (injected as children) */}
                 <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
@@ -652,6 +686,7 @@ const App: React.FC = () => {
                     depthUnit={depthUnit}
                     selectedForComparison={compareSelections}
                     isCompareMode={isCompareMode}
+                    currency={currencyPresentation}
                   />
                 </div>
               </ScenarioManager>
