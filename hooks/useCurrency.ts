@@ -4,13 +4,13 @@ import { CurrencyCode, CurrencyPresentation, ExchangeRateCache } from '../types'
 import { fetchExchangeRate, isCurrencyCode, isFreshRate, readCachedRate, writeCachedRate } from '../utils/currency';
 
 interface UseCurrencyResult extends CurrencyPresentation {
-  setCurrency: (currency: CurrencyCode) => void;
+  setCurrency: (currency: CurrencyCode, savedRate?: ExchangeRateCache) => void;
   refreshRate: () => Promise<void>;
 }
 
-export const useCurrency = (initialCurrency: unknown = DEFAULT_DISPLAY_CURRENCY): UseCurrencyResult => {
+export const useCurrency = (initialCurrency: unknown = DEFAULT_DISPLAY_CURRENCY, initialRate?: ExchangeRateCache | null): UseCurrencyResult => {
   const [currency, setCurrencyState] = useState<CurrencyCode>(isCurrencyCode(initialCurrency) ? initialCurrency : DEFAULT_DISPLAY_CURRENCY);
-  const [cache, setCache] = useState<ExchangeRateCache>(() => readCachedRate() ?? {
+  const [cache, setCache] = useState<ExchangeRateCache>(() => initialRate ?? readCachedRate() ?? {
     rate: DEFAULT_USD_TO_PHP_RATE,
     fetchedAt: 0,
     rateDate: '',
@@ -48,13 +48,14 @@ export const useCurrency = (initialCurrency: unknown = DEFAULT_DISPLAY_CURRENCY)
   }, []);
 
   useEffect(() => {
-    void refreshRate();
+    if (!initialRate) void refreshRate();
     return () => requestRef.current?.abort();
-  }, [refreshRate]);
+  }, [initialRate, refreshRate]);
 
-  const setCurrency = useCallback((nextCurrency: CurrencyCode) => {
+  const setCurrency = useCallback((nextCurrency: CurrencyCode, savedRate?: ExchangeRateCache) => {
+    if (savedRate) setCache(savedRate);
     setCurrencyState(nextCurrency);
-    if (nextCurrency === 'PHP') void refreshRate();
+    if (nextCurrency === 'PHP' && !savedRate) void refreshRate();
   }, [refreshRate]);
 
   return {
@@ -65,6 +66,14 @@ export const useCurrency = (initialCurrency: unknown = DEFAULT_DISPLAY_CURRENCY)
     rateSource: cache.source,
     fetchedAt: cache.fetchedAt || null,
     rateDate: cache.rateDate || null,
+    exchangeRate: {
+      from: 'USD',
+      to: 'PHP',
+      rate: cache.rate,
+      rateDate: cache.rateDate || null,
+      fetchedAt: cache.fetchedAt || null,
+      source: cache.source,
+    },
     setCurrency,
     refreshRate,
   };

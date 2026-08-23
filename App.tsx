@@ -14,6 +14,7 @@ import logoIcon from './img/logo_SonPham.png';
 import { DepthUnit, convertDepth, getUnitLabel } from './utils/unitUtils';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import { useCurrency } from './hooks/useCurrency';
+import { migrateSavedState, serializeSavedState } from './utils/savedState';
 
 const STORAGE_KEY = 'drillcost-pro-state';
 
@@ -57,17 +58,27 @@ const sanitizeScenarios = (scenarios: ScenarioConfig[], validBitIds: Set<string>
 };
 
 const App: React.FC = () => {
+  const [savedState] = useState(() => {
+    const saved = loadSavedState();
+    if (!saved) return null;
+    try {
+      return migrateSavedState(saved);
+    } catch (error) {
+      console.warn('Failed to migrate saved state; using defaults', error);
+      return null;
+    }
+  });
+
   // Initialize state from localStorage if available, otherwise use defaults
   // Using lazy initialization to only load from localStorage once on mount
   const [appData, setAppData, undo, redo, canUndo, canRedo] = useUndoRedo(() => {
-    const saved = loadSavedState();
-    const loadedBits = (saved?.bits ?? INITIAL_BITS) as Bit[];
-    const loadedScenarios = (saved?.scenarios ?? INITIAL_SCENARIOS) as ScenarioConfig[];
+    const loadedBits = savedState?.bits ?? INITIAL_BITS;
+    const loadedScenarios = savedState?.scenarios ?? INITIAL_SCENARIOS;
     const validBitIds = new Set(loadedBits.map((b: Bit) => b.id));
     const sanitizedScenarios = sanitizeScenarios(loadedScenarios, validBitIds);
 
     return {
-      params: (saved?.params ?? INITIAL_GLOBAL_PARAMS) as GlobalParams,
+      params: savedState?.params ?? INITIAL_GLOBAL_PARAMS,
       bits: loadedBits,
       scenarios: sanitizedScenarios
     };
@@ -121,24 +132,19 @@ const App: React.FC = () => {
     }));
   };
   const [theme, setTheme] = useState<'light' | 'dark' | 'xmas'>(() => {
-    const saved = loadSavedState();
-    return saved?.theme ?? 'xmas';
+    return savedState?.preferences.theme ?? 'xmas';
   });
   const [depthUnit, setDepthUnit] = useState<DepthUnit>(() => {
-    const saved = loadSavedState();
-    return saved?.depthUnit ?? 'm';
+    return savedState?.preferences.depthUnit ?? 'm';
   });
   const [compareSelections, setCompareSelections] = useState<string[]>(() => {
-    const saved = loadSavedState();
-    return saved?.compareSelections ?? [];
+    return savedState?.preferences.compareSelections ?? [];
   });
   const [isCompareMode, setIsCompareMode] = useState<boolean>(() => {
-    const saved = loadSavedState();
-    return saved?.isCompareMode ?? false;
+    return savedState?.preferences.isCompareMode ?? false;
   });
-  const savedState = loadSavedState();
-  const currencyState = useCurrency(savedState?.displayCurrency);
-  const { currency, setCurrency, rate, isRateLoading, rateError, rateSource, fetchedAt, rateDate } = currencyState;
+  const currencyState = useCurrency(savedState?.displayCurrency, savedState?.exchangeRate ? { ...savedState.exchangeRate, source: 'saved-case' } : null);
+  const { currency, setCurrency, rate, isRateLoading, rateError, rateSource, fetchedAt, rateDate, exchangeRate } = currencyState;
   const currencyPresentation: CurrencyPresentation = {
     currency,
     rate,
@@ -147,6 +153,7 @@ const App: React.FC = () => {
     rateSource,
     fetchedAt,
     rateDate,
+    exchangeRate,
   };
 
   const isScrolled = useScrolled();
@@ -174,23 +181,20 @@ const App: React.FC = () => {
   // Auto-save state to localStorage whenever it changes
   useEffect(() => {
     try {
-      const stateToSave = {
+      const stateToSave = serializeSavedState({
         params,
         bits,
         scenarios,
-        theme,
-        depthUnit,
-        compareSelections,
-        isCompareMode,
+        preferences: { theme, depthUnit, compareSelections, isCompareMode },
+        baseCurrency: 'USD',
         displayCurrency: currency,
-        version: '1.1',
-        lastSaved: new Date().toISOString()
-      };
+        exchangeRate: currency === 'PHP' ? exchangeRate : null,
+      });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
     } catch (e) {
       console.warn('Failed to save state to localStorage', e);
     }
-  }, [params, bits, scenarios, theme, depthUnit, compareSelections, isCompareMode, currency]);
+  }, [params, bits, scenarios, theme, depthUnit, compareSelections, isCompareMode, currency, exchangeRate]);
 
   // Apply theme class to html element
   useEffect(() => {
@@ -220,21 +224,15 @@ const App: React.FC = () => {
   };
 
   const handleSaveState = () => {
-    const state = {
+    const state = serializeSavedState({
       params,
       bits,
       scenarios,
-      depthUnit,
-      compareSelections,
-      isCompareMode,
+      preferences: { theme, depthUnit, compareSelections, isCompareMode },
       baseCurrency: 'USD',
       displayCurrency: currency,
-      exchangeRate: currencyState.rate,
-      exchangeRateDate: currencyState.rateDate,
-      exchangeRateFetchedAt: currencyState.fetchedAt,
-      version: '1.1',
-      timestamp: new Date().toISOString()
-    };
+      exchangeRate: currency === 'PHP' ? exchangeRate : null,
+    });
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -255,36 +253,26 @@ const App: React.FC = () => {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const state = JSON.parse(content);
-
-        if (state.params && state.bits && state.scenarios) {
-          const validBitIds = new Set((state.bits as Bit[]).map((b: Bit) => b.id));
-          const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
-
-          setAppData(prev => ({
-            ...prev,
-            params: state.params,
-            bits: state.bits as Bit[],
-            scenarios: sanitizedScenarios
-          }));
-        } else {
-          // Fallback partial updates if strictly needed, but for now assuming valid full file
-          if (state.params) setParams(state.params);
-          if (state.bits) setBits(state.bits as Bit[]);
-          if (state.scenarios) {
-            const validBitIds = new Set(((state.bits || bits) as Bit[]).map((b: Bit) => b.id));
-            const sanitizedScenarios = sanitizeScenarios(state.scenarios as ScenarioConfig[], validBitIds);
-            setScenarios(sanitizedScenarios);
-          }
-        }
-        if (state.depthUnit) setDepthUnit(state.depthUnit);
-        if (state.compareSelections) setCompareSelections(state.compareSelections);
-        if (state.isCompareMode !== undefined) setIsCompareMode(state.isCompareMode);
-        if (state.displayCurrency === 'USD' || state.displayCurrency === 'PHP') setCurrency(state.displayCurrency as CurrencyCode);
+        const normalized = migrateSavedState(JSON.parse(content));
+        setAppData({
+          params: normalized.params,
+          bits: normalized.bits,
+          scenarios: normalized.scenarios,
+        });
+        setDepthUnit(normalized.preferences.depthUnit);
+        setTheme(normalized.preferences.theme);
+        setCompareSelections(normalized.preferences.compareSelections);
+        setIsCompareMode(normalized.preferences.isCompareMode);
+        setCurrency(normalized.displayCurrency, normalized.exchangeRate ? {
+          rate: normalized.exchangeRate.rate,
+          fetchedAt: normalized.exchangeRate.fetchedAt ?? 0,
+          rateDate: normalized.exchangeRate.rateDate ?? '',
+          source: 'saved-case',
+        } : undefined);
 
       } catch (error) {
         console.error('Failed to parse state file', error);
-        alert('Invalid file format. Please upload a valid DrillCost JSON file.');
+        alert(`Unable to load saved case: ${(error as Error).message}`);
       }
     };
     reader.readAsText(file);
@@ -311,8 +299,9 @@ const App: React.FC = () => {
       bits: [],
       scenarios: []
     });
+    setCurrency('USD');
     try {
-      localStorage.clear();
+      localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
       console.warn('Failed to clear localStorage', e);
     }

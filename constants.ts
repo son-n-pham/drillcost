@@ -6,6 +6,7 @@ export const EXCHANGE_RATE_CACHE_KEY = 'drillcost-usd-php-rate';
 export const EXCHANGE_RATE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 export const DEFAULT_USD_TO_PHP_RATE = 61.728;
 export const FRANKFURTER_RATE_URL = 'https://api.frankfurter.dev/v1/latest?from=USD&to=PHP';
+export const APP_STATE_VERSION = '1.2';
 
 export const DEFAULT_GLOBAL_PARAMS: GlobalParams = {
   operationCostPerDay: 100000,

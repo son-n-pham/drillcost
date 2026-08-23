@@ -70,4 +70,31 @@ export interface CurrencyPresentation {
   rateSource: ExchangeRateCache['source'];
   fetchedAt: number | null;
   rateDate: string | null;
+  exchangeRate: SavedRateSnapshot | null;
+}
+
+export interface SavedRateSnapshot {
+  from: 'USD';
+  to: 'PHP';
+  rate: number;
+  rateDate: string | null;
+  fetchedAt: number | null;
+  source: ExchangeRateCache['source'] | 'saved-case';
+}
+
+export interface SavedPreferences {
+  theme: 'light' | 'dark' | 'xmas';
+  depthUnit: 'm' | 'ft';
+  compareSelections: string[];
+  isCompareMode: boolean;
+}
+
+export interface NormalizedSavedState {
+  params: GlobalParams;
+  bits: Bit[];
+  scenarios: ScenarioConfig[];
+  preferences: SavedPreferences;
+  baseCurrency: 'USD';
+  displayCurrency: CurrencyCode;
+  exchangeRate: SavedRateSnapshot | null;
 }

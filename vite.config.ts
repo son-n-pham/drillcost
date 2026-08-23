@@ -10,6 +10,18 @@ export default defineConfig({
     host: '0.0.0.0',
   },
   plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          charts: ['recharts'],
+          interaction: ['@dnd-kit/core', '@dnd-kit/modifiers', '@dnd-kit/sortable', '@dnd-kit/utilities'],
+          animation: ['framer-motion'],
+          ui: ['lucide-react', 'clsx', 'tailwind-merge'],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
