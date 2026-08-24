@@ -1213,11 +1213,11 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                       className={clsx(
                         "cursor-pointer rounded-xl border transition-all duration-300 relative overflow-hidden group h-full bg-white dark:bg-[var(--bh-surface-0)] flex flex-col", // Ensure bg is set
                         isCompareMode && isSelectedForCompare
-                          ? "bg-blue-50 dark:bg-[var(--bh-primary)]/10 border-blue-500 shadow-md ring-2 ring-blue-500/30"
+                          ? "bg-[var(--bh-surface-2)] dark:bg-[var(--bh-primary)]/10 border-[var(--bh-primary)] shadow-md ring-2 ring-[var(--bh-primary)]/30"
                           : isActive && !isCompareMode
-                            ? "bg-white dark:bg-[var(--bh-surface-1)] border-blue-500 shadow-md ring-1 ring-blue-500/20 scale-[1.02]"
-                            : "border-slate-200 dark:border-[var(--bh-border)] hover:border-blue-300 dark:hover:border-[var(--bh-border)] hover:shadow-sm",
-                        touchCardSelection.isSelected(res.id) && "ring-2 ring-blue-400"
+                            ? "bg-white dark:bg-[var(--bh-surface-1)] border-[var(--bh-primary)] shadow-md ring-1 ring-[var(--bh-primary)]/20 scale-[1.02]"
+                            : "border-slate-200 dark:border-[var(--bh-border)] hover:border-[var(--bh-primary)] dark:hover:border-[var(--bh-border)] hover:shadow-sm",
+                        touchCardSelection.isSelected(res.id) && "ring-2 ring-[var(--bh-focus)]"
                       )}
                     >
                       {/* Header */}
@@ -1232,9 +1232,9 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({ bits, scenarios, setS
                         {/* Left: Drag or Checkbox - no wrapper div to avoid pointer event interference */}
                         {isCompareMode ? (
                           isSelectedForCompare ? (
-                            <CheckSquare className="flex-shrink-0 w-4 h-4 text-blue-500 dark:text-[var(--bh-primary)]" />
+                            <CheckSquare className="flex-shrink-0 w-4 h-4 text-[var(--bh-primary)]" />
                           ) : (
-                            <Square className="flex-shrink-0 w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-blue-400" />
+                            <Square className="flex-shrink-0 w-4 h-4 text-slate-300 dark:text-[var(--bh-text-mute)] group-hover:text-[var(--bh-primary)]" />
                           )
                         ) : (
                           <DragHandle className={clsx("flex-shrink-0 p-1 rounded", isActive ? "text-slate-800/70 hover:text-slate-900" : "text-slate-400 hover:text-slate-600")} />

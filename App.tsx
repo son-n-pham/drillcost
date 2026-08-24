@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { GlobalParams, Bit, ScenarioConfig, CurrencyCode, CurrencyPresentation } from './types';
+import { GlobalParams, Bit, ScenarioConfig, CurrencyCode, CurrencyPresentation, ThemeMode } from './types';
 import { INITIAL_GLOBAL_PARAMS, INITIAL_BITS, INITIAL_SCENARIOS } from './constants';
 import { runSimulation } from './utils/simulation';
 import SettingsPanel from './components/SettingsPanel';
@@ -7,7 +7,10 @@ import BitsPanel from './components/BitsPanel';
 import ScenarioManager from './components/ScenarioManager';
 import SimulationCharts from './components/SimulationCharts';
 import SnowEffect from './components/SnowEffect';
-import { Activity, Layers, Target, Moon, Sun, Download, Upload, Trash2, FileText, ChevronDown, Snowflake, Undo, Redo, MoreVertical, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import SakuraEffect from './components/SakuraEffect';
+import SummerEffect from './components/SummerEffect';
+import AutumnEffect from './components/AutumnEffect';
+import { Activity, Layers, Target, Moon, Sun, SunMedium, Download, Upload, Trash2, FileText, ChevronDown, Snowflake, Flower2, Leaf, Undo, Redo, MoreVertical, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import { SAMPLE_PARAMS, SAMPLE_BITS, SAMPLE_SCENARIOS } from './sampleData';
 import clsx from 'clsx';
 import logoIcon from './img/logo_SonPham.png';
@@ -131,7 +134,7 @@ const App: React.FC = () => {
       scenarios: typeof newScenarios === 'function' ? newScenarios(prev.scenarios) : newScenarios
     }));
   };
-  const [theme, setTheme] = useState<'light' | 'dark' | 'xmas'>(() => {
+  const [theme, setTheme] = useState<ThemeMode>(() => {
     return savedState?.preferences.theme ?? 'xmas';
   });
   const [depthUnit, setDepthUnit] = useState<DepthUnit>(() => {
@@ -204,6 +207,15 @@ const App: React.FC = () => {
     } else if (theme === 'xmas') {
       document.documentElement.classList.add('dark');
       document.documentElement.setAttribute('data-theme', 'christmas');
+    } else if (theme === 'sakura') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'sakura');
+    } else if (theme === 'summer') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'summer');
+    } else if (theme === 'autumn') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'autumn');
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.setAttribute('data-theme', 'light');
@@ -219,6 +231,9 @@ const App: React.FC = () => {
     setTheme(prev => {
       if (prev === 'light') return 'dark';
       if (prev === 'dark') return 'xmas';
+      if (prev === 'xmas') return 'sakura';
+      if (prev === 'sakura') return 'summer';
+      if (prev === 'summer') return 'autumn';
       return 'light';
     });
   };
@@ -364,7 +379,7 @@ const App: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-[var(--bh-bg)] text-slate-900 dark:text-[var(--bh-text)] font-sans selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300"
+      className="min-h-screen flex flex-col bg-[var(--bh-bg)] text-[var(--bh-text)] font-sans selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900 dark:selection:text-blue-100 transition-colors duration-300"
       style={{
         minHeight: '100dvh',
         paddingLeft: 'var(--safe-area-inset-left)',
@@ -372,6 +387,9 @@ const App: React.FC = () => {
       }}
     >
       {theme === 'xmas' && <SnowEffect />}
+      {theme === 'sakura' && <SakuraEffect />}
+      {theme === 'summer' && <SummerEffect />}
+      {theme === 'autumn' && <AutumnEffect />}
       {/* Hidden File Input */}
       <input
         type="file"
@@ -382,7 +400,7 @@ const App: React.FC = () => {
       />
 
       {/* Header */}
-      <header className="bg-white/80 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-slate-200 dark:border-[var(--bh-border)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
+      <header className="bg-[var(--bh-surface-0)]/85 dark:bg-[var(--bh-surface-1)] backdrop-blur-md border-b border-[var(--bh-border)] sticky top-0 z-50 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
           {/* Left Side: Identity + Action Toolbar */}
@@ -563,6 +581,9 @@ const App: React.FC = () => {
               {theme === 'light' && <Sun className="w-5 h-5" />}
               {theme === 'dark' && <Moon className="w-5 h-5" />}
               {theme === 'xmas' && <Snowflake className="w-5 h-5 text-red-500" />}
+              {theme === 'sakura' && <Flower2 className="w-5 h-5 text-pink-500" />}
+              {theme === 'summer' && <SunMedium className="w-5 h-5 text-amber-500" />}
+              {theme === 'autumn' && <Leaf className="w-5 h-5 text-amber-700" />}
             </button>
           </div>
         </div>

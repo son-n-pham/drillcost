@@ -1,5 +1,5 @@
 import { APP_STATE_VERSION } from '../constants';
-import { Bit, CurrencyCode, NormalizedSavedState, SavedRateSnapshot, ScenarioConfig } from '../types';
+import { Bit, CurrencyCode, NormalizedSavedState, SavedRateSnapshot, ScenarioConfig, ThemeMode } from '../types';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -7,7 +7,7 @@ const isRecord = (value: unknown): value is UnknownRecord => typeof value === 'o
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 const isCurrency = (value: unknown): value is CurrencyCode => value === 'USD' || value === 'PHP';
 const isDepthUnit = (value: unknown): value is 'm' | 'ft' => value === 'm' || value === 'ft';
-const isTheme = (value: unknown): value is 'light' | 'dark' | 'xmas' => value === 'light' || value === 'dark' || value === 'xmas';
+const isTheme = (value: unknown): value is ThemeMode => value === 'light' || value === 'dark' || value === 'xmas' || value === 'sakura' || value === 'summer' || value === 'autumn';
 
 const requireNumber = (value: unknown, field: string): number => {
     if (!isFiniteNumber(value)) throw new Error(`Invalid saved case: ${field} must be a finite number`);

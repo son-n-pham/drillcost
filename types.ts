@@ -82,8 +82,10 @@ export interface SavedRateSnapshot {
   source: ExchangeRateCache['source'] | 'saved-case';
 }
 
+export type ThemeMode = 'light' | 'dark' | 'xmas' | 'sakura' | 'summer' | 'autumn';
+
 export interface SavedPreferences {
-  theme: 'light' | 'dark' | 'xmas';
+  theme: ThemeMode;
   depthUnit: 'm' | 'ft';
   compareSelections: string[];
   isCompareMode: boolean;
