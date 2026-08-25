@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface FallingLeaf {
     x: number;
@@ -32,19 +32,8 @@ const getLeafCount = (): number => {
 
 const AutumnEffect: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isMotionAllowed, setIsMotionAllowed] = useState(false);
 
     useEffect(() => {
-        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const updateMotionPreference = () => setIsMotionAllowed(!mediaQuery.matches);
-        updateMotionPreference();
-        mediaQuery.addEventListener('change', updateMotionPreference);
-        return () => mediaQuery.removeEventListener('change', updateMotionPreference);
-    }, []);
-
-    useEffect(() => {
-        if (!isMotionAllowed) return;
-
         const canvas = canvasRef.current;
         const context = canvas?.getContext('2d');
         if (!canvas || !context) return;
@@ -151,9 +140,7 @@ const AutumnEffect: React.FC = () => {
             window.removeEventListener('resize', resizeCanvas);
             context.clearRect(0, 0, viewportWidth, viewportHeight);
         };
-    }, [isMotionAllowed]);
-
-    if (!isMotionAllowed) return null;
+    }, []);
 
     return <canvas ref={canvasRef} aria-hidden="true" className="fixed inset-0 pointer-events-none z-40" style={{ opacity: 0.9 }} />;
 };
